@@ -19,24 +19,26 @@
 
 ## 読み込み順
 
+コンテキスト自動圧縮、セッション移動、handoff 受領、または要約コンテキストからの再開を検知した場合は、ユーザーへの通常回答や作業継続より前に、以下の初期化ファイル群を再読み込みする。圧縮後の要約だけで文脈補強を済ませず、必ずファイル実体を読む。
+
 1. `AGENTS.md`
 2. `PROJECT.md`
-3. `chat-init.md`
+3. `tech-stack.md`
 4. `README.md`
 5. `docs/imp/user-tasks.md`
 6. 必要に応じて `docs/imp/user-judge.md`
 7. 必要に応じて `docs/imp/imp-tasks.md`
 8. 必要に応じて `docs/imp/imp-plan.md`
-9. 必要に応じて `docs/spec/*`
-10. 必要に応じて `docs/candi-ref/*`
-11. 必要に応じて `.agents/skills/*/SKILL.md`
-12. 必要に応じて `commands/*.md`
+9. 必要に応じて `docs/diary/*`
+10. 必要に応じて `docs/spec/*`
+11. 必要に応じて `docs/candi-ref/*`
+12. 必要に応じて `.agents/skills/*/SKILL.md`
+13. 必要に応じて `commands/*.md`
 
-## `chat-init.md` の位置づけ
+## AGENTS.md 非対応環境
 
-- `chat-init.md` は、毎チャットの最初に読む共通初期化ファイルとして扱う。
-- 現状の進行状況やセッション固有の handoff は書かず、毎回共通で効く起動前提、出力方針、更新方針のみを置く。
-- セッション依存の内容は `docs/diary/*` や `docs/imp/*` に置き、`chat-init.md` には混ぜない。
+- AGENTS.md を自動で読まない LLM / tool を使う場合は、作業開始時にこの `AGENTS.md` を明示的に読ませる。
+- 共通起動ルールはこの `AGENTS.md` を正本にし、セッション固有の handoff は `docs/diary/*` と `docs/imp/*` に置く。
 
 ## ディレクトリ方針
 
@@ -62,6 +64,14 @@
 - `docs/org/`: 権限、ロール、組織運用
 - `docs/data/`: データモデル、イベント、検索、同期
 
+## docs 相互更新ルール
+
+- PJ docs の更新判断は `docs/guide/docs-management-rules.md` を正本にする。
+- 仕様更新だけでなく、タスク整理、タスク進捗、判断待ち発生、判断待ち解消、完了、handoff 作成の各タイミングで、同文書のタイミング別更新判断表に従う。
+- `AGENTS.md` には詳細判断表を重複記載しない。実行時の必須ルールだけを置く。
+- `PROJECT.md` は PJ 固有の目的、スコープ、正本関係、恒久的な構造、採用済みの重要判断を示す場所であり、タスク、進捗、次走テーマ、セッション履歴、判断材料の生ログ、参照元一覧を書かない。
+- タスク、進捗、判断待ち、完了記録は `docs/imp/*`、セッション履歴や handoff は `docs/diary/*`、候補・比較・参照元は `docs/candi-ref/*` または `docs/setting/*`、採用判断の根拠は該当する `docs/arch/*` / `docs/spec/*` / `docs/product/*` / `tech-stack.md` に置く。
+
 ## `docs/imp/` の命名
 
 - `imp-*`: 実装者向け。計画、実装待ち、完了記録、技術判断。
@@ -72,9 +82,13 @@
 
 - 横断ナレッジ vault は `G:\knowledge-vault`。
 - この PJ 固有の設計、比較、進行状態はこの PJ 内を正本にする。
-- 複数 PJ で再利用できる知見、比較結果、判断原則のみ `G:\knowledge-vault` へ反映する。
+- タスク整理、進捗、判断待ち、判断解消、完了、handoff などの各タイミングで、`G:\knowledge-vault` への反映要否を評価する。
+- 反映対象は、再利用できる知見、比較結果、判断原則、運用ルール、失敗知、後から復元価値のある作業記録とする。
 - `G:\knowledge-vault` 配下の既存カテゴリへ蓄積し、新しい知見倉庫は増やさない。
-- 以後も横断価値のある判断や運用知識は、都度 `G:\knowledge-vault` に反映する。
+- 反映先と粒度は `G:\knowledge-vault\knowledge-vault-write-policy.md` に従う。
+- ここでのタスク完了は、最終成果物の完成だけでなく、エージェントが自律走行中に作った TODO / サブタスクを消化した単位を含む。
+- `G:\knowledge-vault` へ記載する前に、必ず `G:\knowledge-vault\knowledge-vault-write-policy.md` を読む。
+- knowledge-vault への反映要否は、`docs/guide/docs-management-rules.md` の knowledge-vault 判定ゲートと中央 policy の両方で判断する。
 
 ## 初期流用元
 
@@ -97,6 +111,12 @@
 - `PrefectHQ/fastmcp` の `fastmcp-client-cli` skill は利用可能だが、土台の追随先ではなく MCP 実装時の参考として扱う。
 - `modelcontextprotocol/servers` は本番実装ではなく参照実装集として扱い、設計判断の根拠に使う。
 - 外部 repo の流用だけで閉じず、必要な skill は Codex で内製し、この PJ に追加していく前提で扱う。
+
+## knowledge-vault への知識蓄積
+
+- `G:\knowledge-vault` は横断ナレッジの正本であり、この PJ からも他 PJ からも共通の知識蓄積先として扱う。
+- `G:\knowledge-vault` へ記載する場合は、事前に `G:\knowledge-vault\knowledge-vault-write-policy.md` を読み、保存先、記載粒度、書かないものを判断する。
+- この PJ の `AGENTS.md` には詳細ルールを重複記載しない。知識蓄積ルールの更新は `G:\knowledge-vault\knowledge-vault-write-policy.md` に集約する。
 
 ## 回答方針
 

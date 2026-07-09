@@ -1,0 +1,7 @@
+interface:
+  display_name: "Mermaid Diagram Style"
+  short_description: "Create consistent pastel Mermaid diagrams"
+  brand_color: "#64A6D9"
+  default_prompt: "Create or revise this Mermaid diagram with consistent colors and clear layout"
+policy:
+  allow_implicit_invocation: true

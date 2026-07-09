@@ -2,19 +2,28 @@
 
 ## 最優先
 
-- `Plane` を主参照候補として扱う前提で、何を借りるかを固定する
-- `OpenProject` と `Leantime` の役割分担を固め、どのレイヤーを借りるかを決める
+- ユーザー判断待ちと Codex 側実装待ちを分けた状態を維持する
+- P0 画面構成仕様を作る
+- ガント MVP 仕様を作る
 
-## 具体タスク
+## Codex が進める具体タスク
 
-1. Plane の参照対象を 3 つ程度に限定する
-2. OpenProject / Leantime の `ガント + TODO 一体性` 比較を進める
-3. `Web閲覧可能` `OSSフォークしやすい` `デザイン改変しやすい` を満たすガント借用方針を詰める
-4. タスクリスト / TODO リストで `Leantime` から濃く借りる候補を洗う
-5. `OpenProject` を人員計画 / 横断計画の主参照に置けるか判断する
-6. `自前入口 + Plane + OpenProject / Leantime 選択的借用` の構成を product / arch に落とす
+1. `docs/spec/screen-structure-p0.md` を作る
+2. `docs/spec/gantt-mvp-flow.md` を作る
+3. `docs/spec/classification-tag-master.md` を作る
+4. `docs/spec/role-and-permission-initial.md` を作る
+5. `docs/spec/prompt-template-management.md` を作る
+6. `docs/spec/intake-source-adapters.md` を下書きする
 
 ## 判断待ち
 
-- AI 自動分別の確定方式
-- Calendar 連携の自動化レベル
+- `UJ-01`: Slack / knowledge-vault から回収する対象範囲
+- `UJ-02`: 回収後の AI 自動分別をどこまで自動確定させるか
+- `UJ-03`: 自動確定しない場合、確認待ちキューで何を表示して GO させるか
+
+## 現在のブロッカー
+
+- アプリ実装開始を止めるブロッカーはまだない。
+- Slack / knowledge-vault adapter の確定版は `UJ-01` 待ち。
+- AI 自動確定の詳細仕様は `UJ-02` 待ち。
+- 確認待ちキューの詳細仕様は `UJ-03` 待ち。

@@ -14,3 +14,45 @@
 - `fastmcp` の運用指示と `modelcontextprotocol/servers` の README を bootstrap source に保存
 - Codex 専用運用土台の upstream は `goose` 単独追随とし、他 repo は参考用として保持する方針に変更
 - 今回の判断を `G:\knowledge-vault` 配下の既存カテゴリへ反映する前提を確定
+
+## 2026-07-02
+
+- `G:\knowledge-vault\knowledge-vault-write-policy.md` を中央正本として作成し、PJ 側から参照する運用へ変更
+- `G:\knowledge-vault\memory\l1-triggers.md` に knowledge-vault 記載方針への想起入口を追加
+- `pj-general` の `AGENTS.md` に、knowledge-vault 記載前に中央 policy を読むルールを明文化
+- Mermaid 図作成用 skill `.agents/skills/mermaid-diagram-style/` を作成
+- 技術スタック比較表と技術概念表を作成
+- P0 全体要約ワークフロー図と P0 データフロー図を作成
+- P0 統一入口イベントモデルを作成
+- P0 AI 整理・登録支援フローを作成
+- P0 初期業務オブジェクトモデルを作成
+- P0 Google Calendar 連携フローを作成
+- P0 Codex プロジェクト開始支援フローを作成
+- Mermaid 図でユーザー操作点と自動処理点を見た目上区別できるように修正
+- ユーザー判断待ちを整理し、Google Calendar、外部協力者表示、ガント、キャパ、Codex 起動支援の判断を反映
+- `docs/guide/docs-management-rules.md` を作成し、docs 配下の正本、同期先、更新トリガー、更新漏れパターンをマトリクス化
+- `docs/guide/docs-management-matrix-result-diagram.md` を作成し、docs 管理マトリクスの結果を Mermaid 図で可視化
+- `AGENTS.md` / `PROJECT.md` / `chat-init.md` / `docs/README.md` に docs 相互更新ルールへの参照と基本原則を追記
+- 横断再利用できる docs 正本・同期ルールを `G:\knowledge-vault\knowledge\dev\docs-source-of-truth-update-rules.md` に反映
+- `docs/guide/docs-management-rules.md` を docs update policy 相当に拡張し、タスク整理、進捗、判断待ち発生、判断待ち解消、完了、handoff 作成のタイミング別更新判断表を追加
+- `AGENTS.md` は詳細表を重複させず、PJ docs 更新判断は `docs/guide/docs-management-rules.md`、横断ナレッジ更新判断は `G:\knowledge-vault\knowledge-vault-write-policy.md` を参照する形に整理
+- 新PJへ引き継ぐ最小ルールセットを `docs/guide/docs-management-rules.md` に追加
+- `.agents/README.md` を追加し、`.agents/` 配下へ docs 更新判断表を重複コピーしない方針を明記
+- `chat-init.md` / `AGENTS.md` / `docs/guide/docs-management-rules.md` / `G:\knowledge-vault\knowledge-vault-write-policy.md` の「横断価値のある知見だけ」系の表現を改め、各作業ポイントで knowledge-vault への反映要否を評価する方針へ統一
+- `chat-init.md` を削除し、毎チャット共通ルールは `AGENTS.md`、セッション固有 handoff は `docs/diary/*` / `docs/imp/*` に集約する方針へ変更
+- `docs/guide/docs-management-matrix-result-diagram.md` の「更新漏れリスク」図を、イベント発生から正本更新、進行管理、入口同期、handoff、knowledge-vault 評価、終了前チェックまでの仕組み図へ差し替え
+- `docs/guide/docs-management-matrix-result-diagram.md` の色分けを、入力口は青、出力先は赤、判断・ルール・確認などその他はグレーに統一
+
+## 2026-07-09
+
+- `PROJECT.md` からタスク、今回の到達目標、参照元一覧、次走テーマなどの履歴・作業管理情報を削除
+- `PROJECT.md` の責務を、PJ 固有の目的、スコープ、正本関係、恒久的な構造、採用済み重要判断に限定する形へ整理
+- `AGENTS.md` に、PROJECT.md へタスク、進捗、次走テーマ、セッション履歴、判断材料の生ログ、参照元一覧を書かない実行ルールを追加
+- `docs/guide/docs-management-rules.md` に、PROJECT.md を履歴置き場にしない禁止事項と配置先の分離ルールを追加
+- `AGENTS.md` に、コンテキスト自動圧縮、セッション移動、handoff 受領、要約コンテキストからの再開を検知した場合、通常回答や作業継続より前に初期化ファイル群を再読み込みするルールを明記
+- `docs/guide/docs-management-rules.md` に、圧縮後要約だけで再開しないためのタイミング別更新判断と更新漏れ防止パターンを追加
+- Codex 自動圧縮の公式 manual 調査、`compact_prompt` override の保留判断、`PreCompact` / `PostCompact` / `SessionStart compact` hook 優先案、今回編集した PJ ファイルと期待動作を `G:\knowledge-vault\knowledge\dev\codex-auto-compact-recovery-design.md` に現時点版として保存
+- `C:\Users\unibe\.codex\AGENTS.md` に compact 復帰の最優先ルールを追記
+- `C:\Users\unibe\.codex\hooks.json` と `C:\Users\unibe\.codex\hooks\post_compact_reminder.ps1` / `session_start_compact_reminder.ps1` を作成し、`PostCompact` と `SessionStart compact` で復帰 reminder / log を生成する設定を追加
+- `C:\Users\unibe\.codex\config.toml` で Memories を有効化し、compact 復帰時の補助記憶として使う設定を追加
+- hook script を手動実行し、`C:\Users\unibe\.codex\compact-recovery-reminder.md` と `C:\Users\unibe\.codex\logs\compact-recovery.log` の生成を確認

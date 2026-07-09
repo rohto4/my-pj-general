@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120">
+  <defs>
+    <style>
+      text {
+        font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+        fill: #172033;
+      }
+      .title { font-size: 34px; font-weight: 700; }
+      .subtitle { font-size: 16px; fill: #53627a; }
+      .section { font-size: 20px; font-weight: 700; }
+      .label { font-size: 22px; font-weight: 700; }
+      .small { font-size: 14px; fill: #42526b; }
+      .tiny { font-size: 12px; fill: #617089; }
+      .card {
+        stroke: #d6ddea;
+        stroke-width: 2;
+        rx: 22;
+        ry: 22;
+      }
+      .panel {
+        fill: #f7f9fc;
+        stroke: #d6ddea;
+        stroke-width: 2;
+        rx: 24;
+        ry: 24;
+      }
+      .link {
+        stroke: #93a4bf;
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+      }
+      .dashed {
+        stroke-dasharray: 8 8;
+      }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#93a4bf"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="1120" fill="#ffffff"/>
+
+  <text x="70" y="70" class="title">PJ-General 要件成熟度の概念図</text>
+  <text x="70" y="102" class="subtitle">2026-06-24 時点。青は要件定義未達寄り、赤は要件定義済寄り。文書で推奨はあるが未固定のものは中間色に置く。</text>
+
+  <rect x="70" y="130" width="1460" height="92" class="panel"/>
+  <text x="95" y="163" class="section">成熟度凡例</text>
+  <g transform="translate(95,178)">
+    <rect x="0" y="0" width="180" height="26" rx="13" fill="#2f6bff"/>
+    <text x="16" y="18" font-size="14" font-weight="700" fill="#ffffff">Lv1 要件定義未達</text>
+    <rect x="200" y="0" width="180" height="26" rx="13" fill="#5b8cff"/>
+    <text x="216" y="18" font-size="14" font-weight="700" fill="#ffffff">Lv2 論点整理段階</text>
+    <rect x="400" y="0" width="180" height="26" rx="13" fill="#7ab8ff"/>
+    <text x="416" y="18" font-size="14" font-weight="700" fill="#13213a">Lv3 方向性あり</text>
+    <rect x="600" y="0" width="180" height="26" rx="13" fill="#ffc857"/>
+    <text x="616" y="18" font-size="14" font-weight="700" fill="#13213a">Lv4 推奨あり</text>
+    <rect x="800" y="0" width="180" height="26" rx="13" fill="#ff8a3d"/>
+    <text x="816" y="18" font-size="14" font-weight="700" fill="#ffffff">Lv5 主要判断済</text>
+    <rect x="1000" y="0" width="180" height="26" rx="13" fill="#e5484d"/>
+    <text x="1016" y="18" font-size="14" font-weight="700" fill="#ffffff">Lv6 かなり固い</text>
+  </g>
+
+  <path d="M800 360 L800 300" class="link" marker-end="url(#arrow)"/>
+  <path d="M650 430 L440 430" class="link" marker-end="url(#arrow)"/>
+  <path d="M950 430 L1160 430" class="link" marker-end="url(#arrow)"/>
+  <path d="M730 520 L620 690" class="link" marker-end="url(#arrow)"/>
+  <path d="M870 520 L980 690" class="link" marker-end="url(#arrow)"/>
+  <path d="M800 520 L800 735" class="link dashed" marker-end="url(#arrow)"/>
+  <path d="M255 540 C235 620 235 725 255 805" class="link" marker-end="url(#arrow)"/>
+  <path d="M1345 540 C1365 620 1365 725 1345 805" class="link" marker-end="url(#arrow)"/>
+
+  <rect x="650" y="360" width="300" height="160" class="card" fill="#ff8a3d"/>
+  <text x="800" y="406" text-anchor="middle" class="label" fill="#ffffff">PJ-General 中核像</text>
+  <text x="800" y="438" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Lv5 主要判断済</text>
+  <text x="800" y="470" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">雑な入力を受けて整理し</text>
+  <text x="800" y="496" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">タスク化・予定化までつなぐ入口</text>
+
+  <rect x="640" y="250" width="320" height="86" class="card" fill="#e5484d"/>
+  <text x="800" y="286" text-anchor="middle" class="label" fill="#ffffff">入口は自前実装</text>
+  <text x="800" y="312" text-anchor="middle" class="small" fill="#fff4f4">独自価値の中心。前提を崩さない。</text>
+
+  <rect x="120" y="310" width="320" height="240" class="card" fill="#ff8a3d"/>
+  <text x="280" y="348" text-anchor="middle" class="label" fill="#ffffff">体験・画面方針</text>
+  <text x="280" y="374" text-anchor="middle" class="small" fill="#fff4f4">Lv5 主要判断済</text>
+  <text x="150" y="414" class="small" fill="#fff7f0">• 4 窓口に分ける</text>
+  <text x="150" y="442" class="small" fill="#fff7f0">• 書き入れ口 / 作成口が差別化の中心</text>
+  <text x="150" y="470" class="small" fill="#fff7f0">• 横断ダッシュボードは閲覧重視</text>
+  <text x="150" y="498" class="small" fill="#fff7f0">• 実績 / 履歴参照を別窓口に置く</text>
+  <text x="150" y="526" class="small" fill="#fff7f0">• UI 基盤候補は shadcn/ui</text>
+
+  <rect x="1160" y="310" width="320" height="240" class="card" fill="#ff8a3d"/>
+  <text x="1320" y="348" text-anchor="middle" class="label" fill="#ffffff">OSS 借用方針</text>
+  <text x="1320" y="374" text-anchor="middle" class="small" fill="#fff4f4">Lv5 主要判断済</text>
+  <text x="1190" y="414" class="small" fill="#fff7f0">• Plane: 入口の情報設計</text>
+  <text x="1190" y="442" class="small" fill="#fff7f0">• OpenProject: ガント / 横断計画</text>
+  <text x="1190" y="470" class="small" fill="#fff7f0">• Leantime: TODO / ideas→todos</text>
+  <text x="1190" y="498" class="small" fill="#fff7f0">• 丸ごと採用ではなくレイヤー借用</text>
+  <text x="1190" y="526" class="small" fill="#fff7f0">• 可視化や体験を主に借りる</text>
+
+  <rect x="120" y="690" width="270" height="150" class="card" fill="#ff8a3d"/>
+  <text x="255" y="726" text-anchor="middle" class="label" fill="#ffffff">外部入口</text>
+  <text x="255" y="752" text-anchor="middle" class="small" fill="#fff4f4">Lv5 主要判断済</text>
+  <text x="150" y="790" class="small" fill="#fff7f0">• Slack を入口にする</text>
+  <text x="150" y="818" class="small" fill="#fff7f0">• knowledge-vault を入口にする</text>
+
+  <rect x="120" y="860" width="270" height="170" class="card" fill="#5b8cff"/>
+  <text x="255" y="896" text-anchor="middle" class="label" fill="#ffffff">正本・同期設計</text>
+  <text x="255" y="922" text-anchor="middle" class="small" fill="#eef4ff">Lv2 論点整理段階</text>
+  <text x="150" y="960" class="small" fill="#eef4ff">• 正本 object が未確定</text>
+  <text x="150" y="988" class="small" fill="#eef4ff">• Slack / GV / Calendar の同期方向</text>
+  <text x="150" y="1016" class="small" fill="#eef4ff">• 重複防止・冪等性は未設計</text>
+
+  <rect x="480" y="690" width="280" height="170" class="card" fill="#ffc857"/>
+  <text x="620" y="726" text-anchor="middle" class="label">技術スタック推奨</text>
+  <text x="620" y="752" text-anchor="middle" class="small">Lv4 推奨あり</text>
+  <text x="510" y="790" class="small">• Next.js App Router</text>
+  <text x="510" y="818" class="small">• shadcn/ui</text>
+  <text x="510" y="846" class="small">• Hono / PostgreSQL / Drizzle</text>
+  <text x="510" y="874" class="small">• Better Auth / BullMQ / Redis / RHF</text>
+
+  <rect x="660" y="760" width="280" height="140" class="card" fill="#7ab8ff"/>
+  <text x="800" y="796" text-anchor="middle" class="label">実装境界の詳細</text>
+  <text x="800" y="822" text-anchor="middle" class="small">Lv3 方向性あり</text>
+  <text x="690" y="858" class="small">• Hono を Day 1 から分離するか</text>
+  <text x="690" y="886" class="small">• admin を別 app にするか</text>
+
+  <rect x="840" y="690" width="280" height="170" class="card" fill="#5b8cff"/>
+  <text x="980" y="726" text-anchor="middle" class="label" fill="#ffffff">ドメイン境界</text>
+  <text x="980" y="752" text-anchor="middle" class="small" fill="#eef4ff">Lv2 論点整理段階</text>
+  <text x="870" y="790" class="small" fill="#eef4ff">• アイデアカードとタスクを分けるか</text>
+  <text x="870" y="818" class="small" fill="#eef4ff">• 予定 / 検討事項 / 気になっている事</text>
+  <text x="870" y="846" class="small" fill="#eef4ff">• 1 入力から複数 object 生成ルール</text>
+
+  <rect x="1210" y="690" width="270" height="150" class="card" fill="#ffc857"/>
+  <text x="1345" y="726" text-anchor="middle" class="label">Codex 運用支援</text>
+  <text x="1345" y="752" text-anchor="middle" class="small">Lv4 推奨あり</text>
+  <text x="1240" y="790" class="small">• 初期プロンプト生成</text>
+  <text x="1240" y="818" class="small">• ひな型 / repo / template 選定支援</text>
+
+  <rect x="1210" y="860" width="270" height="170" class="card" fill="#7ab8ff"/>
+  <text x="1345" y="896" text-anchor="middle" class="label">AI 分別フロー</text>
+  <text x="1345" y="922" text-anchor="middle" class="small">Lv3 方向性あり</text>
+  <text x="1240" y="960" class="small">• 自動分別する方針はある</text>
+  <text x="1240" y="988" class="small">• ただし即確定 / 下書き / レビュー</text>
+  <text x="1240" y="1016" class="small">• この確定フローは未固定</text>
+
+  <rect x="480" y="920" width="280" height="110" class="card" fill="#5b8cff"/>
+  <text x="620" y="956" text-anchor="middle" class="label" fill="#ffffff">権限モデル</text>
+  <text x="620" y="982" text-anchor="middle" class="small" fill="#eef4ff">Lv2 論点整理段階</text>
+  <text x="510" y="1016" class="small" fill="#eef4ff">• 自分 / 外部協力者 / 将来社内の最小モデル</text>
+
+  <rect x="840" y="920" width="280" height="110" class="card" fill="#7ab8ff"/>
+  <text x="980" y="956" text-anchor="middle" class="label">ガント・キャパの扱い</text>
+  <text x="980" y="982" text-anchor="middle" class="small">Lv3 方向性あり</text>
+  <text x="870" y="1016" class="small">• 欲しいが MVP 必須かは未確定</text>
+
+  <text x="70" y="1086" class="tiny">解釈基準: Lv6 は前提として繰り返し明記されているもの、Lv5 は主要判断として合意済のもの、Lv4 は現時点の推奨、Lv3 は方向性はあるが詳細未固定、Lv2 は主要論点として明示済、Lv1 はまだ論点化も浅い領域。</text>
+</svg>

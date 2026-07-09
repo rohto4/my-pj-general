@@ -6,8 +6,9 @@
 
 1. `AGENTS.md`
 2. `PROJECT.md`
-3. `docs/imp/user-tasks.md`
-4. `docs/imp/imp-tasks.md`
+3. `tech-stack.md`
+4. `docs/imp/user-tasks.md`
+5. `docs/imp/imp-tasks.md`
 
 ## 現在の段階
 
@@ -19,3 +20,4 @@
 - `obsidian-set` 由来の `skills` / `commands`
 - `knowledge-vault` 由来のテンプレート
 - OSS 選定と統合計画に進むための初期ドキュメント
+- 技術スタックと実務ツールの正本 `tech-stack.md`

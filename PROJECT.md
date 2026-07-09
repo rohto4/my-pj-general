@@ -1,39 +1,52 @@
 # PJ-General Project Context
 
-## 仮目的
+## PJ の目的
 
-この PJ は、個人のスケジュール管理、個人タスク管理、社員や協力者を含むチームタスク管理、やりたいことの蓄積、判断記録、知識管理を一元化するサイトを作るための拠点。
+この PJ は、個人のスケジュール管理、個人タスク管理、社員や協力者を含むチームタスク管理、やりたいことの蓄積、判断記録、知識管理を一元化するサイトを作るための拠点である。
 
-現時点では要件定義前フェーズとして、次を優先する。
+要件定義前フェーズでは、仕様を早く固定することよりも、情報設計、運用設計、比較材料、将来の統合設計を整えることを優先する。
 
-1. 大規模PJ向けの地盤整備
-2. 既存資産からのテンプレート / skills / commands の流用
-3. 情報設計とディレクトリ設計の確立
-4. 候補 OSS の比較準備
-5. 統合戦略の検討準備
+## PROJECT.md の責務
 
-## 今回の到達目標
+`PROJECT.md` は、PJ 固有の目的、スコープ、正本関係、恒久的な構造、採用済みの重要判断を示す最重要ファイルである。
 
-- モノレポ前提のルート構造を作る
-- agent 指示、project 文脈、docs 運用を初期化する
-- `obsidian-set` / `knowledge-vault` / `my-LLMwiki` の有用テンプレートを取り込む
-- Codex 専用運用土台として参照する高スター repo を clone し、必要部分を取り込む
-- 次走で OSS 選定と統合計画に入れる状態を作る
+次の内容は `PROJECT.md` に置かない。
+
+- タスク一覧、進捗、次走テーマ
+- セッション履歴、handoff、作業ログ
+- 判断材料の生ログ、参照元一覧、調査メモ
+- 一時的な TODO、会話中の未整理メモ
+
+置き場所は次のように分ける。
+
+- タスク、進捗、完了記録: `docs/imp/*`
+- セッション履歴、handoff: `docs/diary/*`
+- 候補、比較、参照元、未採用案: `docs/candi-ref/*` または `docs/setting/*`
+- 採用判断の根拠、設計判断: `docs/arch/*`、`docs/spec/*`、`docs/product/*`、`tech-stack.md`
 
 ## 作業入口
 
-- 毎チャット共通の起動前提: `chat-init.md`
+- 毎チャット共通の起動前提: `AGENTS.md`
+- 技術スタックと実務ツールの正本: `tech-stack.md`
 - ユーザー確認・操作: `docs/imp/user-tasks.md`
 - ユーザー判断待ち: `docs/imp/user-judge.md`
 - 実装待ち: `docs/imp/imp-tasks.md`
 - 実装方針: `docs/imp/imp-plan.md`
 - 完了記録: `docs/imp/imp-comp.md`
 
-## `chat-init.md` の役割
+## 文書管理の正本関係
 
-- `chat-init.md` は、毎チャットの最初に読む共通初期化ファイル。
-- ここには、読み込みのたびに有効な共通運用ルール、出力方針、更新方針だけを置く。
-- 現状の検討結果や handoff は含めず、PJ の進行状態は `docs/diary/*` や `docs/imp/*` に置く。
+- PJ 全体の実行ルールは `AGENTS.md` を正本にする。
+- PJ の目的、入口、構造、採用済みの重要判断は `PROJECT.md` を正本にする。
+- 技術スタックと実務ツールは `tech-stack.md` を正本にする。
+- docs 配下の置き場所、相互更新ルール、タイミング別更新判断表は `docs/guide/docs-management-rules.md` を正本にする。
+- docs 配下の入口一覧は `docs/README.md` とし、詳細ルールを重複させない。
+
+## 新PJへの引き継ぎ
+
+- 新PJへこの運用を移す場合は、`docs/guide/docs-management-rules.md` の「新PJへ引き継ぐ最小ルールセット」を基準にする。
+- `AGENTS.md` / `PROJECT.md` だけでなく、`docs/guide/docs-management-rules.md`、`docs/guide/docs-management-matrix-result-diagram.md`、`docs/README.md`、`docs/imp/*` の最小セット、`.agents/README.md` も AI 設定・運用関連ファイルとして引き継ぐ。
+- `G:\knowledge-vault\knowledge-vault-write-policy.md` は横断ナレッジ更新判断の中央正本として参照し、PJ 側へ重複コピーしない。
 
 ## 初期ディレクトリ構造
 
@@ -41,18 +54,17 @@
 G:\devwork\pj-general
 ├── AGENTS.md
 ├── PROJECT.md
-├── chat-init.md
 ├── README.md
-├── .agents\skills\          # obsidian-set + fastmcp 由来 skill を流用
-├── commands\                # obsidian-set 由来 command を流用
-├── apps\                    # フロントエンド群
-├── services\                # API / Auth / Sync / Gateway
-├── packages\                # 共通ライブラリ / ドメイン / UI
-├── workers\                 # バッチ / 非同期処理 / AI ジョブ
-├── plugins\                 # 拡張モジュール
-├── infra\                   # デプロイ / IaC / 監視 / 権限
-├── scripts\                 # セットアップ / 開発補助
-├── tests\                   # 統合テスト基盤
+├── .agents\skills\
+├── commands\
+├── apps\
+├── services\
+├── packages\
+├── workers\
+├── plugins\
+├── infra\
+├── scripts\
+├── tests\
 ├── docs\
 │   ├── guide\
 │   ├── spec\
@@ -75,26 +87,10 @@ G:\devwork\pj-general
 - `plugins` を独立させることで、候補 OSS の一部機能を段階導入しやすくする。
 - `docs` を product / arch / data / ops / org に分割し、100 万行規模でも知識を迷子にしにくくする。
 
-## 参照した流用元
+## PJ 固有の決定事項
 
-- `G:\devwork\obsidian-set`
-- `G:\devwork\tool-set`
-- `G:\knowledge-vault`
-- `G:\my-LLMwiki`
-- `G:\devwork\clone-dir\aaif-goose-goose`
-- `G:\devwork\clone-dir\PrefectHQ-fastmcp`
-- `G:\devwork\clone-dir\modelcontextprotocol-servers`
-- 参考記事: NocoBase ブログ「GitHubスター数トップ10のオープンソースプロジェクト管理ツール」
-  - 記事公開: 2025-09-17
-  - 記事最終更新: 2026-01-21
-
-## 現時点の採用判断
-
+- この PJ の開発運用は当面 Codex 専用として扱う。
 - Codex 専用運用土台の参照元は `aaif-goose/goose` を第一候補とする。
-- MCP 実装や CLI 操作の土台は `PrefectHQ/fastmcp` を第一候補とする。
+- MCP 実装や CLI 操作の参照元は `PrefectHQ/fastmcp` を第一候補とする。
 - MCP 参照サーバの把握には `modelcontextprotocol/servers` を使う。
 - `awesome-mcp-servers` は巨大索引として有用だが、この PJ に直接コピーして使う土台としては優先しない。
-
-## 次走のテーマ
-
-次は、候補 OSS の選定基準を確定し、引用・拡張に向いたプロジェクトの比較表と統合シナリオを作る。
