@@ -47,7 +47,7 @@ Vikunja plugin (必要になった時だけ)
 ```
 
 - 最初は `Vikunja API` を正本の作成経路にする。plugin を最初から必須にしない。
-- Webhook は失敗時に再試行されないため、pj-general 側は受信イベントを冪等に保存し、定期的な API 照合を後続で用意する。
+- Webhook の再試行挙動はreleaseや送信経路に依存し得る。現行upstreamのE2Eでは失敗時再試行を確認できるが、pj-general側は再試行を前提にせず、受信イベントを冪等に保存し、定期的なAPI照合を用意する。
 - self-hostした複数人利用では、Webhook の送信先制限・署名検証を必須にする。
 - fork する場合は AGPLv3 の条件を受け入れ、upstream の `main` / release に追随する更新手順と差分管理を先に作る。
 

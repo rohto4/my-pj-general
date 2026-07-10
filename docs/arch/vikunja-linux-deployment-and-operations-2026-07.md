@@ -53,7 +53,7 @@ flowchart TB
 | ブラウザ -> pj-general | ユーザー向け | pj-general認証を後続導入 |
 | ブラウザ -> Vikunja | ユーザー向け | Vikunja認証 |
 | pj-general -> Vikunja API | 内部またはTLS | API token、timeout、retry |
-| Vikunja -> pj-general Webhook | Reverse Proxy経由 | HMAC署名、event ID冪等性 |
+| Vikunja -> pj-general Webhook | Reverse Proxy経由 | HMAC署名、event identityまたはpayload hash冪等性 |
 | systemd worker -> 各入口 | 必要な外向き通信 | sourceごとのtoken、取得結果記録 |
 
 ## 起動順
@@ -71,7 +71,7 @@ flowchart TB
 - Vikunja DBとpj-general DBは別々にバックアップし、復旧順を記録する。
 - 毎日のDB dump、設定ファイル、Vikunja/PJ release version、plugin/fork commitを保存する。
 - 復旧後は、`execution_links`とVikunja taskの対応を照合する。
-- Webhook payloadは無期限に保持せず、監査に必要な期間を設定する。ただしevent ID、処理状態、失敗理由は履歴として残す。
+- Webhook payloadは無期限に保持せず、監査に必要な期間を設定する。ただしevent identityまたはpayload hash、処理状態、失敗理由は履歴として残す。
 
 ## 更新手順
 

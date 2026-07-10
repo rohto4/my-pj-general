@@ -133,7 +133,7 @@ create table if not exists sync_attempts (
 
 - GO登録の冪等キーは `provider + candidate_id` とする。
 - `execution_links.candidate_id` を主キーにし、1候補1実行taskを基本とする。
-- WebhookはVikunjaのevent IDを受信キーにし、同じeventを二度処理しない。
+- Webhookはevent identityが提供されるreleaseではそれを受信キーにし、ない場合はpayload hashで同じeventを二度処理しない。
 - 外部APIが成功してDB保存だけ失敗した場合に備え、再照合でtask titleやdescriptionに候補IDを含める。
 - 削除はP0では物理削除せず、`archived`または`sync_state=detached`として保持する。
 

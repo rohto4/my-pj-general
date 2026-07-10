@@ -115,5 +115,7 @@
 - `docs/data/vikunja-integration-data-design-2026-07.md` にexecution link、Webhook event、再試行、冪等性、PostgreSQL移行を含むデータ設計を作成した。
 - `docs/arch/vikunja-linux-deployment-and-operations-2026-07.md` にLinux常設配置、秘密情報、TLS、バックアップ、更新・復旧手順を作成した。
 - `docs/spec/vikunja-integration-contract-2026-07.md` にGO登録、Webhook受信、再照合の論理契約を作成した。upstreamソースからAPI v2 task route、`event_name` / `data.task` payload、`X-Vikunja-Signature`を確認した。
+- 同契約へGO登録とWebhook反映のシーケンス図を追加し、実装時の責務と失敗時の状態を明確化した。
+- 既存比較資料のWebhook再試行に関する断定を、upstream source E2Eとrelease差分を考慮した冪等保存・定期照合前提へ修正した。
 - Windows側にGo・Docker・WSLがなくVikunja本体を実データで起動できないため、モックAPI接続は作らず、Linux実行環境準備を実機結合の開始ゲートにした。
-- 横断的な設計原則を`G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`へ反映した。
+- 横断的な設計原則を`G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`へ、公式仕様のsource noteを`G:\knowledge-vault\sources\vikunja\vikunja-plugin-webhook-api-2026-07.md`へ反映した。
