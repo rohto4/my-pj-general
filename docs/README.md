@@ -19,6 +19,15 @@
 | `docs/org/` | ロール、権限、協力体制 |
 | `docs/data/` | データモデル、検索、同期 |
 
+## Vikunja結合資料
+
+- アーキテクチャ: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`
+- Linux配置・運用: `docs/arch/vikunja-linux-deployment-and-operations-2026-07.md`
+- API結合契約: `docs/spec/vikunja-integration-contract-2026-07.md`
+- データ設計: `docs/data/vikunja-integration-data-design-2026-07.md`
+- タスク: `docs/imp/vikunja-integration-tasks.md`
+- 開始Diary: `docs/diary/2026-07-10-vikunja-integration-plan.md`
+
 ## 更新時の基本
 
 - 変更前に正本を決める。

@@ -107,3 +107,13 @@
 - TODO の見た目と日常利用を重視した比較候補を `docs/candi-ref/todo-ui-candidates-2026-07.md` に整理した。Leantimeを実運用の本線、Vikunjaを最有力の比較対象、Kan / PlaneをUI参照候補としている。
 - Vikunja の公式 plugin / Webhook / API を調査し、backend pluginは実験的かつUI未対応であることを確認した。実行基盤の優先候補をVikunjaへ更新し、まず無改変自己ホストとAPI / Webhook連携を検証してからfork要否を判断する方針を `docs/candi-ref/vikunja-fork-plugin-assessment-2026-07.md` に記録した。
 - 横断ダッシュボードを、上段の処理フロー、下段の入口別量・候補種類・優先確認/判断ログの3列構成へ変更した。左ナビ幅も194pxへ圧縮し、指定画像と同じ情報階層に合わせた。`apps/web/test/api.test.mjs` と `apps/web/check.ps1` を確認した。
+# 2026-07-10 Vikunja結合設計・実行環境確認
+
+- Vikunja upstreamを`G:\devwork\clone-dir\vikunja-upstream`へcloneし、`rohto4/vikunja` GitHub forkを作成した。
+- cloneは`upstream`と`origin`を分離し、初期fork差分を持たない追随起点にした。
+- `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md` にコンポーネント図、データフロー図、責務境界、fork/plugin判断基準を作成した。
+- `docs/data/vikunja-integration-data-design-2026-07.md` にexecution link、Webhook event、再試行、冪等性、PostgreSQL移行を含むデータ設計を作成した。
+- `docs/arch/vikunja-linux-deployment-and-operations-2026-07.md` にLinux常設配置、秘密情報、TLS、バックアップ、更新・復旧手順を作成した。
+- `docs/spec/vikunja-integration-contract-2026-07.md` にGO登録、Webhook受信、再照合の論理契約を作成した。upstreamソースからAPI v2 task route、`event_name` / `data.task` payload、`X-Vikunja-Signature`を確認した。
+- Windows側にGo・Docker・WSLがなくVikunja本体を実データで起動できないため、モックAPI接続は作らず、Linux実行環境準備を実機結合の開始ゲートにした。
+- 横断的な設計原則を`G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`へ反映した。

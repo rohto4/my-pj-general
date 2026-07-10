@@ -24,18 +24,19 @@
 | ガント | Leantime | milestone、期間、依存をまとめて読む補助ビュー | 未確定候補の情報 |
 | 人員計画・横断計画 | OpenProject | 将来の比較材料 | ロール、閲覧範囲、AI判断 |
 
-## Leantime との責務境界
+## Vikunja との責務境界
 
 ```text
 Slack / knowledge-vault / Web入力
           -> pj-general: 入口保存・AI候補化・確認待ち・GO判断
-          -> Leantime: GO済みTODO・subtask・milestone・calendar・gantt
-          <- pj-general: 状態 / 期限 / 担当の要約読取（後続）
+          -> Vikunja: GO済みTODO・実行状態・必要時のlist / kanban / gantt
+          <- pj-general: 状態 / 期限 / 担当のWebhook要約読取
 ```
 
 - 初期連携は `GO -> Vikunja task作成` の一方向に限定する。
 - `candidate_id` と Vikunja task ID を `pj-general` 側で対応付ける。
 - 双方向同期、削除同期、OpenProject への移行は別の設計・実装タスクに分離する。
+- 具体的な結合境界と実装順は `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md` を正本にする。
 
 ## 参照資料
 

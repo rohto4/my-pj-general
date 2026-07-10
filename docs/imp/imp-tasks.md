@@ -19,6 +19,8 @@
 - Vikunja を外部 TODO 実行基盤として検証・接続する
   - 採用判断: `docs/imp/user-judge.md` の `UJ-VIKUNJA-01`
   - 比較正本: `docs/candi-ref/vikunja-fork-plugin-assessment-2026-07.md`
+  - 結合設計正本: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`、`docs/data/vikunja-integration-data-design-2026-07.md`
+  - 実装タスクリスト: `docs/imp/vikunja-integration-tasks.md`
   - upstream 無改変の自己ホスト、API token、Webhook を用意する。接続先URLを SQLite 設定へ保存し、ダッシュボードの主導線を Vikunja TODO へ切り替える。
   - 初期は `GO -> Vikunja task作成` の一方向連携に限り、Webhook受信と定期照合による状態反映、双方向同期は別タスクに分離する。
   - backend plugin は追加API・イベント処理が必要になった場合だけ導入する。UI変更が必要になった場合だけ fork を判断する。

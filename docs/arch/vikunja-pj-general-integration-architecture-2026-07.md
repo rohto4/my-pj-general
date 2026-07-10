@@ -1,0 +1,128 @@
+# Vikunja / pj-general 結合アーキテクチャ 2026-07
+
+## 目的
+
+`pj-general` の確認待ち候補と、Vikunja の実行 TODO を実データで結合する。
+この文書は、Vikunja を先にフォークして仕様を決め打ちするのではなく、upstream 版を連結して実際の不足を観測したうえで、拡張方式を決めるための設計正本である。
+
+## 結論
+
+- `pj-general` は入口、AI候補、出典、判断、履歴、Vikunjaとの対応関係を保持する正本とする。
+- Vikunja は GO 済み候補を実行する TODO 基盤とする。
+- 初期の登録は `pj-general -> Vikunja REST API` とする。
+- 実行状態の戻しは `Vikunja Webhook -> pj-general` とする。
+- Vikunja の plugin / fork は、upstream 連結後に不足を実測してから選ぶ。
+- UI変更は frontend fork、Vikunja内部のAPI・イベント・追加テーブルは backend plugin、コアの権限・状態・データモデル変更だけ backend fork の候補とする。
+
+## コンポーネント図
+
+```mermaid
+flowchart LR
+    User["ユーザー\n確認・GO・実行"]:::actor
+    PJ["pj-general\n候補・判断・履歴の正本"]:::primary
+    DB[("pj-general DB\nSQLite → PostgreSQL")]:::primary
+    Adapter["Vikunja Adapter\nAPI登録・ID対応・再試行"]:::support
+    VJ["Vikunja upstream\n実行 TODO / list / kanban / gantt"]:::external
+    Hook["Webhook Receiver\n署名検証・冪等保存"]:::support
+    Fork["Vikunja fork / plugin\n不足が実測された場合だけ"]:::optional
+
+    User --> PJ
+    PJ --> DB
+    PJ --> Adapter
+    Adapter -->|REST API| VJ
+    VJ -->|task events| Hook
+    Hook --> PJ
+    Fork -.->|拡張候補| VJ
+
+    classDef actor fill:#e8f5e9,stroke:#69a66f,color:#173a1d,stroke-width:2px,font-size:16px,font-weight:bold
+    classDef primary fill:#e3f2fd,stroke:#2c82b8,color:#102f45,stroke-width:2px,font-size:16px,font-weight:bold
+    classDef support fill:#f3f5f7,stroke:#8b98a6,color:#27333d,stroke-width:1.5px,font-size:14px
+    classDef external fill:#fff0d9,stroke:#d4953c,color:#4a2c0b,stroke-width:2px,font-size:16px,font-weight:bold
+    classDef optional fill:#f0eafa,stroke:#9b7bc5,color:#32234a,stroke-width:1.5px,font-size:14px
+```
+
+## データフロー図
+
+```mermaid
+flowchart LR
+    S["入口\nWeb / Slack / knowledge-vault"]:::input
+    R["Raw / Normalized\n出典・本文・発生時刻"]:::data
+    C["Candidate\nAI整理・不足項目・候補状態"]:::data
+    Q{"確認待ち\nGO / 編集 / 不要 / 保留"}:::decision
+    O["GO決定\n判断履歴を保存"]:::decision
+    A["Vikunja API\nTODO作成・更新"]:::external
+    T["Vikunja Task\n実行状態の正本"]:::external
+    W["Webhook\n更新イベント"]:::sync
+    L["Execution Link\n候補ID ↔ Task ID"]:::data
+    H["Audit / Sync\n受信・再試行・差分"]:::sync
+
+    S --> R --> C --> Q
+    Q -->|GO| O --> A --> T
+    O --> L
+    T --> W --> H --> C
+    H --> L
+
+    classDef input fill:#e3f2fd,stroke:#2c82b8,color:#102f45,stroke-width:2px,font-size:15px,font-weight:bold
+    classDef data fill:#f3f5f7,stroke:#8b98a6,color:#27333d,stroke-width:1.5px,font-size:14px
+    classDef decision fill:#fff0f0,stroke:#d87979,color:#4a1515,stroke-width:2px,font-size:15px,font-weight:bold
+    classDef external fill:#fff0d9,stroke:#d4953c,color:#4a2c0b,stroke-width:2px,font-size:15px,font-weight:bold
+    classDef sync fill:#e8f5e9,stroke:#69a66f,color:#173a1d,stroke-width:1.5px,font-size:14px
+```
+
+## 責務境界
+
+| 領域 | pj-general | Vikunja | 初期の扱い |
+| --- | --- | --- | --- |
+| 原文・出典 | 正本 | リンクまたは要約のみ | pj-generalに保持 |
+| AI候補 | 正本 | 原則保持しない | GO前はVikunjaへ送らない |
+| GO判断・判断履歴 | 正本 | 実行タスク作成の結果だけ | `decisions` に保存 |
+| 実行TODO | 対応IDと要約を保持 | 正本 | VikunjaへAPI登録 |
+| 期限・担当・進捗 | ミラー・履歴 | 正本 | Webhookで戻す |
+| plugin固有データ | 必要な参照IDのみ | Vikunja pluginの追加テーブル | pluginが必要になった時だけ |
+| UI | 入口・確認・横断表示 | TODO実行画面 | UI要件が固まってからfrontend fork |
+
+## 拡張方式の判断
+
+### 先に実装する範囲
+
+- upstream Vikunjaを無改変で起動する。
+- project、API token、Webhookを実環境で用意する。
+- `GO` で実際のVikunja taskを作成する。
+- task URLと外部IDをpj-generalへ保存する。
+- Vikunja側で状態・期限・担当を変更し、Webhookでpj-generalへ戻す。
+- 実際に不足した操作・データ・画面を不足機能一覧へ記録する。
+
+### pluginへ寄せる条件
+
+- Vikunja内部のイベント直後に処理する必要がある。
+- Vikunja APIの外側ではなく、Vikunja認証済みの追加APIが必要である。
+- Vikunja側に追加テーブルが必要だが、コアモデルの変更までは不要である。
+
+### frontend forkへ寄せる条件
+
+- TODO画面のレイアウト、詳細pane、導線、操作を変更しないと日常運用できない。
+- pj-generalの独自情報をVikunja内で常時表示したい。
+- 標準画面へのリンクだけでは操作負荷が高い。
+
+### backend forkへ寄せる条件
+
+- 権限、状態遷移、プロジェクト、タスクの中核モデルを変更する必要がある。
+- API / plugin / 外部連携ではデータ整合性を保証できない。
+- その変更をupstream追随コスト込みで保有する判断が完了している。
+
+## 実行環境
+
+- ソースクローン: `G:\devwork\clone-dir\vikunja-upstream`
+- GitHub fork: `https://github.com/rohto4/vikunja` を作成済み。初期はupstreamとの差分なしで保持する
+- Windows開発環境: Docker / WSL / Go がPATHにないため、ソース確認と実行バイナリを分離する
+- Linux常設環境: Vikunja本体、PostgreSQL、pj-general API、Webhook receiverをsystemdまたはcomposeで配置する
+- P0: SQLiteで保持し、外部連携の境界とID対応を先に検証する
+
+## 仮完了の受入条件
+
+- 実在するVikunja projectへ、pj-generalのGO操作から実在するtaskが作成される。
+- 同じ候補を再度GOしても二重taskを作らない。
+- Vikunjaでtaskを完了・変更した結果が、pj-generalの対応候補へ反映される。
+- 外部API失敗時に、判断履歴を失わず、再試行対象として記録できる。
+- 元の入口、候補、判断、外部taskの対応関係をDBから追跡できる。
+- fork / pluginを使った場合は、その理由とupstream追随方法が記録されている。
