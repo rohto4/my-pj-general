@@ -1,0 +1,24 @@
+services:
+  vikunja:
+    image: vikunja/vikunja:2.3.0
+    container_name: vikunja
+    restart: unless-stopped
+    env_file:
+      - /srv/pj-general/secrets/vikunja.env
+    ports:
+      - "127.0.0.1:3456:3456"
+    volumes:
+      - /srv/pj-general/data/vikunja/files:/app/vikunja/files
+      - /srv/pj-general/data/vikunja/db:/db
+    networks:
+      - pj-general-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:3456/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  pj-general-net:
+    external: true

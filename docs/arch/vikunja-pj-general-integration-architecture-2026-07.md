@@ -12,6 +12,7 @@
 - 初期の登録は `pj-general -> Vikunja REST API` とする。
 - 実行状態の戻しは `Vikunja Webhook -> pj-general` とする。
 - Vikunja の plugin / fork は、upstream 連結後に不足を実測してから選ぶ。
+- 初回結合は安定版 `v2.3.0` を固定し、API v1との差分をadapterへ閉じ込める。mainのAPI v2を初回契約に混ぜない。
 - UI変更は frontend fork、Vikunja内部のAPI・イベント・追加テーブルは backend plugin、コアの権限・状態・データモデル変更だけ backend fork の候補とする。
 
 ## コンポーネント図
@@ -115,8 +116,8 @@ flowchart LR
 - ソースクローン: `G:\devwork\clone-dir\vikunja-upstream`
 - GitHub fork: `https://github.com/rohto4/vikunja` を作成済み。初期はupstreamとの差分なしで保持する
 - Windows開発環境: Docker / WSL / Go がPATHにないため、ソース確認と実行バイナリを分離する
-- Linux常設環境: Vikunja本体、PostgreSQL、pj-general API、Webhook receiverをsystemdまたはcomposeで配置する
-- P0: SQLiteで保持し、外部連携の境界とID対応を先に検証する
+- Linux常設環境: Vikunja本体、pj-general API、Webhook receiverをComposeで配置し、継続運用前にPostgreSQLへ移行する
+- 初回実機結合: SQLiteで境界、ID対応、冪等性を検証する。常設多入口運用の完了条件にはしない
 
 ## 仮完了の受入条件
 

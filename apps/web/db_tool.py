@@ -100,8 +100,77 @@ def execute_schema(conn):
           state text not null,
           dependency text not null
         );
+        create table if not exists execution_links (
+          candidate_id text primary key,
+          provider text not null,
+          external_project_id text not null,
+          external_task_id text not null unique,
+          external_url text not null,
+          sync_state text not null default 'not_requested',
+          last_synced_at text,
+          created_at text not null,
+          updated_at text not null
+        );
+        create table if not exists execution_task_state (
+          candidate_id text primary key,
+          title text not null,
+          done integer not null default 0,
+          due_date text,
+          priority integer,
+          assignees_json text not null default '[]',
+          percent_done integer,
+          external_updated_at text,
+          mirrored_at text not null
+        );
+        create table if not exists sync_events (
+          id integer primary key autoincrement,
+          dedupe_key text not null unique,
+          external_event_id text,
+          provider text not null,
+          event_type text not null,
+          payload_hash text not null,
+          payload_json text not null,
+          received_at text not null,
+          processed_at text,
+          processing_state text not null default 'received',
+          error text
+        );
+        create table if not exists sync_attempts (
+          id integer primary key autoincrement,
+          candidate_id text,
+          provider text not null,
+          direction text not null,
+          operation text not null,
+          idempotency_key text not null unique,
+          state text not null,
+          error text,
+          attempted_at text not null
+        );
         """
     )
+
+
+def schema_info(conn):
+    tables = [
+        row["name"]
+        for row in conn.execute(
+            "select name from sqlite_master where type = 'table' order by name"
+        ).fetchall()
+    ]
+    unique_indexes = {}
+    for table in tables:
+        columns = []
+        for index in conn.execute(f'pragma index_list("{table}")').fetchall():
+            if not index["unique"]:
+                continue
+            columns.extend(
+                row["name"]
+                for row in conn.execute(
+                    f'pragma index_info("{index["name"]}")'
+                ).fetchall()
+            )
+        unique_indexes[table] = columns
+    return {"tables": tables, "uniqueIndexes": unique_indexes}
 
 
 def ensure_tag(conn, name):
@@ -566,6 +635,8 @@ def main():
             output = create_tag(conn, payload)
         elif command == "update-tag":
             output = update_tag(conn, payload["id"], payload)
+        elif command == "schema-info":
+            output = schema_info(conn)
         else:
             raise ValueError(f"unknown command: {command}")
         conn.commit()

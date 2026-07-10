@@ -3,7 +3,16 @@
 ## 目的
 
 Vikunja実機を起動する前に、pj-general側の結合境界を固定する。
-Vikunjaの具体的なAPI resource pathやpayloadは、実行するVikunja releaseで確認してから確定する。
+初回実機検証は Vikunja `v2.3.0` を固定し、API v1で行う。main追随時のAPI差分はadapter内へ閉じ込める。
+
+## 対象バージョン
+
+| 対象 | task作成 | task更新 | 用途 |
+| --- | --- | --- | --- |
+| 安定版 `v2.3.0` | `PUT /api/v1/projects/{project}/tasks` | `POST /api/v1/tasks/{task}` | 初回実機検証の正本 |
+| main `e992ed594` | `POST /api/v2/projects/{project}/tasks` | API v2契約に従う | 将来追随の調査対象 |
+
+`VIKUNJA_API_BASE_PATH=/api/v1` をadapter設定に持たせ、画面や候補処理からresource pathを直接参照しない。
 
 ## 連携方向
 
@@ -38,7 +47,7 @@ response 201
 }
 ```
 
-upstream clone（2026-07-10確認、commit `e992ed594`）では、API v2のtask作成resourceは`POST /api/v2/projects/{project}/tasks`として定義されている。実機ではreleaseのSwagger/Scalarと応答を最終確認する。
+main clone（2026-07-10確認、commit `e992ed594`）のAPI v2とは契約が異なる。安定版の実機では、release同梱のAPI資料と応答も照合する。
 
 ### GO登録の不変条件
 
@@ -61,7 +70,7 @@ sequenceDiagram
     U->>P: 確認待ち候補でGO
     P->>D: decision=approvedを保存
     P->>D: execution link / sync attemptを作成
-    P->>V: POST /api/v2/projects/{project}/tasks
+    P->>V: PUT /api/v1/projects/{project}/tasks
     alt 成功
         V-->>P: task id / task URL
         P->>D: execution linkをsyncedへ更新
@@ -85,7 +94,7 @@ sequenceDiagram
     alt 署名不正
         P-->>V: 401
     else 署名正当
-        P->>D: eventをevent_idまたはhashで冪等保存
+        P->>D: eventをdedupe_keyで冪等保存
         alt 未処理イベント
             P->>D: external task状態を反映
             P->>D: processed_atを記録
@@ -112,14 +121,14 @@ body
 }
 ```
 
-upstreamのE2Eテストで、payloadのイベント名は`event_name`、taskは`data.task`として確認できる。実payloadを`sync_events.payload_json`へ保存し、event IDが提供されない場合はHMAC検証後のpayload hashを冪等キーとして使う。
+upstreamのE2Eテストで、payloadのイベント名は`event_name`、taskは`data.task`として確認できる。実payloadを`sync_events.payload_json`へ保存し、外部event IDは任意とする。冪等キーは外部event IDがあればそれを名前空間付きで使い、なければHMAC検証後のpayload hashから作る。
 署名検証が失敗したイベントは候補状態を変更しない。
 
 ### Webhook処理順
 
 1. 受信時刻とraw payloadを記録する。
 2. 署名を検証する。
-3. event IDがあればevent ID、なければpayload hashで重複を確認する。
+3. 外部event IDまたはpayload hashから`dedupe_key`を作り、重複を確認する。
 4. `execution_links.external_task_id`を検索する。
 5. 許可したfieldだけをpj-generalの実行情報へ反映する。
 6. eventの処理結果を記録する。
@@ -159,6 +168,7 @@ upstreamのE2Eテストで、payloadのイベント名は`event_name`、taskは`
 
 - clone: `G:\devwork\clone-dir\vikunja-upstream`
 - upstream commit: `e992ed594cc39044a55acf1c7b157501d43797f9`
-- task route: `pkg/routes/api/v2/tasks.go`
+- 安定版route: tag `v2.3.0` の `pkg/routes/routes.go`
+- main task route: `pkg/routes/api/v2/tasks.go`
 - webhook payload / signature: `pkg/models/webhooks.go`
 - webhook E2E payload形: `pkg/e2etests/webhook_test.go`

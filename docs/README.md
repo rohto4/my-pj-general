@@ -21,9 +21,14 @@
 
 ## Vikunja結合資料
 
+- Linuxサーバー構築手順: docs/guide/linux-server-setup-for-vikunja.md
+- Linux起動雛形: `infra/vikunja/`
+
 - アーキテクチャ: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`
 - Linux配置・運用: `docs/arch/vikunja-linux-deployment-and-operations-2026-07.md`
 - API結合契約: `docs/spec/vikunja-integration-contract-2026-07.md`
+- 実機受入試験: `docs/spec/vikunja-integration-acceptance-tests-2026-07.md`
+- 設計レビュー: `docs/imp/vikunja-design-review-2026-07-11.md`
 - データ設計: `docs/data/vikunja-integration-data-design-2026-07.md`
 - タスク: `docs/imp/vikunja-integration-tasks.md`
 - 開始Diary: `docs/diary/2026-07-10-vikunja-integration-plan.md`

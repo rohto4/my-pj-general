@@ -23,6 +23,7 @@ erDiagram
     CANDIDATE ||--o{ CANDIDATE_REVISION : changes
     CANDIDATE ||--o{ DECISION : receives
     CANDIDATE ||--o| EXECUTION_LINK : promotes
+    EXECUTION_LINK ||--o| EXECUTION_TASK_STATE : mirrors
     EXECUTION_LINK ||--o{ SYNC_EVENT : records
     EXECUTION_LINK ||--o{ SYNC_ATTEMPT : retries
 
@@ -67,8 +68,20 @@ erDiagram
       text sync_state
       datetime last_synced_at
     }
+    EXECUTION_TASK_STATE {
+      text candidate_id PK,FK
+      text title
+      boolean done
+      datetime due_date
+      integer priority
+      text assignees_json
+      integer percent_done
+      datetime external_updated_at
+    }
     SYNC_EVENT {
-      text event_id PK
+      integer id PK
+      text dedupe_key UK
+      text external_event_id
       text provider
       text event_type
       text payload_hash
@@ -105,7 +118,9 @@ create table if not exists execution_links (
 );
 
 create table if not exists sync_events (
-  event_id text primary key,
+  id integer primary key autoincrement,
+  dedupe_key text not null unique,
+  external_event_id text,
   provider text not null,
   event_type text not null,
   payload_hash text not null,
@@ -114,6 +129,18 @@ create table if not exists sync_events (
   processed_at text,
   processing_state text not null default 'received',
   error text
+);
+
+create table if not exists execution_task_state (
+  candidate_id text primary key,
+  title text not null,
+  done integer not null default 0,
+  due_date text,
+  priority integer,
+  assignees_json text not null default '[]',
+  percent_done integer,
+  external_updated_at text,
+  mirrored_at text not null
 );
 
 create table if not exists sync_attempts (
@@ -133,19 +160,21 @@ create table if not exists sync_attempts (
 
 - GO登録の冪等キーは `provider + candidate_id` とする。
 - `execution_links.candidate_id` を主キーにし、1候補1実行taskを基本とする。
-- Webhookはevent identityが提供されるreleaseではそれを受信キーにし、ない場合はpayload hashで同じeventを二度処理しない。
+- Webhookは内部連番IDを持ち、外部event IDは任意列にする。`dedupe_key`は外部event IDまたはpayload hashから生成する。
 - 外部APIが成功してDB保存だけ失敗した場合に備え、再照合でtask titleやdescriptionに候補IDを含める。
 - 削除はP0では物理削除せず、`archived`または`sync_state=detached`として保持する。
 
 ## 状態遷移
 
+状態は混ぜずに3軸で管理する。
+
 ```text
-pending -> edited -> approved
-approved -> sync_pending -> synced
-sync_pending -> sync_failed -> sync_pending
-synced -> externally_updated -> synced
-approved -> rejected / archived はPJ内判断として履歴に残す
+候補判断: pending -> edited -> approved / rejected / archived
+外部同期: not_requested -> sync_pending -> synced / sync_failed -> sync_pending
+外部task: open <-> done、存在しない場合はmissing（execution_task_stateで保持）
 ```
+
+GO判断が保存済みでも外部API失敗は起こり得るため、`candidate.status=approved`と`execution_links.sync_state=sync_failed`は同時に成立してよい。
 
 ## 将来のPostgreSQL移行
 

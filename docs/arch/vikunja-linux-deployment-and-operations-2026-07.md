@@ -41,10 +41,12 @@ flowchart TB
 - Linux: Ubuntu LTSまたは同等のsystemd環境。
 - 公開入口: `pj-general`とVikunjaを別hostまたはpathで分離する。
 - 実行方式: Docker Composeを第一候補にする。Dockerが使えない場合はsystemdで公式バイナリを起動する。
-- DB: P0検証はSQLiteを許容するが、常設運用はPostgreSQLを第一候補にする。
+- Release: 初回検証はVikunja `v2.3.0`を固定し、更新はバックアップと受入試験後に行う。
+- DB: 初回結合検証はSQLiteを許容するが、6時間ごとの多入口収集を含む常設運用前にPostgreSQLへ移行する。
 - HTTPS: Reverse Proxyで終端し、Webhook受信をTLS必須にする。
 - 認証情報: API token、Webhook secret、DB passwordはリポジトリやSQLite設定へ保存しない。
 - pj-general側の候補・判断・出典はVikunjaへ移さず、pj-general DBを正本にする。
+- 内部Docker network宛てWebhookを使う場合は、Vikunjaの`outgoingrequests.allownonroutableips=true`を明示的に設定する。
 
 ## ネットワーク境界
 

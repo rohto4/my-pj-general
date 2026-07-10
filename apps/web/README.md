@@ -1,10 +1,10 @@
-# P0 Thin Web Prototype
+# P0 SQLite Web Demo
 
-This is a dependency-free static prototype for `pj-general` P0 thin implementation v1.
+This is a dependency-free Node/Python demo for `pj-general` P0.
 
 ## Open
 
-Open `index.html` in a browser.
+Run `server.js` through the repository start script, then open `http://127.0.0.1:4173`.
 
 ## Scope
 
@@ -12,7 +12,10 @@ Open `index.html` in a browser.
 - SQLite に保存された確認待ち候補
 - Dashboard
 - Worker / task summary
-- Read-only Gantt view
+- SQLite persistence in `data/p0.sqlite` (gitignored)
+- Real knowledge-vault file import with deduplication
+- Slack connector payload import endpoint
+- TODO provider navigation prepared for Vikunja
 - Minimal admin settings view
 
-No real Slack, Misskey, knowledge-vault, AI, DB, auth, or Google Calendar integration is included in this version.
+Misskey, automatic AI classification, authentication, Google Calendar, and real Vikunja synchronization are not connected yet. Slack credentials are intentionally not stored in this app; Slack data enters through an explicit connector payload.

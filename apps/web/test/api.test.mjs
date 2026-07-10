@@ -4,12 +4,14 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const webRoot = join(import.meta.dirname, "..");
 const port = 4187;
 const baseUrl = `http://127.0.0.1:${port}`;
+const bundledPython = join(process.env.USERPROFILE || "", ".cache", "codex-runtimes", "codex-primary-runtime", "dependencies", "python", "python.exe");
+const python = process.env.PYTHON || bundledPython;
 
 async function waitForServer() {
   for (let index = 0; index < 30; index += 1) {
@@ -69,6 +71,27 @@ test("P0 管理データはSQLiteに保存され、初期データにモック�
   const persisted = await request("/api/bootstrap");
   assert.equal(persisted.adminControls.roles.find((item) => item.id === "owner").enabled, false);
   assert.equal(persisted.tags.find((tag) => tag.id === createdTag.id).visible, 0);
+});
+
+test("Vikunja結合用schemaは判断・同期・外部task状態を分離する", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "pj-general-vikunja-schema-"));
+  try {
+    const result = spawnSync(python, [join(webRoot, "db_tool.py"), "schema-info"], {
+      input: "{}",
+      encoding: "utf8",
+      env: { ...process.env, P0_DB_PATH: join(dir, "p0.sqlite"), PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8" },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const schema = JSON.parse(result.stdout);
+    assert.deepEqual(
+      ["execution_links", "execution_task_state", "sync_attempts", "sync_events"].filter((name) => !schema.tables.includes(name)),
+      [],
+    );
+    assert.ok(schema.uniqueIndexes.sync_events.includes("dedupe_key"));
+    assert.ok(schema.uniqueIndexes.sync_attempts.includes("idempotency_key"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test("クライアントはSQLite応答失敗時に仮候補を作らない", async () => {

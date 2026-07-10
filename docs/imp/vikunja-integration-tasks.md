@@ -19,6 +19,8 @@
 - [x] データフロー図を作成する
 - [x] 連携データ設計と冪等性を作成する
 - [x] 実装前方針をdiaryに記録する
+- [x] 安定版とmainのAPI差分をレビューし、初回releaseを`v2.3.0`に固定する
+- [x] 実機受入試験 VJ-001〜VJ-015 を作成する
 - [ ] fork / plugin不足機能一覧を作成する
 
 ### B. upstream / fork
@@ -32,6 +34,7 @@
 ### C. Vikunja実行
 
 - [ ] Linux常設サーバーを用意する、または実行環境を選択する
+- [x] Compose、Vikunja env、pj-general envのSecretなし雛形を作成する
 - [x] Windows開発環境ではGo・Docker・WSLがないため、実行方式をLinuxサーバー前提にする
 - [ ] 実在するVikunja serverを起動する
 - [ ] project、ユーザー/API tokenを作成する
@@ -41,7 +44,7 @@
 ### D. pj-general結合
 
 - [ ] Vikunja接続先を環境変数またはSQLite設定から読めるようにする
-- [ ] `execution_links`、`sync_events`、`sync_attempts`を追加する
+- [x] `execution_links`、`execution_task_state`、`sync_events`、`sync_attempts`を追加する
 - [ ] GO時にVikunja taskを作成する
 - [ ] 同一候補の二重登録を防ぐ
 - [ ] 作成済みtask URLを確認待ち詳細と作業者画面に表示する
@@ -61,7 +64,9 @@
 ### F. 検証・記録・公開
 
 - [x] Node/Pythonの既存P0テストを通す
-- [ ] 連携APIのunit/integrationテストを追加する
+- [x] adapterのAPI v1 payload、Webhook署名、冪等キーのunit testを追加する
+- [ ] GO endpointとWebhook endpointのintegration testを追加する
+- [x] 実Vikunja向け受入試験仕様を追加する
 - [ ] 実VikunjaとのE2Eを確認する
 - [x] 実装前の設計図を作成する
 - [ ] 設計図を実装結果に合わせて更新する
@@ -75,6 +80,8 @@
 Vikunja本体の実データ結合は、Linux常設サーバーまたは同等のDocker/公式バイナリ実行環境が用意されるまで保留する。実行環境なしでVikunja APIを模擬して結合済みとは扱わない。
 
 サーバーが用意されるまでに、設計図、API契約、SQLite migration、テストケース、配置手順、バックアップ・更新手順を先に完成させる。
+
+2026-07-11時点で、設計レビュー、API契約、データモデル、SQLite migration、受入試験、Linux構築手順、Compose/env雛形までは完了した。サーバー非依存で残る主作業はadapterのunit/integration testであり、実機E2EはLinux環境待ちである。
 
 ## 仮完了条件
 

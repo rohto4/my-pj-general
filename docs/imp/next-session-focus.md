@@ -2,7 +2,8 @@
 
 ## 最優先
 
-- Linux常設サーバーまたは同等のVikunja実行環境を用意し、設計資料に沿って実機結合を開始する
+- ユーザーはVikunja設計レビューとLinuxサーバー準備を進める
+- CodexはLinux待ちの間にadapterのunit/integration testを先行する。SQLite migrationは完了済み
 - ユーザー判断待ちと Codex 側実装待ちを分けた状態を維持する
 - P0 本デモ状態をレビュー可能に保つ
 - SQLite 永続化、実入口 import、確認待ち操作、管理画面P0設定を壊さず前進する
@@ -16,6 +17,7 @@
 4. Slack `memo-ideas` に投稿が増えたら connector 経由で `/api/import/slack` payload に流す
 5. 確認待ち詳細の編集項目、管理画面 P0 最小範囲、SQLite 継続利用可否のユーザー判断を反映する
 6. `docs/imp/vikunja-integration-tasks.md` のA〜Fを順に進める。設計正本は `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`
+7. 初回実機結合はVikunja `v2.3.0` / API v1へ固定し、`docs/spec/vikunja-integration-acceptance-tests-2026-07.md`で検証する
 
 ## 判断待ち
 
@@ -33,4 +35,4 @@
 - P0 全体完了時点で、部分自動確定の条件を再設計する。
 - 現在の `apps/web` は依存なしの Node 標準サーバ + Python 標準 `sqlite3` helper で動く。
 - SQLite ファイルは `apps/web/data/p0.sqlite` にローカル生成され、git 管理外。
-- Vikunjaはupstream cloneまで完了。Windows側にGo・Docker・WSLがないため、Linux実行環境が整うまで実機結合は開始しない。
+- Vikunjaはfork、upstream clone、設計レビュー、受入試験、Compose/env雛形まで完了。Linux環境が整うまで実機E2Eだけを開始しない。

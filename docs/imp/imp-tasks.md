@@ -25,6 +25,7 @@
   - 初期は `GO -> Vikunja task作成` の一方向連携に限り、Webhook受信と定期照合による状態反映、双方向同期は別タスクに分離する。
   - backend plugin は追加API・イベント処理が必要になった場合だけ導入する。UI変更が必要になった場合だけ fork を判断する。
   - ガントは Vikunja TODO 内の副次ビューとして使い、pj-general に外部ガント専用導線は置かない。
+  - 2026-07-11設計レビューで初回対象をVikunja `v2.3.0` / API v1に固定した。Linux待ちの間はmigrationとadapter testを先行する。
 - Linux 常設サーバー向けに定期入口同期 worker を導入する
   - 設計正本: `docs/arch/linux-periodic-intake-architecture.md`
   - 初期実装: `workers/sync` を切り出し、`systemd timer` から6時間ごとに `oneshot` 実行する
