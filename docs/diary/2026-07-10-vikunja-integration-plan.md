@@ -19,6 +19,8 @@ Windows開発環境からVikunja本体を実データで起動できないため
 upstream cloneは`G:\devwork\clone-dir\vikunja-upstream`へ完了した。GitHub fork `https://github.com/rohto4/vikunja`を作成し、cloneの`origin`へ設定した。upstreamとforkのremoteを分離している。
 upstream cloneの確認commitは`e992ed594cc39044a55acf1c7b157501d43797f9`。task作成resourceとWebhook payload形をソースから確認した。
 
+設計チェックポイントは`eb172e3`、Webhook契約修正は`5ba24c5`として`rohto4/my-pj-general`へpushした。
+
 ## 採用して開始する方針
 
 1. `pj-general`に入口・候補・出典・判断・同期履歴を保持する。

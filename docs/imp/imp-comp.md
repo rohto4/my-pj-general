@@ -119,3 +119,4 @@
 - 既存比較資料のWebhook再試行に関する断定を、upstream source E2Eとrelease差分を考慮した冪等保存・定期照合前提へ修正した。
 - Windows側にGo・Docker・WSLがなくVikunja本体を実データで起動できないため、モックAPI接続は作らず、Linux実行環境準備を実機結合の開始ゲートにした。
 - 横断的な設計原則を`G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`へ、公式仕様のsource noteを`G:\knowledge-vault\sources\vikunja\vikunja-plugin-webhook-api-2026-07.md`へ反映した。
+- 設計チェックポイントを`eb172e3`、upstream仕様差分の修正を`5ba24c5`としてGitHubへpushした。

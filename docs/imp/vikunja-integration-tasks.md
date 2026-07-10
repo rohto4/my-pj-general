@@ -25,14 +25,14 @@
 
 - [x] Vikunja upstreamを`G:\devwork\clone-dir\vikunja-upstream`へcloneする
 - [x] `rohto4/vikunja` GitHub forkを作成する
-- [ ] upstream remoteとfork originを確認する
+- [x] upstream remoteとfork originを確認する
 - [ ] upstreamのライセンス、release、build手順を記録する
-- [ ] forkは当面変更せず、差分管理の土台だけ作る
+- [x] forkは当面変更せず、差分管理の土台だけ作る
 
 ### C. Vikunja実行
 
 - [ ] Linux常設サーバーを用意する、または実行環境を選択する
-- [ ] Windows開発環境で利用可能な実行方式を確定する
+- [x] Windows開発環境ではGo・Docker・WSLがないため、実行方式をLinuxサーバー前提にする
 - [ ] 実在するVikunja serverを起動する
 - [ ] project、ユーザー/API tokenを作成する
 - [ ] 実データのtaskを手動で作成・更新して画面を確認する
@@ -60,14 +60,15 @@
 
 ### F. 検証・記録・公開
 
-- [ ] Node/Pythonの既存テストを通す
+- [x] Node/Pythonの既存P0テストを通す
 - [ ] 連携APIのunit/integrationテストを追加する
 - [ ] 実VikunjaとのE2Eを確認する
+- [x] 実装前の設計図を作成する
 - [ ] 設計図を実装結果に合わせて更新する
 - [ ] diaryに設計との差分と実装結果を記録する
 - [ ] `docs/imp/imp-comp.md`へ完了単位を追記する
-- [ ] knowledge-vaultへ汎用化できる知見を反映する
-- [ ] 機能まとまりごとに`rohto4`でcommit/pushする
+- [x] knowledge-vaultへ汎用化できる知見を反映する
+- [x] 設計チェックポイントを`rohto4`でcommit/pushする
 
 ## 現時点の実装開始ゲート
 
