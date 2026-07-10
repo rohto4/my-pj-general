@@ -3,27 +3,31 @@
 ## 最優先
 
 - ユーザー判断待ちと Codex 側実装待ちを分けた状態を維持する
-- P0 画面構成仕様を作る
-- ガント MVP 仕様を作る
+- P0 本デモ状態をレビュー可能に保つ
+- SQLite 永続化、実入口 import、確認待ち操作、管理画面P0設定を壊さず前進する
+- 必要なら UI 仕上げを継続するが、mock へ戻さない
 
 ## Codex が進める具体タスク
 
-1. `docs/spec/screen-structure-p0.md` を作る
-2. `docs/spec/gantt-mvp-flow.md` を作る
-3. `docs/spec/classification-tag-master.md` を作る
-4. `docs/spec/role-and-permission-initial.md` を作る
-5. `docs/spec/prompt-template-management.md` を作る
-6. `docs/spec/intake-source-adapters.md` を下書きする
+1. P0 本デモ状態をユーザーが触った結果を反映する
+2. SQLite schema を後続 PostgreSQL 移行しやすい形へ見直す
+3. knowledge-vault import の重複判定と対象範囲を調整する
+4. Slack `memo-ideas` に投稿が増えたら connector 経由で `/api/import/slack` payload に流す
+5. 確認待ち詳細の編集項目、管理画面 P0 最小範囲、SQLite 継続利用可否のユーザー判断を反映する
 
 ## 判断待ち
 
-- `UJ-01`: Slack / knowledge-vault から回収する対象範囲
-- `UJ-02`: 回収後の AI 自動分別をどこまで自動確定させるか
-- `UJ-03`: 自動確定しない場合、確認待ちキューで何を表示して GO させるか
+- 現時点で、P0 薄く実装 1 版の開始を止めるユーザー判断待ちはない。
+- Slack の対象 channel は `memo-ideas`。
+- Slack URL は `https://unibell4-dev.slack.com/archives/C0BG4TCPAUD`。
+- Slack `memo-ideas` は 2026-07-10 時点で取り込み対象投稿なし。チャンネル参加メッセージのみ確認済み。
 
 ## 現在のブロッカー
 
-- アプリ実装開始を止めるブロッカーはまだない。
-- Slack / knowledge-vault adapter の確定版は `UJ-01` 待ち。
-- AI 自動確定の詳細仕様は `UJ-02` 待ち。
-- 確認待ちキューの詳細仕様は `UJ-03` 待ち。
+- P0 本デモのレビュー開始を止めるブロッカーはない。
+- Slack はアプリ本体に認証情報を持たせず、P0では connector / 手動 import payload 経路で扱う。
+- Misskey はまだ mock data のまま。
+- AI 整理結果は全件確認待ちでよい。
+- P0 全体完了時点で、部分自動確定の条件を再設計する。
+- 現在の `apps/web` は依存なしの Node 標準サーバ + Python 標準 `sqlite3` helper で動く。
+- SQLite ファイルは `apps/web/data/p0.sqlite` にローカル生成され、git 管理外。

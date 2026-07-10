@@ -2,141 +2,42 @@
 
 ## 目的
 
-要件定義前フェーズで、`Plane`、`OpenProject`、`Leantime` をどう使い分けるかを固定する。
+`pj-general` の入口・AI候補化と、GO後に日常的に実行する TODO を分離し、各 OSS の使いどころを固定する。
 
-この文書では、各 OSS を「採用するかどうか」ではなく、「どの体験の参照先として使うか」で整理する。
+## 採用方針
 
-## 前提
+- `pj-general` は Slack / knowledge-vault / Web 入力を受け、AI候補化、確認待ち、GO判断、判断履歴を正本として持つ。
+- `Plane` は書き入れ口と AI 補助の情報設計を参照する。
+- `Vikunja` は GO済みの実行TODOの体験と外部連携先の主候補にする。
+- ガントは個人の隙間時間での実行を主目的にしない。Vikunja TODO の副次ビューとして、期間・依存を確認したい時だけ使う。
+- `OpenProject` は横断計画・大規模権限・キャパ管理が要件化した場合の再評価候補に留める。
 
-- 入口は自前実装とする
-- 入口 UI は `shadcn/ui` を基盤候補にする
-- Slack と knowledge-vault を外部入口として扱う
-- AI による自動分別を前提にする
-- 既存 OSS は丸ごと採用よりも、役割ごとの選択的借用を優先する
+## 画面ごとの主参照先
 
-## 体験レイヤーごとの主参照先
+| 画面・機能 | 主参照 | 借りるもの | pj-general が持つ正本 |
+| --- | --- | --- | --- |
+| 書き入れ口 / 作成口 | Plane、Leantime | 軽量入力、アイデアを行動に寄せる導線 | source、原文、AI分類 |
+| 横断ダッシュボード | Plane、Leantime | 今日見るべきこと、期限・予定・実行状態の要約 | 入口別量、候補品質、判断ログ |
+| TODO / タスクリスト | Leantime | list / table / kanban、担当・期限・優先度の読み順 | GO前の確認、source provenance |
+| タスク詳細 | Leantime | subtask、コメント、依存、進捗、期日 | AI要約、抜粋、不要判定 |
+| カレンダー | Leantime、Cal.com | 計画済みTODOの時間的な見通し | Google Calendar登録前のGO |
+| ガント | Leantime | milestone、期間、依存をまとめて読む補助ビュー | 未確定候補の情報 |
+| 人員計画・横断計画 | OpenProject | 将来の比較材料 | ロール、閲覧範囲、AI判断 |
 
-### 1. 書き入れ口 / 作成口
+## Leantime との責務境界
 
-主参照:
-- `Plane`
-- `Leantime`
+```text
+Slack / knowledge-vault / Web入力
+          -> pj-general: 入口保存・AI候補化・確認待ち・GO判断
+          -> Leantime: GO済みTODO・subtask・milestone・calendar・gantt
+          <- pj-general: 状態 / 期限 / 担当の要約読取（後続）
+```
 
-見る観点:
-- アイデアから具体化への導線
-- 軽量な入力体験
-- タスク候補の見せ方
-- 非 PM ユーザーでも迷いにくい画面遷移
+- 初期連携は `GO -> Vikunja task作成` の一方向に限定する。
+- `candidate_id` と Vikunja task ID を `pj-general` 側で対応付ける。
+- 双方向同期、削除同期、OpenProject への移行は別の設計・実装タスクに分離する。
 
-判断:
-- 主軸は `Plane`
-- TODO やアイデア昇格の軽さは `Leantime` を補助参照にする
+## 参照資料
 
-### 2. 横断ダッシュボード
-
-主参照:
-- `OpenProject`
-- `Plane`
-
-見る観点:
-- 複数人、複数タスク、複数 PJ の俯瞰
-- 権限つきの横断表示
-- タスク、計画、進行状況の接続
-
-判断:
-- 構造主軸は `OpenProject`
-- 情報の整理感や現代的な見せ方は `Plane` を補助参照にする
-
-### 3. TODO / タスクリスト
-
-主参照:
-- `Leantime`
-- `OpenProject`
-
-見る観点:
-- list / table / kanban の切り替え
-- アイデアからタスクへの昇格
-- 日常的に触りたくなる密度と軽さ
-
-判断:
-- 体験主軸は `Leantime`
-- 横断整合や属性の厚みは `OpenProject` を参照する
-
-### 4. ガントチャート
-
-主参照:
-- `OpenProject`
-- `Leantime`
-
-見る観点:
-- タスクとの一体性
-- 依存、期間、階層の見せ方
-- Web 閲覧前提での扱いやすさ
-
-判断:
-- 構造主軸は `OpenProject`
-- 実行寄りの軽さや近接ビューの参考として `Leantime` を補助参照にする
-
-### 5. 人員キャパ / 計画
-
-主参照:
-- `OpenProject`
-
-見る観点:
-- assignee 単位の計画視点
-- 複数 PJ をまたぐ負荷の見え方
-- 権限や横断管理とのつながり
-
-判断:
-- 発想の主参照先は `OpenProject`
-- ただし `Team planner` は Enterprise add-on なので、機能流用ではなく構造参照として扱う
-
-## 現時点の採り方
-
-### `Plane`
-
-- 採るもの:
-- 入口の情報設計
-- アイデアからアクションへの導線設計
-- モダンな PM 体験の整理感
-
-- 今は採らないもの:
-- ガントの主構造
-- 人員計画の主構造
-
-### `OpenProject`
-
-- 採るもの:
-- `work packages` 中心の構造
-- ガントとタスクの一体モデル
-- 横断管理と権限の考え方
-
-- 今は採らないもの:
-- 入口の軽量 UX
-- そのままの重い UI 印象
-
-### `Leantime`
-
-- 採るもの:
-- `ideas -> todos -> gantt` の流れ
-- TODO / task list の軽い体験
-- 書き入れ口に近い実行導線
-
-- 今は採らないもの:
-- 横断管理の主構造
-- 権限や大規模組織運用の主軸
-
-## いまの仮結論
-
-- 入口の思想は `Plane`
-- ガントと横断計画の思想は `OpenProject`
-- TODO とアイデア昇格の体験は `Leantime`
-
-この 3 つを混ぜる前提で、自前プロダクト側に一貫した情報設計を作るのが現時点の本線である。
-
-## 次に詰めること
-
-1. `Plane` から借りる画面原則を 3 つ程度に絞る
-2. `OpenProject` から借りる構造要素を object/view 単位で分解する
-3. `Leantime` から借りる TODO UI の粒度を決める
-4. 4 窓口のうち、どこでどの OSS の思想を使うかを画面単位に落とす
+- `docs/candi-ref/leantime-adoption-and-ui-reference-2026-07.md`
+- `docs/candi-ref/openproject-vs-leantime-integrated-comparison.md`

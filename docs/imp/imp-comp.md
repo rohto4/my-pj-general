@@ -56,3 +56,54 @@
 - `C:\Users\unibe\.codex\hooks.json` と `C:\Users\unibe\.codex\hooks\post_compact_reminder.ps1` / `session_start_compact_reminder.ps1` を作成し、`PostCompact` と `SessionStart compact` で復帰 reminder / log を生成する設定を追加
 - `C:\Users\unibe\.codex\config.toml` で Memories を有効化し、compact 復帰時の補助記憶として使う設定を追加
 - hook script を手動実行し、`C:\Users\unibe\.codex\compact-recovery-reminder.md` と `C:\Users\unibe\.codex\logs\compact-recovery.log` の生成を確認
+- 初期プロトタイプ向けの UI 参考資料を `docs/candi-ref/ui-reference-sources-for-initial-prototype.md` に整理し、既存調査での `Plane` / `OpenProject` / `Leantime` / `shadcn/ui` の役割分担を画面別に落とし込んだ
+- `UJ-01` / `UJ-02` / `UJ-03` のユーザー判断を `docs/imp/user-judge.md`、`docs/imp/user-tasks.md`、`docs/imp/next-session-focus.md` に反映し、P0 薄く実装 1 版の開始を止める判断待ちがない状態に整理した
+- Slack / knowledge-vault / Misskey / Web の入口別 adapter 仕様を `docs/spec/intake-source-adapters.md` として作成した
+- P0 確認待ちキュー仕様を `docs/spec/confirmation-queue-p0.md` として作成し、全件確認待ち、GO / 編集 / 不要 / アーカイブの最小操作を固定した
+- knowledge-vault の現在構成と P0 暫定取り込み対象を `docs/candi-ref/knowledge-vault-current-structure-for-intake.md` に整理した
+- Slack 対象チャンネルを `memo-ideas`（`https://unibell4-dev.slack.com/archives/C0BG4TCPAUD`）に確定し、knowledge-vault の `inbox/` を P0 取り込み対象へ追加した
+- P0 薄く実装 1 版のタスク表を `docs/imp/p0-thin-implementation-tasks.md` に作成した
+- P0 画面構成仕様を `docs/spec/screen-structure-p0.md`、ガント MVP 仕様を `docs/spec/gantt-mvp-flow.md` として作成した
+- `apps/web` に依存なし静的プロトタイプを作成し、書き入れ口、確認待ちキュー、横断ダッシュボード、作業者用 / タスクサマリ、ガント表示、管理画面の最小範囲を mock data で触れる状態にした
+- root `package.json`、`pnpm-workspace.yaml`、`apps/web/package.json`、`apps/web/server.mjs`、PowerShell wrapper を追加し、`pnpm check` と `pnpm dev` で確認できるようにした
+- `pnpm check`、`pnpm dev`、HTTP 200 応答、主要画面文言の表示を確認した
+- P0 薄く実装 1 版に対する初回フィードバックを反映し、表示順を `横断ダッシュボード -> ガント表示 -> 確認待ちキュー -> 作業者用 / タスクサマリ -> 管理画面` に変更、書き入れ口を右 drawer 化、ガントを週メモリ付き日本語サンプルに変更、横断ダッシュボードの指標を増やし、確認待ちキュー詳細 pane と操作ボタン幅を調整した
+- P0 本デモ化タスク表を `docs/imp/p0-production-demo-tasks.md` として作成し、SQLite 永続化と実入口を持つデモ可能な P0 へ進める方針を固定した
+- 横断ダッシュボードを左サマリ列 + 右側処理フロー / 優先確認 / 判断ログへ再配置し、WQHD でガント先頭まで見える密度に調整した
+- 確認待ちキュー詳細 pane の `AI要約`、`抜粋`、`TODO案`、`予定案`、`参照元`、`GO後プレビュー` にラベル色と本文色の差を付けた
+- 操作可能、選択中、操作不能の見た目をブルー系の明暗・濃淡で整理し、不要な角丸を減らした
+- 管理画面の最小範囲を P0 状態へ拡張し、入口設定、タグマスタ、ロール表示、AI確定方針、プロンプトテンプレート、取り込み対象を表示する構成にした
+- `apps/web/db_tool.py` を追加し、Python 標準 `sqlite3` で `apps/web/data/p0.sqlite` を初期化・操作する構成にした
+- `apps/web/server.mjs` に `/api/bootstrap`、`/api/candidates`、`/api/candidates/:id/status`、`/api/import/knowledge-vault`、`/api/import/slack` を追加した
+- Web 書き入れ口から候補を SQLite に保存し、確認待ち操作の `GO` / `編集` / `不要` / `アーカイブ` を `decisions` に永続化するようにした
+- knowledge-vault の `inbox`、`records`、`tasks`、`memory` から Markdown を読み、`KV-*` 候補として SQLite に取り込めるようにした。検証では10件を取り込み、候補合計16件になった
+- Slack `memo-ideas` は connector で読み取り、現時点で取り込み対象メッセージがないことを確認した。P0では `/api/import/slack` へ connector / 手動 import payload を渡す経路を用意した
+- `pnpm check` を強化し、`app.js`、`server.mjs`、SQLite bootstrap を確認するようにした
+- `pnpm check`、API bootstrap、Web候補作成、状態更新、knowledge-vault import、Slack import test、WQHD遅延スクリーンショットを確認した
+- `docs/spec/classification-tag-master.md`、`docs/spec/role-and-permission-initial.md`、`docs/spec/prompt-template-management.md` を作成し、管理画面P0最小範囲の仕様正本を補完した
+- P0仮完了レビュー待ちタスク表 `docs/imp/p0-review-hardening-tasks.md` を作成した
+- 確認待ち詳細 pane に編集フォームを追加し、title / summary / excerpt / todo / schedule / tags を SQLite に保存できるようにした
+- `保存` と `保存してGO` を追加し、編集後に `edited` または `approved` へ進められるようにした
+- 管理画面の source enabled と prompt template enabled を SQLite に保存する API と UI トグルを追加した
+- knowledge-vault import の imported / skipped / scanned と最終取り込み時刻を管理画面で見られるようにし、P0レビュー手順に反映した
+- Slack `memo-ideas` は connector で読み取り、現時点で取り込み対象投稿がないことを確認した。P0では connector / 手動 payload を `/api/import/slack` へ流す方式としてレビュー手順に残した
+- P0 仮完了レビュー待ちタスク `P0-REVIEW-01` から `P0-REVIEW-07` を完了に更新した
+- P0 仮完了レビュー前検証として `pnpm check` と `/api/bootstrap` を確認した。API は candidates 16 件、knowledge-vault 由来 10 件、ganttTasks 4 件、sources 4 件、promptTemplates 3 件を返す
+# 2026-07-10 P0 SQLite 完結・画面再配置
+
+- 横断ダッシュボードから8数値を撤廃し、入口別量・候補の種類・処理フロー・優先確認・判断ログの配置を再構成した。
+- 確認待ちキューを詳細左・一覧右へ反転した。
+- コピー操作を実クリップボード書き込みへ変更し、連続実行できるようにした。
+- ロール、AI方針、knowledge-vault対象、タグを SQLite 保存の管理操作へ移した。
+- 初期モック候補、空 Slack payload、クライアント側の通信失敗フォールバックを除去した。
+- `apps/web/test/api.test.mjs`、`apps/web/check.ps1`、`/api/bootstrap` を確認した。
+
+# 2026-07-10 Leantime 実行基盤・UI参照調査
+
+- Leantime の TODO、subtask、dependency、list / table / kanban / calendar / gantt、goal、dashboard、timesheet、API / plugin / MCP の現行機能を公式資料で確認した。
+- `docs/candi-ref/leantime-adoption-and-ui-reference-2026-07.md` に、UI参照・外部連携・fork / 改変の3方式、AGPLv3注意点、pj-generalとの責務境界、画面別の参照対象、Linux配置前提を整理した。
+- 実行基盤の判断待ちを `UJ-GANTT-01` から `UJ-LEANTIME-01` に更新し、推奨を「Leantime独立自己ホスト + GO済み候補の一方向TODO連携」とした。OpenProject は横断計画・大規模権限を優先する場合の代替候補として維持した。
+- ユーザー判断により、ガントを主遷移先から TODO の副次ビューへ降格し、Leantime TODO を主遷移先とする方針へ更新した。
+- TODO の見た目と日常利用を重視した比較候補を `docs/candi-ref/todo-ui-candidates-2026-07.md` に整理した。Leantimeを実運用の本線、Vikunjaを最有力の比較対象、Kan / PlaneをUI参照候補としている。
+- Vikunja の公式 plugin / Webhook / API を調査し、backend pluginは実験的かつUI未対応であることを確認した。実行基盤の優先候補をVikunjaへ更新し、まず無改変自己ホストとAPI / Webhook連携を検証してからfork要否を判断する方針を `docs/candi-ref/vikunja-fork-plugin-assessment-2026-07.md` に記録した。
+- 横断ダッシュボードを、上段の処理フロー、下段の入口別量・候補種類・優先確認/判断ログの3列構成へ変更した。左ナビ幅も194pxへ圧縮し、指定画像と同じ情報階層に合わせた。`apps/web/test/api.test.mjs` と `apps/web/check.ps1` を確認した。

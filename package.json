@@ -1,0 +1,9 @@
+{
+  "name": "pj-general",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "pnpm --dir apps/web dev",
+    "check": "pnpm --dir apps/web check"
+  }
+}

@@ -12,10 +12,11 @@
 ## プロダクト方針
 
 - 入口、AI 分別、業務オブジェクト、権限は自前で握る
-- ガント、TODO、横断計画、スケジュール表示は OSS の思想や一部実装を参照する
-- OSS は丸ごと採用ではなく、レイヤーごとに借りる
+- TODO、タスク実行、スケジュール表示は OSS の思想や一部実装を参照する
 - 入口 UI は自前実装し、`Plane` と `Leantime` の体験を参考にする
-- 横断計画やガントは `OpenProject` を主参照にする
+- 実行タスクの主導線は `Vikunja` を優先候補にし、ガントは必要時だけ開く副次ビューとする
+- `Vikunja` は、まず API / Webhook / backend plugin で拡張し、UI変更が必要になった場合だけ fork を検討する
+- `Leantime` と `OpenProject` は比較・参照候補として残す
 
 ## 採用第一候補
 
@@ -190,6 +191,13 @@ git push origin main
 - Python 3
 
 `Docker Desktop` は PostgreSQL / Redis をローカルに直接入れず、compose で揃えるために使う。
+
+## Linux 常設運用への移行
+
+- P0 の手動取り込みは、将来 `workers/sync` の source adapter として切り出す。
+- 初期の定期実行は `systemd timer + Type=oneshot service` を使い、Web サーバーの稼働状態に依存させない。
+- 6時間ごとの候補収集、排他、再試行、結果記録の詳細は `docs/arch/linux-periodic-intake-architecture.md` を正本にする。
+- 入口数・再試行・外部連携が増えた時点で PostgreSQL + Redis / BullMQ の常駐 worker へ移行する。
 
 ## 外部連携候補
 

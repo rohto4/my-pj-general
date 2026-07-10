@@ -1,0 +1,11 @@
+{
+  "name": "@pj-general/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File ./dev.ps1",
+    "check": "powershell -ExecutionPolicy Bypass -File ./check.ps1",
+    "test": "powershell -ExecutionPolicy Bypass -File ./test.ps1"
+  }
+}

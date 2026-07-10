@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pj-general P0</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand">
+          <div class="brand-mark">P0</div>
+          <div>
+            <div class="brand-name">pj-general</div>
+            <div class="brand-sub">P0 試作</div>
+          </div>
+        </div>
+        <nav class="nav-list">
+          <a href="#dashboard" class="nav-link active">横断</a>
+          <a href="#gantt" class="nav-link">ガント</a>
+          <a href="#queue" class="nav-link">確認待ち</a>
+          <a href="#worker" class="nav-link">作業者</a>
+          <a href="#admin" class="nav-link">管理</a>
+        </nav>
+        <div class="sidebar-note">
+          <span class="note-label">P0 ルール</span>
+          <span>AI候補は、ユーザー操作まで全件確認待ちに置く。</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Personal operations hub</p>
+            <h1>個人・チーム運用 P0</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" type="button" data-scroll-target="queue" title="確認待ちキュー">Q</button>
+            <button class="primary-button" type="button" data-open-intake>書き入れ</button>
+          </div>
+        </header>
+
+        <section class="summary-grid" id="dashboard" aria-labelledby="dashboard-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h2 id="dashboard-title">横断ダッシュボード</h2>
+            </div>
+            <span class="status-pill" id="dashboardStatus">SQLite 読込中</span>
+          </div>
+          <div class="dashboard-layout">
+            <section class="summary-group dashboard-source" aria-label="入口別の量">
+              <div class="panel-header">
+                <h3>入口別の量</h3>
+                <span class="muted">P0 intake scope</span>
+              </div>
+              <div class="source-list compact" id="sourceMix"></div>
+            </section>
+            <section class="summary-group dashboard-kinds" aria-label="候補の種類">
+              <div class="panel-header">
+                <h3>候補の種類</h3>
+                <span class="muted">what AI found</span>
+              </div>
+              <div class="source-list compact" id="kindMix"></div>
+            </section>
+            <section class="panel dashboard-wide">
+              <div class="panel-header">
+                <h3>処理フロー</h3>
+                <span class="muted">queue to schedule</span>
+              </div>
+              <div class="health-grid" id="flowHealth"></div>
+            </section>
+            <section class="panel dashboard-attention">
+              <div class="panel-header">
+                <h3>優先確認</h3>
+                <span class="muted">high signal checks</span>
+              </div>
+              <div class="decision-list" id="attentionItems"></div>
+            </section>
+            <section class="panel dashboard-decisions">
+              <div class="panel-header">
+                <h3>判断ログ</h3>
+                <span class="muted">GO / edit / reject</span>
+              </div>
+              <div class="decision-list" id="decisionLog"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="section" id="gantt" aria-labelledby="gantt-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Planning</p>
+              <h2 id="gantt-title">ガント表示</h2>
+            </div>
+            <span class="status-pill">read only / weekly scale</span>
+          </div>
+          <section class="panel gantt-panel">
+            <div class="gantt-header">
+              <span>タスク</span>
+              <span>担当</span>
+              <span>進捗</span>
+              <span>週表示</span>
+            </div>
+            <div class="week-scale" id="weekScale"></div>
+            <div id="ganttRows"></div>
+          </section>
+        </section>
+
+        <section class="section" id="queue" aria-labelledby="queue-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Review</p>
+              <h2 id="queue-title">確認待ちキュー</h2>
+            </div>
+            <span class="status-pill">all pending first</span>
+          </div>
+          <div class="queue-tools" aria-label="Queue filters">
+            <label>
+              <span>状態</span>
+              <select id="filterStatus"></select>
+            </label>
+            <label>
+              <span>入口</span>
+              <select id="filterSource"></select>
+            </label>
+            <label>
+              <span>種類</span>
+              <select id="filterKind"></select>
+            </label>
+            <label>
+              <span>不足</span>
+              <select id="filterMissing"></select>
+            </label>
+          </div>
+          <div class="queue-layout">
+            <section class="panel table-panel">
+              <table class="queue-table">
+                <thead>
+                  <tr>
+                    <th>状態</th>
+                    <th>タイトル</th>
+                    <th>種類</th>
+                    <th>入口</th>
+                    <th>タグ</th>
+                    <th>信頼度</th>
+                    <th>不足</th>
+                    <th>発生日</th>
+                  </tr>
+                </thead>
+                <tbody id="queueTable"></tbody>
+              </table>
+            </section>
+            <aside class="panel detail-pane" id="detailPane" aria-label="Candidate detail"></aside>
+          </div>
+        </section>
+
+        <section class="section" id="worker" aria-labelledby="worker-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Worker view</p>
+              <h2 id="worker-title">作業者用 / タスクサマリ</h2>
+            </div>
+            <span class="status-pill">Codex trigger</span>
+          </div>
+          <div class="worker-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>今日見るもの</h3>
+                <span class="muted">from TODO + schedule</span>
+              </div>
+              <div id="todayTasks"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Codex 起動支援</h3>
+                <span class="muted">task summary trigger</span>
+              </div>
+              <div class="codex-box">
+                <pre id="codexPrompt"></pre>
+                <button class="secondary-button" type="button" id="copyPromptButton">コピー</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="section" id="admin" aria-labelledby="admin-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Admin</p>
+              <h2 id="admin-title">管理画面の最小範囲</h2>
+            </div>
+            <span class="status-pill">SQLite 設定</span>
+          </div>
+          <div class="admin-status" id="adminStatus"></div>
+          <div class="admin-grid">
+            <section class="panel">
+              <h3>入口設定</h3>
+              <div class="admin-control-list" id="sourceSettings"></div>
+              <form class="payload-form" id="slackImportForm">
+                <label>
+                  <span>Slack memo-ideas payload</span>
+                  <textarea name="messages" rows="3" placeholder='[{"ts":"...","text":"..."}]'></textarea>
+                </label>
+                <button class="secondary-button" type="submit">Slack payloadを取り込む</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>タグマスタ</h3>
+                <form class="inline-form" id="tagCreateForm">
+                  <input name="name" type="text" placeholder="タグを追加" aria-label="タグを追加" />
+                  <button class="secondary-button" type="submit">追加</button>
+                </form>
+              </div>
+              <div class="tag-cloud editable" id="tagMaster"></div>
+            </section>
+            <section class="panel">
+              <h3>ロール表示</h3>
+              <div class="admin-control-list" id="roleSettings"></div>
+            </section>
+            <section class="panel">
+              <h3>AI確定方針</h3>
+              <div class="admin-control-list" id="automationSettings"></div>
+            </section>
+            <section class="panel">
+              <h3>プロンプトテンプレート</h3>
+              <div class="admin-control-list" id="promptSettings"></div>
+            </section>
+            <section class="panel">
+              <h3>取り込み対象</h3>
+              <div class="admin-control-list" id="scopeSettings"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+    <button class="floating-intake-button" type="button" data-open-intake>書き入れ</button>
+    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+    <aside class="intake-drawer" id="intakeDrawer" aria-label="書き入れ口 / 作成口" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <p class="eyebrow">Intake</p>
+          <h2>書き入れ口 / 作成口</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-intake title="Close intake">×</button>
+      </div>
+      <form class="panel intake-form" id="intakeForm">
+        <label>
+          <span>タイトル</span>
+          <input name="title" type="text" value="週次レビューの入力口を整える" />
+        </label>
+        <label>
+          <span>本文</span>
+          <textarea name="body" rows="7">Slack memo-ideas と knowledge-vault inbox から、やりたいことを確認待ちに出す流れを触って確認したい。</textarea>
+        </label>
+        <div class="form-grid drawer-form-grid">
+          <label>
+            <span>URL</span>
+            <input name="url" type="url" value="https://unibell4-dev.slack.com/archives/C0BG4TCPAUD" />
+          </label>
+          <label>
+            <span>タグ</span>
+            <input name="tags" type="text" value="intake, review, p0" />
+          </label>
+        </div>
+        <div class="form-grid drawer-form-grid">
+          <label>
+            <span>種類</span>
+            <select name="kind">
+              <option value="idea">idea</option>
+              <option value="consideration">consideration</option>
+              <option value="concern">concern</option>
+              <option value="todo">todo</option>
+              <option value="schedule_candidate">schedule_candidate</option>
+            </select>
+          </label>
+          <label>
+            <span>予定化</span>
+            <select name="schedule">
+              <option value="none">none</option>
+              <option value="wanted">wanted</option>
+              <option value="urgent">urgent</option>
+            </select>
+          </label>
+        </div>
+        <button class="primary-button" type="submit">確認待ちに追加</button>
+      </form>
+      <section class="panel">
+        <div class="panel-header">
+          <h3>作成後プレビュー</h3>
+          <span class="muted">after GO</span>
+        </div>
+        <div class="object-preview" id="objectPreview"></div>
+      </section>
+    </aside>
+    <script src="./app.js"></script>
+  </body>
+</html>
