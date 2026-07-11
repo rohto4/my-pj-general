@@ -491,6 +491,43 @@ def fail_execution(conn, payload):
     return {"candidate_id": payload["candidate_id"], "sync_state": "failed"}
 
 
+def list_execution_links(conn):
+    return [dict(row) for row in conn.execute("select * from execution_links order by candidate_id").fetchall()]
+
+
+def record_reconcile_result(conn, payload):
+    candidate_id = payload["candidate_id"]
+    result = payload["result"]
+    timestamp = now()
+    attempt_key = f"vikunja:{candidate_id}:reconcile:{datetime.now().isoformat(timespec='microseconds')}"
+    state = "succeeded" if result in ("updated", "detached") else "failed"
+    conn.execute(
+        """
+        insert into sync_attempts(candidate_id, provider, direction, operation, idempotency_key, state, error, attempted_at)
+        values (?, 'vikunja', 'inbound', 'reconcile_task', ?, ?, ?, ?)
+        """,
+        (candidate_id, attempt_key, state, payload.get("error"), timestamp),
+    )
+    if result == "detached":
+        conn.execute(
+            "update execution_links set sync_state = 'detached', updated_at = ? where candidate_id = ?",
+            (timestamp, candidate_id),
+        )
+    elif result == "updated":
+        link = conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone()
+        complete_execution(
+            conn,
+            {
+                "candidate_id": candidate_id,
+                "project_id": link["external_project_id"],
+                "external_url": link["external_url"],
+                "attempt_id": None,
+                "task": payload["task"],
+            },
+        )
+    return {"candidate_id": candidate_id, "result": result}
+
+
 def process_vikunja_webhook(conn, payload):
     raw_body = payload["raw_body"]
     event = json.loads(raw_body)
@@ -779,6 +816,10 @@ def main():
             output = complete_execution(conn, payload)
         elif command == "fail-execution":
             output = fail_execution(conn, payload)
+        elif command == "list-execution-links":
+            output = list_execution_links(conn)
+        elif command == "record-reconcile-result":
+            output = record_reconcile_result(conn, payload)
         elif command == "process-vikunja-webhook":
             output = process_vikunja_webhook(conn, payload)
         elif command == "update-candidate":

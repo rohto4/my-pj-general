@@ -47,10 +47,14 @@ Linuxなしで進められる設計レビュー、起動準備、schema実装は
 - Webhook `#1`を`task.created / task.updated / task.deleted`で登録した。
 - Vikunjaでtask `#1`を完了し、配送イベント生成まで確認した。
 - 実配送はVikunjaのSSRF保護がDocker private IPを拒否して停止した。`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`の明示承認後に再試験する。
+- Webhook欠落を補う再照合APIを追加し、実task `#1`の完了状態をpj-generalへ修復した。
+- 両SQLiteをonline backupし、別ファイルへrestoreしてintegrityと件数を確認した。
+- Vikunjaとpj-generalを再起動し、候補19件、link 1件、done状態の永続化を確認した。
 
 ### 設計との差分
 
 - API用URLとブラウザー用URLは同一と想定していたが、Docker内部通信では`VIKUNJA_BASE_URL`と`VIKUNJA_PUBLIC_URL`の分離が必要だった。
 - ホストにはNodeを導入せず、pj-general専用コンテナへPythonを同梱した。
 - 初回データベースは設計どおりSQLiteを使用し、Vikunjaとpj-generalで別ファイルを正本にした。
+- systemd workerは未導入だが、定期実行から呼べる再照合HTTP endpointを先に実装した。
 - 次のゲートはSSH公開鍵登録とVikunja API token発行。project IDはtoken取得後にAPIから特定する。

@@ -159,6 +159,7 @@ flowchart LR
 - `execution_links.candidate_id`により同じ候補の二重task作成を防ぐ。
 - API内部URLとブラウザー公開URLを分離する。
 - Webhook署名、payload hash冪等キー、task state反映を実装済み。
+- Webhook欠落時は再照合APIがVikunja taskを取得し、更新または`detached`を反映する。
 - Linux上でpj-generalとVikunjaを別コンテナ・別SQLiteとして起動済み。
 
 ### 実機で残るゲート

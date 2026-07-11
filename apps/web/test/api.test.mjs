@@ -102,12 +102,30 @@ test("GOは実Vikunja契約でtaskを1件だけ作り、署名付きWebhookを�
   const vikunjaPort = 4289;
   const webhookSecret = "integration-test-webhook-secret";
   const received = [];
+  let fakeTask = null;
   const fakeVikunja = createServer(async (request, response) => {
     let body = "";
     for await (const chunk of request) body += chunk;
-    received.push({ method: request.method, url: request.url, authorization: request.headers.authorization, body: JSON.parse(body) });
-    response.writeHead(201, { "content-type": "application/json" });
-    response.end(JSON.stringify({ id: 77, title: received.at(-1).body.title, done: false, priority: 0 }));
+    if (request.method === "PUT" && request.url === "/api/v1/projects/1/tasks") {
+      const parsed = JSON.parse(body);
+      received.push({ method: request.method, url: request.url, authorization: request.headers.authorization, body: parsed });
+      fakeTask = { id: 77, title: parsed.title, done: false, priority: 0, percent_done: 0 };
+      response.writeHead(201, { "content-type": "application/json" });
+      response.end(JSON.stringify(fakeTask));
+      return;
+    }
+    if (request.method === "GET" && request.url === "/api/v1/tasks/77") {
+      if (!fakeTask) {
+        response.writeHead(404, { "content-type": "application/json" });
+        response.end(JSON.stringify({ message: "task not found" }));
+        return;
+      }
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify(fakeTask));
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end(JSON.stringify({ message: "not found" }));
   });
   await new Promise((resolve) => fakeVikunja.listen(vikunjaPort, "127.0.0.1", resolve));
 
@@ -171,10 +189,28 @@ test("GOは実Vikunja契約でtaskを1件だけ作り、署名付きWebhookを�
     headers: { "x-vikunja-signature": signature },
     body: webhookBody,
   });
+  const invalidWebhook = await fetch(`http://127.0.0.1:${appPort}/api/integrations/vikunja/webhook`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-vikunja-signature": "invalid" },
+    body: webhookBody,
+  });
+  assert.equal(invalidWebhook.status, 401);
   const bootstrap = await localRequest("/api/bootstrap");
   assert.equal(bootstrap.executionLinks.find((item) => item.candidate_id === candidate.id).sync_state, "synced");
   assert.equal(bootstrap.executionTaskStates.find((item) => item.candidate_id === candidate.id).done, 1);
   assert.equal(bootstrap.syncEvents.length, 1);
+
+  fakeTask = { ...fakeTask, done: false, priority: 5, percent_done: 50 };
+  const reconciled = await localRequest("/api/integrations/vikunja/reconcile", { method: "POST", body: "{}" });
+  assert.deepEqual(reconciled, { checked: 1, updated: 1, detached: 0, failed: 0 });
+  const afterReconcile = await localRequest("/api/bootstrap");
+  assert.equal(afterReconcile.executionTaskStates.find((item) => item.candidate_id === candidate.id).priority, 5);
+
+  fakeTask = null;
+  const detached = await localRequest("/api/integrations/vikunja/reconcile", { method: "POST", body: "{}" });
+  assert.deepEqual(detached, { checked: 1, updated: 0, detached: 1, failed: 0 });
+  const afterDelete = await localRequest("/api/bootstrap");
+  assert.equal(afterDelete.executionLinks.find((item) => item.candidate_id === candidate.id).sync_state, "detached");
 });
 
 test("クライアントはSQLite応答失敗時に仮候補を作らない", async () => {

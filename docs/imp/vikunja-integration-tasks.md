@@ -54,6 +54,8 @@
 - [x] task更新Webhook receiverと状態反映を実装する
 - [ ] 実Webhook配送でpj-general反映を確認する
 - [ ] 失敗・再試行・外部削除を履歴に残す（失敗・再試行は完了、外部削除は未完）
+- [x] Webhook欠落を補う再照合APIで実task状態を修復する
+- [x] 外部task 404を`detached`へ反映するintegration testを追加する
 - [ ] upstreamのみで足りる範囲を受入テストで固定する
 
 ### E. 拡張判断
@@ -72,6 +74,7 @@
 - [x] GO endpointとWebhook endpointのintegration testを追加する
 - [x] 実Vikunja向け受入試験仕様を追加する
 - [ ] 実VikunjaとのE2Eを確認する
+- [x] GO、二重作成防止、再照合、再起動、backup/restoreの実Vikunja E2Eを確認する
 - [x] 実装前の設計図を作成する
 - [ ] 設計図を実装結果に合わせて更新する
 - [ ] diaryに設計との差分と実装結果を記録する

@@ -126,6 +126,46 @@ async function createVikunjaExecution(candidateId) {
   }
 }
 
+async function reconcileVikunjaExecutions() {
+  const config = vikunjaConfig();
+  if (!config.baseUrl || !config.apiToken) throw new Error("Vikunja connection is not configured");
+  const links = runDb("list-execution-links");
+  const summary = { checked: links.length, updated: 0, detached: 0, failed: 0 };
+  for (const link of links) {
+    try {
+      const apiResponse = await fetch(
+        `${config.baseUrl}${config.apiBasePath}/tasks/${encodeURIComponent(link.external_task_id)}`,
+        {
+          headers: { authorization: `Bearer ${config.apiToken}` },
+          signal: AbortSignal.timeout(10000),
+        },
+      );
+      if (apiResponse.status === 404) {
+        runDb("record-reconcile-result", { candidate_id: link.candidate_id, result: "detached" });
+        summary.detached += 1;
+        continue;
+      }
+      const responseBody = await apiResponse.text();
+      if (!apiResponse.ok) throw new Error(`Vikunja API ${apiResponse.status}: ${responseBody.slice(0, 500)}`);
+      runDb("record-reconcile-result", {
+        candidate_id: link.candidate_id,
+        result: "updated",
+        task: JSON.parse(responseBody),
+      });
+      summary.updated += 1;
+    } catch (error) {
+      const detail = error.cause?.message ? `${error.message}: ${error.cause.message}` : error.message;
+      runDb("record-reconcile-result", {
+        candidate_id: link.candidate_id,
+        result: "failed",
+        error: detail,
+      });
+      summary.failed += 1;
+    }
+  }
+  return summary;
+}
+
 async function handleApi(request, response, url) {
   try {
     if (request.method === "GET" && url.pathname === "/api/bootstrap") {
@@ -161,6 +201,10 @@ async function handleApi(request, response, url) {
           external_event_id: event.event_id || null,
         }),
       );
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/integrations/vikunja/reconcile") {
+      sendJson(response, 200, await reconcileVikunjaExecutions());
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/import/knowledge-vault") {
