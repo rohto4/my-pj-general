@@ -162,6 +162,6 @@ flowchart LR
 - Webhook欠落時は再照合APIがVikunja taskを取得し、更新または`detached`を反映する。
 - Linux上でpj-generalとVikunjaを別コンテナ・別SQLiteとして起動済み。
 
-### 実機で残るゲート
+### 実Webhookの運用境界
 
-VikunjaのSSRF保護によりDocker private IP宛Webhookが拒否される。専用network内に限定して`outgoingrequests.allownonroutableips`を有効化した後、実Webhook反映を再試験する。
+専用Docker network内に限定して`outgoingrequests.allownonroutableips`を有効化した。target URLはpj-general serviceへ固定し、HMAC署名、payload hash冪等保存、定期再照合を併用する。実taskの未完了・完了変更がpj-generalへ反映されることを確認済み。

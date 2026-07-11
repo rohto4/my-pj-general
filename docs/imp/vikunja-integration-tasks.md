@@ -42,7 +42,7 @@
 - [x] project `1 / Inbox`、ユーザー、runtime API tokenを作成する
 - [x] 実データのtaskをAPI作成・画面更新して確認する
 - [x] Webhook送信先と署名検証方式を確認し、project webhookを登録する
-- [ ] private Docker network宛Webhook許可を明示設定し、実配送を完了する
+- [x] private Docker network宛Webhook許可を明示設定し、実配送を完了する
 
 ### D. pj-general結合
 
@@ -52,7 +52,7 @@
 - [x] 同一候補の二重登録を防ぐ
 - [x] 作成済みtask URLを確認待ち詳細に表示する
 - [x] task更新Webhook receiverと状態反映を実装する
-- [ ] 実Webhook配送でpj-general反映を確認する
+- [x] 実Webhook配送でpj-general反映を確認する
 - [ ] 失敗・再試行・外部削除を履歴に残す（失敗・再試行は完了、外部削除は未完）
 - [x] Webhook欠落を補う再照合APIで実task状態を修復する
 - [x] 外部task 404を`detached`へ反映するintegration testを追加する
@@ -73,7 +73,7 @@
 - [x] adapterのAPI v1 payload、Webhook署名、冪等キーのunit testを追加する
 - [x] GO endpointとWebhook endpointのintegration testを追加する
 - [x] 実Vikunja向け受入試験仕様を追加する
-- [ ] 実VikunjaとのE2Eを確認する
+- [x] 実VikunjaとのE2Eを確認する
 - [x] GO、二重作成防止、再照合、再起動、backup/restoreの実Vikunja E2Eを確認する
 - [x] 実装前の設計図を作成する
 - [ ] 設計図を実装結果に合わせて更新する

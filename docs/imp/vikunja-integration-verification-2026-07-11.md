@@ -17,8 +17,8 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 | VJ-001 | 合格 | Vikunja `:3456`、pj-general `:4173`、両コンテナとAPIへ到達 |
 | VJ-002 | 合格 | 実候補GOからVikunja task `#1`を作成 |
 | VJ-003 | 合格 | 再GO後もtask IDとlink件数が1 |
-| VJ-004 | 保留 | Vikunja完了操作は成功。Webhook配送がprivate IP拒否で未反映 |
-| VJ-005 | 部分合格 | HMAC受信はintegration test合格。実配送はVJ-004と同じゲート |
+| VJ-004 | 合格 | 実taskを未完了・完了へ変更し、pj-generalへ`done=0 -> 1`を反映 |
+| VJ-005 | 合格 | 実署名Webhook 2件を受信し、いずれも`task.updated / processed` |
 | VJ-006 | 自動合格 | 不正署名401をserver実装とintegration testで確認 |
 | VJ-007 | 自動合格 | 同一payloadを2回送信し`sync_events`が1件 |
 | VJ-008 | 合格 | network timeout時もapproved判断とfailed attemptを保持 |
@@ -35,12 +35,20 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 1. Docker内からLAN公開IPへのhairpin接続がtimeoutしたため、内部API URLと公開リンクURLを分離した。
 2. VikunjaのWebhook配送はprivate Docker IPをSSRF保護で拒否した。専用networkだけを使う構成でも明示設定が必要だった。
 3. ホストへNodeを導入せず、pj-generalをPython同梱コンテナにした。
-4. `latest`コンテナの実versionは2.3.0だったが、再pullによるdrift防止のためComposeを2.3.0へ固定する必要がある。
+4. `latest`コンテナの実versionは2.3.0だったため、再pullによるdrift防止としてComposeを`2.3.0`へ固定した。
 5. Webhook配送が停止しても、`POST /api/integrations/vikunja/reconcile`で実行状態を修復できた。
 
 ## 次の1手
 
-ユーザー承認後、Vikunjaへ`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`を設定し、imageを`2.3.0`へ固定して再起動する。その後task `#1`を未完了・完了へ切り替え、VJ-004 / VJ-005を再検証する。
+主要な実機結合項目は合格した。残りは実task削除の非破壊な確認方法、旧API token整理、GitHub push、仮完了監査である。
+
+## 実Webhook証拠
+
+- Vikunja setting: `VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`
+- image: `vikunja/vikunja:2.3.0`
+- 未完了反映: pj-general `done=0`、event `task.updated / processed`
+- 完了反映: pj-general `done=1`、event累計2件、両方`processed`
+- link state: `synced`
 
 ## バックアップ証拠
 

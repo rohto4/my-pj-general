@@ -50,6 +50,10 @@ Linuxなしで進められる設計レビュー、起動準備、schema実装は
 - Webhook欠落を補う再照合APIを追加し、実task `#1`の完了状態をpj-generalへ修復した。
 - 両SQLiteをonline backupし、別ファイルへrestoreしてintegrityと件数を確認した。
 - Vikunjaとpj-generalを再起動し、候補19件、link 1件、done状態の永続化を確認した。
+- ユーザーがprivate webhook許可を追加し、Vikunjaを再作成した。
+- 実taskを未完了・完了へ変更し、署名Webhook 2件がpj-generalへ`processed`で反映された。
+- Vikunja Composeのimageを`latest`から実稼働版`2.3.0`へ固定した。
+- 露出した旧API token 2本を削除し、非表示で配置したruntime tokenだけを運用対象にした。
 
 ### 設計との差分
 

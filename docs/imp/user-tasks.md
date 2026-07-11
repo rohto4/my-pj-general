@@ -23,8 +23,8 @@ Vikunja `v2.3.0`のAPI応答は確認済み。project IDはAPI token取得後に
 
 ### 2026-07-11 実機結合後の判断待ち
 
-- Vikunjaとpj-generalを接続する専用Docker network内に限り、`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`を有効化してよいか。
-- 診断中に出力へ露出した`pj-general-integration`と`dev-codex-api`を削除してよいか。実運用には非表示で作成した`pj-general-runtime`を使用中。
+- [x] 専用Docker network内で`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`を有効化した。
+- [x] 診断中に出力へ露出した`pj-general-integration`と`dev-codex-api`を削除し、`pj-general-runtime`だけを残した。
 
 ## 2026-07-09 確認してほしい箇所
 
