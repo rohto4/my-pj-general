@@ -18,7 +18,7 @@
         </div>
         <nav class="nav-list">
           <a href="#dashboard" class="nav-link active">横断</a>
-          <a href="#gantt" class="nav-link">ガント</a>
+          <a href="#tasks" class="nav-link" id="tasksNavLink">Tasks側</a>
           <a href="#queue" class="nav-link">確認待ち</a>
           <a href="#worker" class="nav-link">作業者</a>
           <a href="#admin" class="nav-link">管理</a>
@@ -71,6 +71,18 @@
               </div>
               <div class="health-grid" id="flowHealth"></div>
             </section>
+            <section class="panel dashboard-tasks" id="tasks" aria-labelledby="tasks-title">
+              <div class="panel-header">
+                <h3 id="tasks-title">Tasks側の概要</h3>
+                <div class="panel-header-actions">
+                  <span class="status-pill" id="vikunjaOverviewStatus">Vikunja読込中</span>
+                  <button class="text-button" type="button" data-refresh-vikunja title="Tasks側の概要を更新">更新</button>
+                </div>
+              </div>
+              <div class="task-overview-summary" id="vikunjaSummary"></div>
+              <div class="task-overview-list" id="vikunjaRecentTasks"></div>
+              <a class="secondary-button inline-button is-disabled" id="tasksOpenLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
+            </section>
             <section class="panel dashboard-attention">
               <div class="panel-header">
                 <h3>優先確認</h3>
@@ -91,10 +103,13 @@
         <section class="section" id="gantt" aria-labelledby="gantt-title">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Planning</p>
-              <h2 id="gantt-title">ガント表示</h2>
+              <p class="eyebrow">Tasks view</p>
+              <h2 id="gantt-title">参考ガント表示</h2>
             </div>
-            <span class="status-pill">read only / weekly scale</span>
+            <div class="section-heading-actions">
+              <span class="status-pill">Tasks側で管理</span>
+              <a class="text-link is-disabled" id="ganttExternalLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
+            </div>
           </div>
           <section class="panel gantt-panel">
             <div class="gantt-header">

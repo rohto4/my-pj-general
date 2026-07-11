@@ -32,6 +32,7 @@
 - 実機検証結果: `docs/imp/vikunja-integration-verification-2026-07-11.md`
 - データ設計: `docs/data/vikunja-integration-data-design-2026-07.md`
 - タスク: `docs/imp/vikunja-integration-tasks.md`
+- Hub / Vikunja UI調和タスク: `docs/imp/hub-vikunja-ui-harmonization-tasks.md`
 - 開始Diary: `docs/diary/2026-07-10-vikunja-integration-plan.md`
 
 ## 更新時の基本

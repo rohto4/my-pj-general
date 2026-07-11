@@ -40,7 +40,7 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 
 ## 次の1手
 
-主要な実機結合項目は合格した。残りは実task削除の非破壊な確認方法、旧API token整理、GitHub push、仮完了監査である。
+主要な実機結合項目とHubのTasks概要・導線・2段階UI洗練は完了した。次はユーザーの微調整を受ける。
 
 ## 実Webhook証拠
 
@@ -64,3 +64,11 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 - pj-general: `integrity_check=ok`、restore `ok`、candidates 19件
 - Vikunja: `integrity_check=ok`、restore `ok`、tasks 1件
 - live DBは上書きせず、別restore-test DBで検証した。
+
+## Hub / Tasks導線の実機確認 2026-07-11
+
+- Hubコンテナを更新し、`GET /api/integrations/vikunja/overview` がVikunja project `Inbox`とtask `#1`を返すことを確認した。
+- 概要レスポンスは全1件、未完了0件、完了1件で、期限・担当・Tasks側URLを含む。
+- 概要レスポンスへAPI tokenが含まれないことを確認した。
+- HTMLへTasks概要、Tasks側リンク、参考ガント表示の導線が配信されることを確認した。
+- ブラウザーでのクリック遷移と、Webhook / 再照合後の表示確認は次のユーザーレビュー項目とする。

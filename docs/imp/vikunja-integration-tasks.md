@@ -81,6 +81,15 @@
 - [x] knowledge-vaultへ汎用化できる知見を反映する
 - [x] 設計チェックポイントを`rohto4`でcommit/pushする
 
+### G. Hub / Tasks導線とP0境界
+
+- [x] HubからVikunja project概要と直近タスクをAPI v1で取得する
+- [x] ダッシュボードにTasks側の件数、未完了・完了、直近タスクを表示する
+- [x] HubのTasks導線、確認待ち詳細、参考ガントからTasks側へ遷移できるようにする
+- [x] GO後の実行タスクをTasks側で完結させ、Hubは候補・判断・連携状態を担当する境界をUIと設計書へ反映する
+- [x] 概要APIのtoken非露出、未接続・接続失敗時の表示、既存GO/Webhookとの結合テストを追加する
+- [x] HubとVikunjaのブルー・シルバー・ソリッド基調を2段階洗練し、実画面で調和を確認する
+
 ## 実装開始ゲートの結果
 
 Linux常設サーバー、実Vikunja `v2.3.0`、runtime token、Webhook、pj-generalコンテナを用意し、実データ結合まで完了した。モック接続は完了証拠に使用していない。
@@ -92,4 +101,4 @@ Linux常設サーバー、実Vikunja `v2.3.0`、runtime token、Webhook、pj-gen
 - 外部連携失敗でもpj-generalの判断履歴が残る。
 - clone、fork、結合コード、設計図、データ設計、diary、完了記録が揃う。
 
-上記4条件は2026-07-11に満たしたため、Vikunja / pj-general実データ結合を仮完了とする。
+上記4条件は2026-07-11に満たしたため、Vikunja / pj-general実データ結合を仮完了とする。Gの未完了項目はUI洗練フェーズへ分離する。

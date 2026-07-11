@@ -14,6 +14,7 @@
 | 判断 | pj-general | action、note、操作者、時刻 | 登録結果のみ |
 | 実行TODO | Vikunja | 外部ID、URL、最終同期値 | title、description、期限、担当、priority |
 | 同期 | pj-general | event、attempt、error、last_seen | webhook payloadの送信 |
+| Tasks概要 | Vikunja | project title、task一覧、done、期限、進捗 | Hubへ表示用に読取。Hub側で別タスク正本を作らない |
 
 ## 論理モデル
 
@@ -160,6 +161,7 @@ create table if not exists sync_attempts (
 
 - GO登録の冪等キーは `provider + candidate_id` とする。
 - `execution_links.candidate_id` を主キーにし、1候補1実行taskを基本とする。
+- Tasks概要はVikunja APIから都度取得する表示用Projectionであり、HubのSQLiteへ一覧全体を保存しない。候補に紐づく外部IDと状態ミラーだけを保存する。
 - Webhookは内部連番IDを持ち、外部event IDは任意列にする。`dedupe_key`は外部event IDまたはpayload hashから生成する。
 - 外部APIが成功してDB保存だけ失敗した場合に備え、再照合でtask titleやdescriptionに候補IDを含める。
 - 削除はP0では物理削除せず、`archived`または`sync_state=detached`として保持する。

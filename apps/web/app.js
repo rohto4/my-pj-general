@@ -17,6 +17,7 @@ const state = {
   selectedId: "",
   log: [],
   executionLinks: [],
+  vikunjaOverview: { available: false, reason: "loading", project: null, tasks: [], summary: { total: 0, open: 0, done: 0 } },
   dbPath: "",
   editingId: "",
   adminNotice: "SQLite を読み込み中",
@@ -33,6 +34,21 @@ const kindDisplayOrder = ["todo", "consideration", "idea", "schedule_candidate",
 
 function byId(id) {
   return document.getElementById(id);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatVikunjaDate(value) {
+  if (!value) return "期限なし";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
 
 async function apiJson(url, options = {}) {
@@ -219,7 +235,83 @@ function renderDecisionLog() {
             </div>
           `,
           )
-          .join("");
+           .join("");
+}
+
+function setVikunjaLink(id, href) {
+  const link = byId(id);
+  if (!link) return;
+  if (href) {
+    link.href = href;
+    link.classList.remove("is-disabled");
+    link.removeAttribute("aria-disabled");
+    link.removeAttribute("tabindex");
+  } else {
+    link.href = "#tasks";
+    link.classList.add("is-disabled");
+    link.setAttribute("aria-disabled", "true");
+    link.setAttribute("tabindex", "-1");
+  }
+}
+
+function renderVikunjaOverview() {
+  const overview = state.vikunjaOverview;
+  const project = overview.project;
+  const taskList = byId("vikunjaRecentTasks");
+  const summary = byId("vikunjaSummary");
+  const status = byId("vikunjaOverviewStatus");
+  if (!taskList || !summary || !status) return;
+
+  setVikunjaLink("tasksNavLink", project?.url);
+  setVikunjaLink("tasksOpenLink", project?.url);
+  setVikunjaLink("ganttExternalLink", project?.url);
+  if (overview.reason === "loading") {
+    status.textContent = "Vikunja読込中";
+    summary.innerHTML = '<span class="muted">Tasks側の概要を取得しています。</span>';
+    taskList.innerHTML = '<div class="task-overview-empty">直近タスクを読込中</div>';
+    return;
+  }
+  if (!overview.available) {
+    status.textContent = overview.reason === "not-configured" ? "未接続" : "接続エラー";
+    summary.innerHTML = '<span class="muted">Tasks側の接続状態を確認してください。</span>';
+    taskList.innerHTML = '<div class="task-overview-empty">Vikunjaの概要を取得できません。</div>';
+    return;
+  }
+  status.textContent = project?.title || "Tasks側";
+  summary.innerHTML = [
+    ["全タスク", `${overview.summary.total}件`],
+    ["未完了", `${overview.summary.open}件`],
+    ["完了", `${overview.summary.done}件`],
+  ]
+    .map(([title, value]) => `<div class="task-overview-metric"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(title)}</span></div>`)
+    .join("");
+  taskList.innerHTML = overview.tasks.length
+    ? overview.tasks
+        .map(
+          (task) => `
+          <div class="task-overview-row">
+            <div class="task-overview-title">
+              ${task.url ? `<a href="${escapeHtml(task.url)}" target="_blank" rel="noreferrer">${escapeHtml(task.title)}</a>` : `<strong>${escapeHtml(task.title)}</strong>`}
+              <span class="muted">#${escapeHtml(task.id)} / ${task.done ? "完了" : `${escapeHtml(task.percentDone)}%`}</span>
+            </div>
+            <span class="task-overview-meta">期限 ${escapeHtml(formatVikunjaDate(task.dueDate))}</span>
+          </div>
+        `,
+        )
+        .join("")
+    : '<div class="task-overview-empty">Tasks側にタスクはありません。</div>';
+}
+
+async function refreshVikunjaOverview() {
+  state.vikunjaOverview = { ...state.vikunjaOverview, available: false, reason: "loading", project: null, tasks: [] };
+  renderVikunjaOverview();
+  try {
+    state.vikunjaOverview = await apiJson("/api/integrations/vikunja/overview");
+  } catch (error) {
+    console.warn(error);
+    state.vikunjaOverview = { available: false, reason: "unavailable", project: null, tasks: [], summary: { total: 0, open: 0, done: 0 } };
+  }
+  renderVikunjaOverview();
 }
 
 function renderQueue() {
@@ -333,8 +425,8 @@ function renderDetail() {
     ${
       link
         ? `<div class="detail-block execution-result">
-            <span class="detail-label">Vikunja実行タスク</span>
-            <p><a href="${link.external_url}" target="_blank" rel="noreferrer">Vikunjaで開く</a> <span class="muted">#${link.external_task_id} / ${link.sync_state}</span></p>
+            <span class="detail-label">Tasks側の実行タスク</span>
+            <p><a href="${link.external_url}" target="_blank" rel="noreferrer">Tasks側で開く</a> <span class="muted">#${link.external_task_id} / ${link.sync_state}</span></p>
           </div>`
         : ""
     }
@@ -396,6 +488,7 @@ async function executeCandidate(id) {
   const candidate = state.candidates.find((item) => item.id === id);
   if (candidate) candidate.status = "approved";
   state.adminNotice = `Vikunja task #${link.external_task_id} を作成しました`;
+  void refreshVikunjaOverview();
   return link;
 }
 
@@ -426,16 +519,18 @@ async function updateCandidateStatus(id, status) {
 }
 
 function renderObjectPreview() {
-  const approved = state.candidates.filter((item) => item.status === "approved" || item.status === "edited");
+  const linked = state.executionLinks
+    .map((link) => ({ link, candidate: state.candidates.find((item) => item.id === link.candidate_id) }))
+    .filter((item) => item.candidate);
   byId("objectPreview").innerHTML =
-    approved.length === 0
-      ? '<div class="source-item"><strong>作成済みオブジェクトなし</strong><span class="muted">GO後の結果がここに出ます。</span></div>'
-      : approved
+    linked.length === 0
+      ? '<div class="source-item"><strong>Tasks側の登録なし</strong><span class="muted">HubでGOするとTasks側へ登録されます。</span></div>'
+      : linked
           .map(
-            (item) => `
+            ({ link, candidate }) => `
           <div class="source-item">
-            <strong>${item.preview}</strong>
-            <span class="muted">${label(item.kind)} from ${label(item.source)}</span>
+            <strong>${candidate.title}</strong>
+            <span class="muted"><a href="${link.external_url}" target="_blank" rel="noreferrer">Tasks側タスク #${link.external_task_id}</a> / ${link.sync_state}</span>
           </div>
         `,
           )
@@ -747,6 +842,7 @@ function renderAll() {
   renderFlowHealth();
   renderSourceMix();
   renderKindMix();
+  renderVikunjaOverview();
   renderAttentionItems();
   renderDecisionLog();
   renderQueue();
@@ -784,6 +880,9 @@ function bindStaticActions() {
   byId("copyPromptButton").addEventListener("click", copyPrompt);
   byId("tagCreateForm").addEventListener("submit", createTag);
   byId("slackImportForm").addEventListener("submit", importSlackPayload);
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-refresh-vikunja]")) refreshVikunjaOverview();
+  });
 }
 
 function openIntakeDrawer() {
@@ -834,6 +933,7 @@ async function initApp() {
   }
   renderAll();
   applyHashState();
+  refreshVikunjaOverview();
 }
 
 initApp();

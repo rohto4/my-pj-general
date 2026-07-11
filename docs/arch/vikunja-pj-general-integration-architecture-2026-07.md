@@ -10,7 +10,9 @@
 - `pj-general` は入口、AI候補、出典、判断、履歴、Vikunjaとの対応関係を保持する正本とする。
 - Vikunja は GO 済み候補を実行する TODO 基盤とする。
 - 初期の登録は `pj-general -> Vikunja REST API` とする。
-- 実行状態の戻しは `Vikunja Webhook -> pj-general` とする。
+- HubのダッシュボードはVikunja APIからプロジェクト概要と直近タスクを読み取り、Tasks側への導線を提供する。
+- 実行状態の戻しは `Vikunja Webhook / 再照合 -> pj-general` の状態ミラーに限定する。候補本文や判断をVikunjaからHubへ逆同期しない。
+- GO後のタスク実行、期限、担当、進捗、完了操作はVikunja側で完結させる。Hubは入口、候補、GO判断、連携状態の確認に集中する。
 - Vikunja の plugin / fork は、upstream 連結後に不足を実測してから選ぶ。
 - 初回結合は安定版 `v2.3.0` を固定し、API v1との差分をadapterへ閉じ込める。mainのAPI v2を初回契約に混ぜない。
 - UI変更は frontend fork、Vikunja内部のAPI・イベント・追加テーブルは backend plugin、コアの権限・状態・データモデル変更だけ backend fork の候補とする。
@@ -25,6 +27,7 @@ flowchart LR
     Adapter["Vikunja Adapter\nAPI登録・ID対応・再試行"]:::support
     VJ["Vikunja upstream\n実行 TODO / list / kanban / gantt"]:::external
     Hook["Webhook Receiver\n署名検証・冪等保存"]:::support
+    Overview["Hub Tasks概要\nAPI読取・直近タスク"]:::support
     Fork["Vikunja fork / plugin\n不足が実測された場合だけ"]:::optional
 
     User --> PJ
@@ -33,6 +36,7 @@ flowchart LR
     Adapter -->|REST API| VJ
     VJ -->|task events| Hook
     Hook --> PJ
+    VJ -->|project / tasks read| Overview --> PJ
     Fork -.->|拡張候補| VJ
 
     classDef actor fill:#e8f5e9,stroke:#69a66f,color:#173a1d,stroke-width:2px,font-size:16px,font-weight:bold
@@ -53,6 +57,7 @@ flowchart LR
     O["GO決定\n判断履歴を保存"]:::decision
     A["Vikunja API\nTODO作成・更新"]:::external
     T["Vikunja Task\n実行状態の正本"]:::external
+    OV["Tasks概要\nHubで読み取り表示"]:::sync
     W["Webhook\n更新イベント"]:::sync
     L["Execution Link\n候補ID ↔ Task ID"]:::data
     H["Audit / Sync\n受信・再試行・差分"]:::sync
@@ -62,6 +67,8 @@ flowchart LR
     O --> L
     T --> W --> H --> C
     H --> L
+    T -->|project/tasks read| OV
+    OV -->|表示のみ| PJ
 
     classDef input fill:#e3f2fd,stroke:#2c82b8,color:#102f45,stroke-width:2px,font-size:15px,font-weight:bold
     classDef data fill:#f3f5f7,stroke:#8b98a6,color:#27333d,stroke-width:1.5px,font-size:14px
@@ -81,6 +88,14 @@ flowchart LR
 | 期限・担当・進捗 | ミラー・履歴 | 正本 | Webhookで戻す |
 | plugin固有データ | 必要な参照IDのみ | Vikunja pluginの追加テーブル | pluginが必要になった時だけ |
 | UI | 入口・確認・横断表示 | TODO実行画面 | UI要件が固まってからfrontend fork |
+
+## P0の導線と一方向境界
+
+- `Intake -> Hub` は入口データを候補化し、`Hub -> Tasks` はユーザーのGO判断後に実行タスクを登録する一方向の作成導線とする。
+- 登録時は候補のタイトル、要約、TODO案、候補IDなどをTasks側へ渡す。登録後のタスク本文・期限・担当・進捗はTasks側で編集する。
+- Hubはページ表示時のVikunja API読取でプロジェクト概要と直近タスクを表示し、SQLiteへ別のタスク一覧を複製しない。SQLiteには候補との対応リンクとWebhook / 再照合で得た状態ミラーだけを保持する。
+- Webhookと再照合は「Tasks側の実行状態をHubの確認表示へ戻す」ためのものであり、候補本文やGO判断を書き換える双方向同期ではない。
+- Hub内の参考ガントは既存候補の補助表示として残せるが、主導線はTasks側のTODO・ガント画面とし、HubのナビゲーションからTasks側プロジェクトへ直接遷移できるようにする。
 
 ## 拡張方式の判断
 

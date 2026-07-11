@@ -71,6 +71,78 @@ function vikunjaConfig() {
   return config;
 }
 
+function emptyVikunjaOverview(reason = "not-configured") {
+  return {
+    available: false,
+    reason,
+    project: null,
+    tasks: [],
+    summary: { total: 0, open: 0, done: 0 },
+    fetchedAt: null,
+  };
+}
+
+function normalizeVikunjaTask(task, config) {
+  const assignees = Array.isArray(task?.assignees)
+    ? task.assignees.map((assignee) => assignee.username || assignee.name || assignee.email).filter(Boolean)
+    : [];
+  return {
+    id: task?.id,
+    title: task?.title || "無題のタスク",
+    done: Boolean(task?.done),
+    priority: Number(task?.priority || 0),
+    percentDone: Number(task?.percent_done || 0),
+    dueDate: task?.due_date || null,
+    updatedAt: task?.updated || task?.updated_at || null,
+    assignees,
+    url: task?.id ? `${config.publicUrl}/tasks/${encodeURIComponent(task.id)}` : null,
+  };
+}
+
+async function fetchVikunjaJson(config, path) {
+  const apiResponse = await fetch(`${config.baseUrl}${config.apiBasePath}${path}`, {
+    headers: { authorization: `Bearer ${config.apiToken}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  const responseBody = await apiResponse.text();
+  if (!apiResponse.ok) throw new Error(`Vikunja API ${apiResponse.status}: ${responseBody.slice(0, 200)}`);
+  return JSON.parse(responseBody || "null");
+}
+
+async function getVikunjaOverview() {
+  const config = vikunjaConfig();
+  if (!config.baseUrl || !config.projectId || !config.apiToken || !config.publicUrl) {
+    return emptyVikunjaOverview();
+  }
+  try {
+    const [project, taskPayload] = await Promise.all([
+      fetchVikunjaJson(config, `/projects/${encodeURIComponent(config.projectId)}`),
+      fetchVikunjaJson(config, `/projects/${encodeURIComponent(config.projectId)}/tasks`),
+    ]);
+    const tasks = (Array.isArray(taskPayload) ? taskPayload : taskPayload?.tasks || taskPayload?.data || [])
+      .map((task) => normalizeVikunjaTask(task, config))
+      .filter((task) => task.id !== undefined && task.id !== null)
+      .sort((left, right) => String(right.updatedAt || "").localeCompare(String(left.updatedAt || "")));
+    const recentLimit = Math.max(Number.parseInt(process.env.VIKUNJA_OVERVIEW_TASK_LIMIT || "8", 10), 1);
+    const done = tasks.filter((task) => task.done).length;
+    return {
+      available: true,
+      reason: null,
+      project: {
+        id: project?.id ?? config.projectId,
+        title: project?.title || `Project #${config.projectId}`,
+        url: `${config.publicUrl}/projects/${encodeURIComponent(config.projectId)}`,
+      },
+      tasks: tasks.slice(0, recentLimit),
+      summary: { total: tasks.length, open: tasks.length - done, done },
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.warn(`Vikunja overview unavailable: ${error.message}`);
+    return emptyVikunjaOverview("unavailable");
+  }
+}
+
 function verifyVikunjaSignature(rawBody, signature, secret) {
   if (!signature || !secret) return false;
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
@@ -170,6 +242,10 @@ async function handleApi(request, response, url) {
   try {
     if (request.method === "GET" && url.pathname === "/api/bootstrap") {
       sendJson(response, 200, runDb("bootstrap"));
+      return true;
+    }
+    if (request.method === "GET" && url.pathname === "/api/integrations/vikunja/overview") {
+      sendJson(response, 200, await getVikunjaOverview());
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/candidates") {

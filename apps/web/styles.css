@@ -1,26 +1,26 @@
 :root {
   color-scheme: light;
-  --bg: #f5f7fa;
+  --bg: #eef1f5;
   --surface: #ffffff;
-  --surface-2: #f0f3f7;
-  --text: #18202b;
-  --muted: #667386;
-  --line: #d9dee7;
-  --line-strong: #b9c2d0;
-  --accent: #176f8f;
-  --accent-strong: #0b526b;
-  --accent-soft: #e2f3f7;
-  --accent-faint: #f0f8fb;
-  --selected: #e7f4f8;
-  --disabled: #edf1f5;
-  --warn: #9a5b16;
-  --warn-soft: #fff1db;
-  --danger: #a33c38;
-  --danger-soft: #ffe9e7;
-  --ok: #2f7357;
-  --ok-soft: #e5f4ed;
-  --ink-soft: #eef1f5;
-  --shadow: 0 10px 28px rgba(24, 32, 43, 0.06);
+  --surface-2: #f5f5f5;
+  --text: #0a0a0a;
+  --muted: #68717d;
+  --line: #d2d8e0;
+  --line-strong: #aeb8c5;
+  --accent: #126cfd;
+  --accent-strong: #0b4fae;
+  --accent-soft: #e7efff;
+  --accent-faint: #f4f7fc;
+  --selected: #e8f1ff;
+  --disabled: #e5e9ee;
+  --warn: #8a5a13;
+  --warn-soft: #fff1d8;
+  --danger: #c63b35;
+  --danger-soft: #ffebe9;
+  --ok: #188c58;
+  --ok-soft: #e8f7ef;
+  --ink-soft: #eef0f3;
+  --shadow: 0 5px 14px rgba(10, 10, 10, 0.06);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -67,7 +67,7 @@ button {
   padding: 18px 12px;
   background: #111820;
   color: #f8fafc;
-  border-right: 1px solid #24303d;
+  border-right: 1px solid #2b3440;
 }
 
 .brand {
@@ -79,11 +79,11 @@ button {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  background: #e6f7fb;
-  color: #0f5974;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: #e7efff;
+  color: var(--accent-strong);
   font-weight: 800;
 }
 
@@ -105,7 +105,8 @@ button {
 .nav-link {
   color: #d8dee8;
   text-decoration: none;
-  padding: 10px 12px;
+  border-left: 3px solid transparent;
+  padding: 9px 10px;
   border-radius: 4px;
   font-size: 14px;
 }
@@ -114,6 +115,7 @@ button {
 .nav-link.active {
   background: #24303d;
   color: #ffffff;
+  border-left-color: var(--accent);
 }
 
 .sidebar-note {
@@ -122,7 +124,7 @@ button {
   gap: 8px;
   padding: 12px;
   border: 1px solid #354253;
-  border-radius: 8px;
+  border-radius: 3px;
   color: #c5cfdd;
   font-size: 13px;
 }
@@ -130,7 +132,7 @@ button {
 .note-label {
   width: max-content;
   padding: 3px 7px;
-  border-radius: 999px;
+  border-radius: 4px;
   background: #263849;
   color: #dff7ff;
   font-size: 11px;
@@ -139,21 +141,26 @@ button {
 
 .main {
   display: grid;
-  gap: 24px;
-  padding: 22px 20px;
+  gap: 20px;
+  padding: 20px;
   min-width: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(245, 247, 250, 0) 220px),
-    var(--bg);
+  background: var(--bg);
 }
 
 .topbar,
 .section-heading,
-.panel-header {
+.panel-header,
+.panel-header-actions,
+.section-heading-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.panel-header-actions,
+.section-heading-actions {
+  flex-shrink: 0;
 }
 
 .topbar {
@@ -199,12 +206,46 @@ button {
 .icon-button {
   min-height: 36px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 8px 12px;
   font-weight: 700;
 }
 
+a.primary-button,
+a.secondary-button,
+a.ghost-button,
+a.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.text-button,
+.text-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.text-button:hover,
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.is-disabled {
+  color: #7b8797;
+  cursor: not-allowed;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
 .primary-button {
+  border-color: var(--accent);
   background: var(--accent);
   color: #ffffff;
 }
@@ -215,8 +256,15 @@ button {
 
 .secondary-button {
   background: var(--surface);
-  border-color: var(--line);
+  border-color: var(--line-strong);
   color: var(--text);
+}
+
+.secondary-button:hover,
+.ghost-button:hover,
+.icon-button:hover {
+  background: var(--accent-faint);
+  border-color: var(--accent);
 }
 
 .ghost-button {
@@ -239,6 +287,15 @@ button {
   color: var(--accent-strong);
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .section,
 .summary-grid {
   display: grid;
@@ -250,7 +307,7 @@ button {
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 3px;
   box-shadow: var(--shadow);
 }
 
@@ -261,7 +318,8 @@ button {
   width: max-content;
   min-height: 24px;
   padding: 3px 8px;
-  border-radius: 999px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   background: var(--ink-soft);
   color: #364354;
   font-size: 12px;
@@ -340,7 +398,7 @@ button {
 .dashboard-layout {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
   grid-template-areas:
-    "flow flow empty"
+    "flow flow tasks"
     "sources kinds attention"
     "sources kinds decisions";
   justify-content: start;
@@ -358,6 +416,13 @@ button {
 .dashboard-wide {
   grid-area: flow;
   width: 100%;
+  border-top: 3px solid var(--accent);
+}
+
+.dashboard-tasks {
+  grid-area: tasks;
+  min-width: 0;
+  border-top: 3px solid var(--accent);
 }
 
 .dashboard-attention {
@@ -413,8 +478,8 @@ button {
   min-height: 50px;
   padding: 7px 10px;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: linear-gradient(180deg, #ffffff, #f7fafc);
+  border-radius: 3px;
+  background: var(--surface);
 }
 
 .health-item strong {
@@ -425,6 +490,81 @@ button {
   color: var(--text);
   font-size: 12px;
   font-weight: 800;
+}
+
+.task-overview-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.task-overview-metric {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: var(--accent-faint);
+}
+
+.task-overview-metric strong {
+  font-size: 18px;
+}
+
+.task-overview-metric span,
+.task-overview-meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.task-overview-list {
+  display: grid;
+  gap: 6px;
+}
+
+.task-overview-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.task-overview-row:hover {
+  background: var(--accent-faint);
+}
+
+.task-overview-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.task-overview-title a,
+.task-overview-title strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-overview-title a:hover {
+  color: var(--accent-strong);
+}
+
+.task-overview-empty {
+  padding: 10px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.inline-button {
+  margin-top: 10px;
 }
 
 .health-item p {
@@ -447,7 +587,7 @@ select,
 textarea {
   width: 100%;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 3px;
   padding: 9px 10px;
   background: #ffffff;
   color: var(--text);
@@ -466,7 +606,7 @@ textarea {
   padding: 12px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 3px;
   box-shadow: 0 8px 22px rgba(24, 32, 43, 0.05);
   grid-template-columns: repeat(4, minmax(220px, 255px));
   justify-content: start;
@@ -497,7 +637,7 @@ textarea {
 .queue-table th {
   position: sticky;
   top: 0;
-  background: #f9fafc;
+  background: var(--surface-2);
   color: #435064;
   font-size: 12px;
   z-index: 1;
@@ -510,6 +650,10 @@ textarea {
 .queue-table tr:hover,
 .queue-table tr.selected {
   background: var(--selected);
+}
+
+.queue-table tr.selected td:first-child {
+  box-shadow: inset 3px 0 var(--accent);
 }
 
 .tag-list,
@@ -605,8 +749,8 @@ textarea {
   display: grid;
   gap: 6px;
   padding: 9px 10px;
-  border-left: 3px solid #c3dbe6;
-  background: #f8fbfd;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-faint);
 }
 
 .detail-edit-form {
@@ -617,7 +761,7 @@ textarea {
 .detail-edit-form input,
 .detail-edit-form textarea {
   background: #ffffff;
-  border-color: #9fb8c7;
+  border-color: var(--line-strong);
 }
 
 .edit-actions {
@@ -634,7 +778,7 @@ textarea {
 .decision-item p,
 .task-item p {
   margin: 0;
-  color: #526176;
+  color: #3f4854;
   line-height: 1.55;
 }
 
@@ -654,7 +798,7 @@ textarea {
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 3px;
-  background: #fbfcfd;
+  background: var(--surface);
 }
 
 .source-item-disabled {
@@ -669,7 +813,7 @@ textarea {
 .source-bar {
   height: 8px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 3px;
   background: var(--ink-soft);
 }
 
@@ -690,7 +834,7 @@ pre {
   white-space: pre-wrap;
   word-break: break-word;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 3px;
   background: #111820;
   color: #edf3f8;
   font-size: 12px;
@@ -764,8 +908,8 @@ pre {
 .timeline {
   position: relative;
   height: 28px;
-  border-radius: 999px;
-  background: #eef1f5;
+  border-radius: 3px;
+  background: var(--ink-soft);
   overflow: hidden;
 }
 
@@ -781,7 +925,7 @@ pre {
   position: absolute;
   top: 4px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: 3px;
   background: var(--accent);
 }
 
@@ -841,7 +985,7 @@ pre {
   padding: 10px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
-  background: #fbfcfd;
+  background: var(--surface);
 }
 
 .admin-buttons {
@@ -876,11 +1020,11 @@ button:disabled {
   z-index: 30;
   min-height: 44px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 4px;
   padding: 0 18px;
   background: var(--accent);
   color: #ffffff;
-  box-shadow: 0 16px 34px rgba(29, 111, 143, 0.28);
+  box-shadow: 0 8px 18px rgba(18, 108, 253, 0.24);
   font-weight: 800;
 }
 
@@ -933,7 +1077,7 @@ button:disabled {
   .dashboard-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
     grid-template-areas:
-      "flow flow empty"
+      "flow flow tasks"
       "sources kinds attention"
       "sources kinds decisions";
     gap: 10px;
@@ -943,6 +1087,7 @@ button:disabled {
   .dashboard-source,
   .dashboard-kinds,
   .dashboard-wide,
+  .dashboard-tasks,
   .dashboard-decisions,
   .dashboard-attention {
     align-self: start;
@@ -1095,6 +1240,7 @@ button:disabled {
   .dashboard-layout {
     grid-template-areas:
       "flow"
+      "tasks"
       "sources"
       "kinds"
       "attention"

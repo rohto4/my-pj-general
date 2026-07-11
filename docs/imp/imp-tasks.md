@@ -26,6 +26,11 @@
   - backend plugin は追加API・イベント処理が必要になった場合だけ導入する。UI変更が必要になった場合だけ fork を判断する。
   - ガントは Vikunja TODO 内の副次ビューとして使い、pj-general に外部ガント専用導線は置かない。
   - 2026-07-11設計レビューで初回対象をVikunja `v2.3.0` / API v1に固定した。Linux待ちの間はmigrationとadapter testを先行する。
+  - 2026-07-11追加: HubはVikunja project概要・直近タスクを読取表示し、GO後のタスク実行はTasks側で完結する一方向境界へ整理した。HubとTasksのUI導線は接続済み。
+- Hub / Vikunja UIを調和させるデザイン洗練を進める
+  - 正本: `docs/imp/hub-vikunja-ui-harmonization-tasks.md`
+  - Hubをブルー + シルバー + ソリッド基調で2段階洗練し、Tasks側の見た目へ寄せる
+  - データ結合・導線結合・P0動作確認を優先し、実画面での状態確認後に着手する
 - Linux 常設サーバー向けに定期入口同期 worker を導入する
   - 設計正本: `docs/arch/linux-periodic-intake-architecture.md`
   - 初期実装: `workers/sync` を切り出し、`systemd timer` から6時間ごとに `oneshot` 実行する

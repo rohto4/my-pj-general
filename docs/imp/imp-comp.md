@@ -126,3 +126,20 @@
 - Windows側にGo・Docker・WSLがなくVikunja本体を実データで起動できないため、モックAPI接続は作らず、Linux実行環境準備を実機結合の開始ゲートにした。
 - 横断的な設計原則を`G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`へ、公式仕様のsource noteを`G:\knowledge-vault\sources\vikunja\vikunja-plugin-webhook-api-2026-07.md`へ反映した。
 - 設計チェックポイントを`eb172e3`、upstream仕様差分の修正を`5ba24c5`としてGitHubへpushした。
+
+# 2026-07-11 Hub / Tasks導線結合
+
+- `GET /api/integrations/vikunja/overview` を追加し、Vikunja API v1のproject概要と直近タスクをHubへ表示できるようにした。
+- HubダッシュボードにTasks側の全件数・未完了・完了、直近タスク、Tasks側プロジェクトへのリンクを追加した。
+- 確認待ち詳細、書き入れ口の作成後プレビュー、参考ガントからTasks側へ遷移できる導線を整理した。
+- GO後はTasks側でタスク実行を完結し、Hubは入口・候補・判断・連携状態を保持する一方向境界を設計書へ反映した。
+- 概要APIはtokenを返さず、未接続・接続失敗を画面で扱い、既存GO/Webhook/再照合と結合するテストを追加した。
+- `apps/web/test/api.test.mjs` 10件、Python 3件を通過し、Linux実機の概要APIと配信ファイルを確認した。
+
+# 2026-07-11 Hub / Vikunja UI調和
+
+- Vikunja `v2.3.0`の配信CSSを確認し、青 `#126cfd`、白・薄いグレー、黒寄りの文字、明確な境界線をHubの視覚基盤へ反映した。
+- Hubの色トークン、パネル、表、詳細ブロック、フォーム、無効状態、選択状態、Tasks側リンクを2段階で調整した。
+- 装飾的なグラデーション、大きなピル形状、過剰な角丸を減らし、業務ツールとしてのソリッドな見た目へ寄せた。
+- 実画面でダッシュボードのTasks概要、直近タスク、QueueのTasks側リンク、Tasks側URLを確認した。
+- Vikunja upstream本体は変更せず、Hub側の視覚と導線を寄せる方針を維持した。次はユーザーの微調整を受ける段階とする。
