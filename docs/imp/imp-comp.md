@@ -4,6 +4,7 @@
 
 - Windows 11ミニPCをUbuntu Server上のVikunja / pj-general実行環境へ移行するための、USB作成、OS導入、SSH、Firewall、Docker Compose、永続化、Secret保管、完了確認手順を docs/guide/linux-server-setup-for-vikunja.md に整理した
 - Vikunja安定版とmainのAPI差分、状態分離、Webhook冪等性、Secret境界をレビューし、実機受入試験とCompose/env雛形を追加した
+- Vikunja `v2.3.0`とpj-generalをLinux上で実データ結合し、GO、二重作成防止、署名Webhook、再照合、再起動、backup/restoreを実機確認して仮完了とした
 
 ## 2026-06-23
 

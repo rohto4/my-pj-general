@@ -15,6 +15,8 @@ Vikunja実機を起動する前に、pj-general側の結合境界を固定する
 `VIKUNJA_API_BASE_PATH=/api/v1` をadapter設定に持たせ、画面や候補処理からresource pathを直接参照しない。
 Docker常設環境では`VIKUNJA_BASE_URL=http://vikunja:3456`を内部API用、`VIKUNJA_PUBLIC_URL=http://SERVER_LAN_IP:3456`をブラウザーリンク用として分離する。
 
+stable API v1のtask更新はPATCHとして扱わない。`POST /api/v1/tasks/{task}`へ部分payloadを送ると、省略fieldがzero valueへ戻ることを実機確認した。更新前にtaskをGETし、変更可能fieldを保持したread-modify-write payloadを送る。
+
 ## 連携方向
 
 | 名前 | 方向 | 意味 |

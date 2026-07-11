@@ -17,7 +17,7 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 | VJ-001 | 合格 | Vikunja `:3456`、pj-general `:4173`、両コンテナとAPIへ到達 |
 | VJ-002 | 合格 | 実候補GOからVikunja task `#1`を作成 |
 | VJ-003 | 合格 | 再GO後もtask IDとlink件数が1 |
-| VJ-004 | 合格 | 実taskを未完了・完了へ変更し、pj-generalへ`done=0 -> 1`を反映 |
+| VJ-004 | 合格 | 実taskの完了、priority 3、期限、担当`unibell`をpj-generalへ反映 |
 | VJ-005 | 合格 | 実署名Webhook 2件を受信し、いずれも`task.updated / processed` |
 | VJ-006 | 自動合格 | 不正署名401をserver実装とintegration testで確認 |
 | VJ-007 | 自動合格 | 同一payloadを2回送信し`sync_events`が1件 |
@@ -49,6 +49,14 @@ private IP、API token、Webhook secretはリポジトリへ記録しない。
 - 未完了反映: pj-general `done=0`、event `task.updated / processed`
 - 完了反映: pj-general `done=1`、event累計2件、両方`processed`
 - link state: `synced`
+- 属性反映: `priority=3`、`due_date=2026-07-20T12:00:00Z`、assignee `unibell`
+- task description: 出典、TODO、`candidate: KV-e378384856`を保持
+
+## API更新契約の実測差分
+
+- `POST /api/v1/tasks/{task}`へpriorityとdue dateだけを送ると、省略した`done`と`description`がzero valueへ戻った。
+- task更新はPATCHとして扱わず、GETした現在値からmutable fieldを保持するread-modify-writeが必要。
+- `GET /api/v1/tasks/{task}/assignees`はこの実機で500になったため、task本体の`assignees`を参照し、割当は`PUT /tasks/{task}/assignees`を使った。
 
 ## バックアップ証拠
 

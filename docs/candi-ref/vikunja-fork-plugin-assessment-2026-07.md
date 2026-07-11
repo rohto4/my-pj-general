@@ -59,6 +59,40 @@ Vikunja plugin (必要になった時だけ)
 4. `task.updated` / `task.completed` Webhook を受信して SQLite に反映する。
 5. 日常利用後、UI差分の要求を一覧化して plugin / fork を判断する。
 
+## 2026-07-11 実機結合後の評価
+
+### 実測した不足と解決方法
+
+| 実測した不足 | 分類 | 解決方法 | plugin / fork |
+| --- | --- | --- | --- |
+| DockerからLAN公開IPへのAPI接続がtimeout | network | 内部API URLと公開リンクURLを分離 | 不要 |
+| private IP宛WebhookがSSRF保護で拒否 | operation / security | 専用network、固定target、private宛許可、HMAC | 不要 |
+| Webhook欠落時に状態が戻らない | integration | 再照合APIと履歴をpj-generalへ実装 | 不要 |
+| 候補と外部taskの対応が標準Vikunjaにない | data ownership | pj-generalの`execution_links`を正本化 | 不要 |
+| 候補ID・出典をtaskから辿りたい | provenance | task descriptionへ候補IDと最小出典を付与 | 不要 |
+| pj-general独自の確認待ち・GO UI | UI | pj-generalを別フロントエンドとして維持 | Vikunja fork不要 |
+| `GET /tasks/{id}/assignees`が実機で500 | API | task本体の`assignees`参照と割当PUTを使用 | P0では不要、upstream再確認 |
+| task更新へ部分payloadを送ると省略fieldが初期化 | API contract | GET後にmutable fieldを保持してPOST | adapterで解決、fork不要 |
+
+### P0判断
+
+- stable `v2.3.0`のAPI v1、Webhook、pj-general側adapterで仮完了範囲を実現できた。
+- backend plugin候補は現時点でないため、pluginの最小実装は行わない。
+- Vikunja標準TODO画面は実行画面として利用でき、P0でfrontend forkは不要。
+- backend forkが必要な権限・状態・コアモデル差分は観測されていない。
+- `rohto4/vikunja` forkはupstream追随用に差分なしで保持する。
+- 日常利用で標準TODO画面の操作負荷が具体化した場合だけfrontend forkを再評価する。
+
+### upstream追随
+
+- license: AGPL-3.0
+- 初回固定release: `v2.3.0`
+- 実行物: 公式Docker image `vikunja/vikunja:2.3.0`
+- source clone: `G:\devwork\clone-dir\vikunja-upstream`
+- fork: `rohto4/vikunja`
+- 更新時はrelease notes、API contract、backup、VJ-001〜VJ-015の順で確認する。
+- P0ではsource buildを本番経路にせず、forkへ差分を入れる時点でupstream build手順を実行対象にする。
+
 ## 一次情報
 
 - Vikunja plugin development: https://vikunja.io/docs/plugin-development/

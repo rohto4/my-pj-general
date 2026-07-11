@@ -182,3 +182,7 @@ GO判断が保存済みでも外部API失敗は起こり得るため、`candidat
 - JSONは原文・payload・候補スナップショットなど履歴性が必要な部分に限定する。
 - 一覧検索、状態、provider、外部ID、時刻は通常列にする。
 - PostgreSQL移行時に`sync_attempts`をworkerのoutboxへ切り出し、Redis/BullMQは再試行実行に使う。
+
+## 外部task更新の注意
+
+Vikunja stable API v1のtask更新は部分PATCHとして扱わない。現在taskをGETし、title、description、done、due date、priority、start/end、repeat、percent doneなど変更可能fieldを保持したread-modify-write payloadを作る。担当者はtask更新とは別のassignee APIで扱う。

@@ -54,6 +54,8 @@ Linuxなしで進められる設計レビュー、起動準備、schema実装は
 - 実taskを未完了・完了へ変更し、署名Webhook 2件がpj-generalへ`processed`で反映された。
 - Vikunja Composeのimageを`latest`から実稼働版`2.3.0`へ固定した。
 - 露出した旧API token 2本を削除し、非表示で配置したruntime tokenだけを運用対象にした。
+- 実taskへpriority、期限、担当を設定し、Webhookと再照合でpj-generalへ反映した。
+- stable API v1のtask更新は部分payloadで省略fieldが初期化されるため、read-modify-write契約へ修正した。
 
 ### 設計との差分
 
