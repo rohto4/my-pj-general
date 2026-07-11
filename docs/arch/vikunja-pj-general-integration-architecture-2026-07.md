@@ -127,3 +127,40 @@ flowchart LR
 - 外部API失敗時に、判断履歴を失わず、再試行対象として記録できる。
 - 元の入口、候補、判断、外部taskの対応関係をDBから追跡できる。
 - fork / pluginを使った場合は、その理由とupstream追随方法が記録されている。
+
+## 2026-07-11 実装結果
+
+```mermaid
+flowchart LR
+    Browser["ブラウザー<br/>確認・GO・実行"]:::input
+    PJ["pj-general<br/>Node + Python"]:::app
+    PDB[("pj-general SQLite<br/>候補・判断・同期")]:::data
+    VJ["Vikunja 2.3.0<br/>実行TODO"]:::external
+    VDB[("Vikunja SQLite<br/>task正本")]:::data
+    Hook["署名Webhook<br/>task更新を反映"]:::api
+
+    Browser -->|LAN :4173| PJ
+    PJ --> PDB
+    PJ -->|Docker内部 API v1| VJ
+    VJ --> VDB
+    VJ -->|task events| Hook --> PJ
+    Browser -->|LAN :3456| VJ
+
+    classDef input fill:#e3f2fd,stroke:#64a6d9,color:#17324d,stroke-width:1.5px,font-size:15px,font-weight:bold
+    classDef app fill:#fff4c2,stroke:#d8b545,color:#3b3100,stroke-width:1.5px,font-size:15px,font-weight:bold
+    classDef api fill:#e8f5e9,stroke:#73b77a,color:#183d1f,stroke-width:1.5px,font-size:14px
+    classDef data fill:#dff3ff,stroke:#5aa4c8,color:#173746,stroke-width:1.5px,font-size:14px
+    classDef external fill:#ffe8d6,stroke:#d9965c,color:#4a2a10,stroke-width:1.5px,font-size:15px,font-weight:bold
+```
+
+### 実装済み
+
+- 実SQLite候補から`PUT /api/v1/projects/{project}/tasks`で実taskを作成する。
+- `execution_links.candidate_id`により同じ候補の二重task作成を防ぐ。
+- API内部URLとブラウザー公開URLを分離する。
+- Webhook署名、payload hash冪等キー、task state反映を実装済み。
+- Linux上でpj-generalとVikunjaを別コンテナ・別SQLiteとして起動済み。
+
+### 実機で残るゲート
+
+VikunjaのSSRF保護によりDocker private IP宛Webhookが拒否される。専用network内に限定して`outgoingrequests.allownonroutableips`を有効化した後、実Webhook反映を再試験する。

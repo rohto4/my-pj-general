@@ -334,7 +334,27 @@ def bootstrap(conn):
     tags = [dict(row) for row in conn.execute("select * from tags order by name").fetchall()]
     gantt = [dict(row) for row in conn.execute("select * from gantt_tasks order by id").fetchall()]
     templates = [dict(row) for row in conn.execute("select * from prompt_templates order by id").fetchall()]
-    return {"candidates": candidates, "log": log, "sources": sources, "tags": tags, "ganttTasks": gantt, "promptTemplates": templates, "adminControls": load_admin_controls(conn), "dbPath": str(DB_PATH)}
+    execution_links = [dict(row) for row in conn.execute("select * from execution_links order by created_at").fetchall()]
+    execution_task_states = [dict(row) for row in conn.execute("select * from execution_task_state order by candidate_id").fetchall()]
+    sync_events = [
+        dict(row)
+        for row in conn.execute(
+            "select id, dedupe_key, external_event_id, provider, event_type, received_at, processed_at, processing_state, error from sync_events order by id"
+        ).fetchall()
+    ]
+    return {
+        "candidates": candidates,
+        "log": log,
+        "sources": sources,
+        "tags": tags,
+        "ganttTasks": gantt,
+        "promptTemplates": templates,
+        "adminControls": load_admin_controls(conn),
+        "executionLinks": execution_links,
+        "executionTaskStates": execution_task_states,
+        "syncEvents": sync_events,
+        "dbPath": str(DB_PATH),
+    }
 
 
 def next_candidate_id(conn):
@@ -379,6 +399,142 @@ def update_status(conn, candidate_id, status):
     conn.execute("update candidates set status = ?, updated_at = ? where id = ?", (status, now(), candidate_id))
     conn.execute("insert into decisions(candidate_id, action, note, created_at) values (?, ?, ?, ?)", (candidate_id, status, "queue action", now()))
     return {"id": candidate_id, "status": status}
+
+
+def prepare_execution(conn, candidate_id):
+    candidate = conn.execute("select * from candidates where id = ?", (candidate_id,)).fetchone()
+    if candidate is None:
+        raise ValueError(f"candidate not found: {candidate_id}")
+    existing = conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone()
+    if existing is not None:
+        return {"existing": True, "link": dict(existing)}
+
+    timestamp = now()
+    if candidate["status"] != "approved":
+        conn.execute("update candidates set status = 'approved', updated_at = ? where id = ?", (timestamp, candidate_id))
+        conn.execute(
+            "insert into decisions(candidate_id, action, note, created_at) values (?, 'approved', 'Vikunja execution requested', ?)",
+            (candidate_id, timestamp),
+        )
+    attempt_key = f"vikunja:{candidate_id}:create:{datetime.now().isoformat(timespec='microseconds')}"
+    cursor = conn.execute(
+        """
+        insert into sync_attempts(candidate_id, provider, direction, operation, idempotency_key, state, attempted_at)
+        values (?, 'vikunja', 'outbound', 'create_task', ?, 'pending', ?)
+        """,
+        (candidate_id, attempt_key, timestamp),
+    )
+    return {"existing": False, "attempt_id": cursor.lastrowid, "candidate": dict(candidate)}
+
+
+def complete_execution(conn, payload):
+    candidate_id = payload["candidate_id"]
+    task = payload["task"]
+    timestamp = now()
+    external_task_id = str(task["id"])
+    conn.execute(
+        """
+        insert into execution_links(
+          candidate_id, provider, external_project_id, external_task_id, external_url,
+          sync_state, last_synced_at, created_at, updated_at
+        ) values (?, 'vikunja', ?, ?, ?, 'synced', ?, ?, ?)
+        on conflict(candidate_id) do update set
+          external_task_id=excluded.external_task_id,
+          external_url=excluded.external_url,
+          sync_state='synced',
+          last_synced_at=excluded.last_synced_at,
+          updated_at=excluded.updated_at
+        """,
+        (
+            candidate_id,
+            str(payload["project_id"]),
+            external_task_id,
+            payload["external_url"],
+            timestamp,
+            timestamp,
+            timestamp,
+        ),
+    )
+    conn.execute(
+        """
+        insert into execution_task_state(
+          candidate_id, title, done, due_date, priority, assignees_json,
+          percent_done, external_updated_at, mirrored_at
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        on conflict(candidate_id) do update set
+          title=excluded.title, done=excluded.done, due_date=excluded.due_date,
+          priority=excluded.priority, assignees_json=excluded.assignees_json,
+          percent_done=excluded.percent_done, external_updated_at=excluded.external_updated_at,
+          mirrored_at=excluded.mirrored_at
+        """,
+        (
+            candidate_id,
+            task.get("title", ""),
+            1 if task.get("done") else 0,
+            task.get("due_date"),
+            task.get("priority"),
+            json.dumps(task.get("assignees") or [], ensure_ascii=False),
+            task.get("percent_done"),
+            task.get("updated"),
+            timestamp,
+        ),
+    )
+    conn.execute("update sync_attempts set state = 'succeeded', error = null where id = ?", (payload["attempt_id"],))
+    return dict(conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone())
+
+
+def fail_execution(conn, payload):
+    conn.execute(
+        "update sync_attempts set state = 'failed', error = ? where id = ?",
+        (str(payload.get("error", "external API failed"))[:1000], payload["attempt_id"]),
+    )
+    return {"candidate_id": payload["candidate_id"], "sync_state": "failed"}
+
+
+def process_vikunja_webhook(conn, payload):
+    raw_body = payload["raw_body"]
+    event = json.loads(raw_body)
+    payload_hash = hashlib.sha256(raw_body.encode("utf-8")).hexdigest()
+    external_event_id = payload.get("external_event_id")
+    dedupe_key = f"vikunja:event:{external_event_id}" if external_event_id else f"vikunja:payload:{payload_hash}"
+    timestamp = now()
+    cursor = conn.execute(
+        """
+        insert or ignore into sync_events(
+          dedupe_key, external_event_id, provider, event_type, payload_hash,
+          payload_json, received_at, processing_state
+        ) values (?, ?, 'vikunja', ?, ?, ?, ?, 'received')
+        """,
+        (dedupe_key, external_event_id, event.get("event_name", "unknown"), payload_hash, raw_body, timestamp),
+    )
+    if cursor.rowcount == 0:
+        return {"duplicate": True, "dedupe_key": dedupe_key}
+
+    task = (event.get("data") or {}).get("task") or {}
+    task_id = str(task.get("id", ""))
+    link = conn.execute("select * from execution_links where external_task_id = ?", (task_id,)).fetchone()
+    if link is None:
+        conn.execute(
+            "update sync_events set processed_at = ?, processing_state = 'orphan' where dedupe_key = ?",
+            (timestamp, dedupe_key),
+        )
+        return {"duplicate": False, "orphan": True, "dedupe_key": dedupe_key}
+
+    complete_execution(
+        conn,
+        {
+            "candidate_id": link["candidate_id"],
+            "project_id": link["external_project_id"],
+            "external_url": link["external_url"],
+            "attempt_id": None,
+            "task": task,
+        },
+    )
+    conn.execute(
+        "update sync_events set processed_at = ?, processing_state = 'processed' where dedupe_key = ?",
+        (timestamp, dedupe_key),
+    )
+    return {"duplicate": False, "orphan": False, "dedupe_key": dedupe_key}
 
 
 def update_candidate(conn, candidate_id, payload):
@@ -617,6 +773,14 @@ def main():
             output = create_candidate(conn, payload)
         elif command == "update-status":
             output = update_status(conn, payload["id"], payload["status"])
+        elif command == "prepare-execution":
+            output = prepare_execution(conn, payload["id"])
+        elif command == "complete-execution":
+            output = complete_execution(conn, payload)
+        elif command == "fail-execution":
+            output = fail_execution(conn, payload)
+        elif command == "process-vikunja-webhook":
+            output = process_vikunja_webhook(conn, payload)
         elif command == "update-candidate":
             output = update_candidate(conn, payload["id"], payload)
         elif command == "delete-candidate":

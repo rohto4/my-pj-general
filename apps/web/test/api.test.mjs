@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { spawn, spawnSync } from "node:child_process";
+import { createHmac } from "node:crypto";
+import { createServer } from "node:http";
 
 const require = createRequire(import.meta.url);
 const webRoot = join(import.meta.dirname, "..");
@@ -94,11 +96,102 @@ test("Vikunja結合用schemaは判断・同期・外部task状態を分離する
   }
 });
 
+test("GOは実Vikunja契約でtaskを1件だけ作り、署名付きWebhookを反映する", async (context) => {
+  const dir = await mkdtemp(join(tmpdir(), "pj-general-vikunja-api-"));
+  const appPort = 4188;
+  const vikunjaPort = 4289;
+  const webhookSecret = "integration-test-webhook-secret";
+  const received = [];
+  const fakeVikunja = createServer(async (request, response) => {
+    let body = "";
+    for await (const chunk of request) body += chunk;
+    received.push({ method: request.method, url: request.url, authorization: request.headers.authorization, body: JSON.parse(body) });
+    response.writeHead(201, { "content-type": "application/json" });
+    response.end(JSON.stringify({ id: 77, title: received.at(-1).body.title, done: false, priority: 0 }));
+  });
+  await new Promise((resolve) => fakeVikunja.listen(vikunjaPort, "127.0.0.1", resolve));
+
+  const child = spawn(process.execPath, [join(webRoot, "server.mjs")], {
+    cwd: webRoot,
+    env: {
+      ...process.env,
+      PORT: String(appPort),
+      P0_DB_PATH: join(dir, "p0.sqlite"),
+      VIKUNJA_BASE_URL: `http://127.0.0.1:${vikunjaPort}`,
+      VIKUNJA_API_BASE_PATH: "/api/v1",
+      VIKUNJA_PROJECT_ID: "1",
+      VIKUNJA_API_TOKEN: "test-token",
+      VIKUNJA_WEBHOOK_SECRET: webhookSecret,
+    },
+    stdio: "ignore",
+  });
+  context.after(async () => {
+    child.kill();
+    await new Promise((resolve) => fakeVikunja.close(resolve));
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const localRequest = async (path, options = {}) => {
+    const response = await fetch(`http://127.0.0.1:${appPort}${path}`, {
+      headers: { "content-type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+    const body = await response.text();
+    assert.ok(response.ok, `${options.method || "GET"} ${path} failed: ${body}`);
+    return JSON.parse(body);
+  };
+  for (let index = 0; index < 30; index += 1) {
+    try {
+      if ((await fetch(`http://127.0.0.1:${appPort}/api/bootstrap`)).ok) break;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  const candidate = await localRequest("/api/candidates", {
+    method: "POST",
+    body: JSON.stringify({ title: "実Vikunja結合を確認する", summary: "P0結合候補", todo: "taskを作る" }),
+  });
+  const first = await localRequest(`/api/candidates/${candidate.id}/execution`, { method: "POST", body: "{}" });
+  const second = await localRequest(`/api/candidates/${candidate.id}/execution`, { method: "POST", body: "{}" });
+  assert.equal(first.external_task_id, "77");
+  assert.equal(second.external_task_id, "77");
+  assert.equal(received.length, 1);
+  assert.equal(received[0].method, "PUT");
+  assert.equal(received[0].url, "/api/v1/projects/1/tasks");
+  assert.equal(received[0].authorization, "Bearer test-token");
+
+  const webhookBody = JSON.stringify({ event_name: "task.updated", data: { task: { id: 77, title: "実Vikunja結合を確認する", done: true, priority: 3, percent_done: 100 } } });
+  const signature = createHmac("sha256", webhookSecret).update(webhookBody).digest("hex");
+  await localRequest("/api/integrations/vikunja/webhook", {
+    method: "POST",
+    headers: { "x-vikunja-signature": signature },
+    body: webhookBody,
+  });
+  await localRequest("/api/integrations/vikunja/webhook", {
+    method: "POST",
+    headers: { "x-vikunja-signature": signature },
+    body: webhookBody,
+  });
+  const bootstrap = await localRequest("/api/bootstrap");
+  assert.equal(bootstrap.executionLinks.find((item) => item.candidate_id === candidate.id).sync_state, "synced");
+  assert.equal(bootstrap.executionTaskStates.find((item) => item.candidate_id === candidate.id).done, 1);
+  assert.equal(bootstrap.syncEvents.length, 1);
+});
+
 test("クライアントはSQLite応答失敗時に仮候補を作らない", async () => {
   const app = await readFile(join(webRoot, "app.js"), "utf8");
   assert.equal(app.includes("structuredClone(candidates)"), false);
   assert.equal(app.includes("candidate = {\n      id: `AI-"), false);
   assert.match(app, /navigator\.clipboard\.writeText/);
+  assert.match(app, /\/execution/);
+  assert.match(app, /Vikunjaで開く/);
+});
+
+test("Linuxコンテナではbind先とSQLiteを環境変数で切り替えられる", async () => {
+  const server = await readFile(join(webRoot, "server.mjs"), "utf8");
+  const dockerfile = await readFile(join(webRoot, "Dockerfile"), "utf8");
+  assert.match(server, /process\.env\.HOST \|\| "127\.0\.0\.1"/);
+  assert.match(dockerfile, /P0_DB_PATH=\/data\/p0\.sqlite/);
+  assert.match(dockerfile, /PYTHON=python3/);
 });
 
 test("入口別の量はSQLiteの全入口を0件でも描画対象にする", async () => {

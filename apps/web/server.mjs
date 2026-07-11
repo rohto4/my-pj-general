@@ -1,4 +1,5 @@
 import { createReadStream, existsSync, statSync } from "node:fs";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -6,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number.parseInt(process.env.PORT || "4173", 10);
+const host = process.env.HOST || "127.0.0.1";
 const dbTool = join(root, "db_tool.py");
 const bundledPython = join(process.env.USERPROFILE || "", ".cache", "codex-runtimes", "codex-primary-runtime", "dependencies", "python", "python.exe");
 const python = process.env.PYTHON || (existsSync(bundledPython) ? bundledPython : "python");
@@ -57,6 +59,73 @@ function runDb(command, payload = {}) {
   return JSON.parse(result.stdout || "{}");
 }
 
+function vikunjaConfig() {
+  const config = {
+    baseUrl: (process.env.VIKUNJA_BASE_URL || "").replace(/\/$/, ""),
+    publicUrl: (process.env.VIKUNJA_PUBLIC_URL || process.env.VIKUNJA_BASE_URL || "").replace(/\/$/, ""),
+    apiBasePath: `/${(process.env.VIKUNJA_API_BASE_PATH || "/api/v1").replace(/^\/+|\/+$/g, "")}`,
+    projectId: process.env.VIKUNJA_PROJECT_ID || "",
+    apiToken: process.env.VIKUNJA_API_TOKEN || "",
+    webhookSecret: process.env.VIKUNJA_WEBHOOK_SECRET || "",
+  };
+  return config;
+}
+
+function verifyVikunjaSignature(rawBody, signature, secret) {
+  if (!signature || !secret) return false;
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  if (signature.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(signature, "utf8"), Buffer.from(expected, "utf8"));
+}
+
+async function createVikunjaExecution(candidateId) {
+  const prepared = runDb("prepare-execution", { id: candidateId });
+  if (prepared.existing) return prepared.link;
+  const config = vikunjaConfig();
+  if (!config.baseUrl || !config.projectId || !config.apiToken) {
+    runDb("fail-execution", {
+      candidate_id: candidateId,
+      attempt_id: prepared.attempt_id,
+      error: "Vikunja connection is not configured",
+    });
+    throw new Error("Vikunja connection is not configured");
+  }
+  const candidate = prepared.candidate;
+  const description = [candidate.summary, candidate.todo, `candidate: ${candidate.id}`].filter(Boolean).join("\n\n");
+  try {
+    const apiResponse = await fetch(
+      `${config.baseUrl}${config.apiBasePath}/projects/${encodeURIComponent(config.projectId)}/tasks`,
+      {
+        method: "PUT",
+        headers: {
+          authorization: `Bearer ${config.apiToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ title: candidate.title, description }),
+        signal: AbortSignal.timeout(10000),
+      },
+    );
+    const responseBody = await apiResponse.text();
+    if (!apiResponse.ok) throw new Error(`Vikunja API ${apiResponse.status}: ${responseBody.slice(0, 500)}`);
+    const task = JSON.parse(responseBody);
+    return runDb("complete-execution", {
+      candidate_id: candidateId,
+      attempt_id: prepared.attempt_id,
+      project_id: config.projectId,
+      external_url: `${config.publicUrl}/tasks/${task.id}`,
+      task,
+    });
+  } catch (error) {
+    const detail = error.cause?.message ? `${error.message}: ${error.cause.message}` : error.message;
+    runDb("fail-execution", {
+      candidate_id: candidateId,
+      attempt_id: prepared.attempt_id,
+      error: detail,
+    });
+    throw new Error(detail);
+  }
+}
+
 async function handleApi(request, response, url) {
   try {
     if (request.method === "GET" && url.pathname === "/api/bootstrap") {
@@ -66,6 +135,32 @@ async function handleApi(request, response, url) {
     if (request.method === "POST" && url.pathname === "/api/candidates") {
       const body = await readBody(request);
       sendJson(response, 201, runDb("create-candidate", JSON.parse(body || "{}")));
+      return true;
+    }
+    const executionMatch = url.pathname.match(/^\/api\/candidates\/([^/]+)\/execution$/);
+    if (request.method === "POST" && executionMatch) {
+      const candidateId = decodeURIComponent(executionMatch[1]);
+      const link = await createVikunjaExecution(candidateId);
+      sendJson(response, link.sync_state === "synced" ? 200 : 201, link);
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/integrations/vikunja/webhook") {
+      const rawBody = await readBody(request);
+      const config = vikunjaConfig();
+      const signature = request.headers["x-vikunja-signature"] || "";
+      if (!verifyVikunjaSignature(rawBody, signature, config.webhookSecret)) {
+        sendJson(response, 401, { error: "invalid Vikunja signature" });
+        return true;
+      }
+      const event = JSON.parse(rawBody || "{}");
+      sendJson(
+        response,
+        200,
+        runDb("process-vikunja-webhook", {
+          raw_body: rawBody,
+          external_event_id: event.event_id || null,
+        }),
+      );
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/import/knowledge-vault") {
@@ -156,6 +251,6 @@ createServer(async (request, response) => {
     "cache-control": "no-store",
   });
   createReadStream(file).pipe(response);
-}).listen(port, "127.0.0.1", () => {
-  console.log(`pj-general web prototype: http://127.0.0.1:${port}`);
+}).listen(port, host, () => {
+  console.log(`pj-general web: http://${host}:${port}`);
 });

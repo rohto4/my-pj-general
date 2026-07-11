@@ -29,6 +29,7 @@
 - API結合契約: `docs/spec/vikunja-integration-contract-2026-07.md`
 - 実機受入試験: `docs/spec/vikunja-integration-acceptance-tests-2026-07.md`
 - 設計レビュー: `docs/imp/vikunja-design-review-2026-07-11.md`
+- 実機検証結果: `docs/imp/vikunja-integration-verification-2026-07-11.md`
 - データ設計: `docs/data/vikunja-integration-data-design-2026-07.md`
 - タスク: `docs/imp/vikunja-integration-tasks.md`
 - 開始Diary: `docs/diary/2026-07-10-vikunja-integration-plan.md`

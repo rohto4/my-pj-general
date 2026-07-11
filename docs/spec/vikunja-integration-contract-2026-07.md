@@ -13,6 +13,7 @@ Vikunja実機を起動する前に、pj-general側の結合境界を固定する
 | main `e992ed594` | `POST /api/v2/projects/{project}/tasks` | API v2契約に従う | 将来追随の調査対象 |
 
 `VIKUNJA_API_BASE_PATH=/api/v1` をadapter設定に持たせ、画面や候補処理からresource pathを直接参照しない。
+Docker常設環境では`VIKUNJA_BASE_URL=http://vikunja:3456`を内部API用、`VIKUNJA_PUBLIC_URL=http://SERVER_LAN_IP:3456`をブラウザーリンク用として分離する。
 
 ## 連携方向
 

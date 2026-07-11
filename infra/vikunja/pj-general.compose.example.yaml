@@ -1,0 +1,24 @@
+services:
+  pj-general:
+    build:
+      context: ../../apps/web
+    image: pj-general/web:p0
+    container_name: pj-general
+    restart: unless-stopped
+    env_file:
+      - /home/unibell4/.config/pj-general/pj-general.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      P0_DB_PATH: /data/p0.sqlite
+      PYTHON: python3
+    ports:
+      - "${SERVER_LAN_IP:?set SERVER_LAN_IP}:4173:4173"
+    volumes:
+      - /home/unibell4/.local/share/pj-general:/data
+    networks:
+      - pj-general-net
+
+networks:
+  pj-general-net:
+    external: true

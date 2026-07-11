@@ -30,3 +30,27 @@ Linuxなしで進められる設計レビュー、起動準備、schema実装は
 - `docs/spec/vikunja-integration-acceptance-tests-2026-07.md`
 - `docs/guide/linux-server-setup-for-vikunja.md`
 - `docs/imp/vikunja-integration-tasks.md`
+
+## 2026-07-11 実機到達確認
+
+- LAN上の実サーバー`/api/v1/info`からVikunja `v2.3.0`の正常応答を確認した。private IPはリポジトリへ記録しない。
+- Webhook有効、local認証有効で、初回設計のAPI v1対象と一致している。
+- SSH host名`universe`はWindows側で名前解決できなかった。
+- LAN上の実サーバーには到達したが、初回は公開鍵未登録のため認証に失敗した。その後、専用SSH鍵を登録して接続済み。
+
+## 2026-07-11 実装結果
+
+- pj-generalを`Node 24 + Python + SQLite`コンテナとしてLinuxへ配置し、LAN上の`4173`で起動した。
+- ローカルの実SQLite候補19件をサーバーへ移し、候補`KV-e378384856`をGOした。
+- Vikunja project `1 / Inbox`へtask `#1 / L1 Triggers`が実作成され、候補ID、出典、TODOが説明へ入った。
+- 同じ候補を再GOしてもtask IDは`1`のまま、`execution_links`も1件で、二重作成されないことを確認した。
+- Webhook `#1`を`task.created / task.updated / task.deleted`で登録した。
+- Vikunjaでtask `#1`を完了し、配送イベント生成まで確認した。
+- 実配送はVikunjaのSSRF保護がDocker private IPを拒否して停止した。`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`の明示承認後に再試験する。
+
+### 設計との差分
+
+- API用URLとブラウザー用URLは同一と想定していたが、Docker内部通信では`VIKUNJA_BASE_URL`と`VIKUNJA_PUBLIC_URL`の分離が必要だった。
+- ホストにはNodeを導入せず、pj-general専用コンテナへPythonを同梱した。
+- 初回データベースは設計どおりSQLiteを使用し、Vikunjaとpj-generalで別ファイルを正本にした。
+- 次のゲートはSSH公開鍵登録とVikunja API token発行。project IDはtoken取得後にAPIから特定する。

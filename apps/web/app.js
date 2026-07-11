@@ -16,6 +16,7 @@ const state = {
   candidates: [],
   selectedId: "",
   log: [],
+  executionLinks: [],
   dbPath: "",
   editingId: "",
   adminNotice: "SQLite を読み込み中",
@@ -77,6 +78,10 @@ function label(value) {
 
 function selectedCandidate() {
   return state.candidates.find((candidate) => candidate.id === state.selectedId) || state.candidates[0] || null;
+}
+
+function executionLink(candidateId) {
+  return state.executionLinks.find((link) => link.candidate_id === candidateId) || null;
 }
 
 function filteredCandidates() {
@@ -295,6 +300,7 @@ function renderDetail() {
     });
     return;
   }
+  const link = executionLink(candidate.id);
   byId("detailPane").innerHTML = `
     <div class="panel-header">
       <h3>${candidate.title}</h3>
@@ -324,6 +330,14 @@ function renderDetail() {
       <span class="detail-label">GO後プレビュー</span>
       <p>${candidate.preview}</p>
     </div>
+    ${
+      link
+        ? `<div class="detail-block execution-result">
+            <span class="detail-label">Vikunja実行タスク</span>
+            <p><a href="${link.external_url}" target="_blank" rel="noreferrer">Vikunjaで開く</a> <span class="muted">#${link.external_task_id} / ${link.sync_state}</span></p>
+          </div>`
+        : ""
+    }
     <div class="actions">
       <button class="primary-button" type="button" data-action="approved">GO</button>
       <button class="secondary-button" type="button" data-edit-candidate>編集</button>
@@ -363,6 +377,7 @@ async function saveCandidateEdit(event) {
     if (index >= 0) state.candidates[index] = updated;
     state.selectedId = updated.id;
     state.log.push({ action: payload.status, title: updated.title, time: new Date().toLocaleString("ja-JP") });
+    if (payload.status === "approved") await executeCandidate(updated.id);
   } catch (error) {
     console.warn(error);
   }
@@ -370,14 +385,32 @@ async function saveCandidateEdit(event) {
   renderAll();
 }
 
+async function executeCandidate(id) {
+  const link = await apiJson(`/api/candidates/${encodeURIComponent(id)}/execution`, {
+    method: "POST",
+    body: "{}",
+  });
+  const index = state.executionLinks.findIndex((item) => item.candidate_id === id);
+  if (index >= 0) state.executionLinks[index] = link;
+  else state.executionLinks.push(link);
+  const candidate = state.candidates.find((item) => item.id === id);
+  if (candidate) candidate.status = "approved";
+  state.adminNotice = `Vikunja task #${link.external_task_id} を作成しました`;
+  return link;
+}
+
 async function updateCandidateStatus(id, status) {
   const candidate = state.candidates.find((item) => item.id === id);
   if (!candidate) return;
   try {
-    await apiJson(`/api/candidates/${encodeURIComponent(id)}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
+    if (status === "approved") {
+      await executeCandidate(id);
+    } else {
+      await apiJson(`/api/candidates/${encodeURIComponent(id)}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+    }
   } catch (error) {
     state.adminNotice = `状態変更に失敗しました: ${error.message}`;
     renderAll();
@@ -569,6 +602,7 @@ function applyBootstrap(bootstrap) {
     ? state.selectedId
     : bootstrap.candidates[0]?.id || "";
   state.log = bootstrap.log || [];
+  state.executionLinks = bootstrap.executionLinks || [];
   state.dbPath = bootstrap.dbPath || "";
   ganttTasks = bootstrap.ganttTasks || [];
   tagMaster = bootstrap.tags || [];

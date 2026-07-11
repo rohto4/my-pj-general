@@ -15,7 +15,8 @@ Run `server.js` through the repository start script, then open `http://127.0.0.1
 - SQLite persistence in `data/p0.sqlite` (gitignored)
 - Real knowledge-vault file import with deduplication
 - Slack connector payload import endpoint
-- TODO provider navigation prepared for Vikunja
+- Real Vikunja task creation through API v1 with idempotent candidate links
+- Signed Vikunja webhook receiver and mirrored execution task state
 - Minimal admin settings view
 
-Misskey, automatic AI classification, authentication, Google Calendar, and real Vikunja synchronization are not connected yet. Slack credentials are intentionally not stored in this app; Slack data enters through an explicit connector payload.
+Misskey, automatic AI classification, authentication, Google Calendar, webhook reconciliation, and external task deletion recovery are not connected yet. Slack credentials are intentionally not stored in this app; Slack data enters through an explicit connector payload.

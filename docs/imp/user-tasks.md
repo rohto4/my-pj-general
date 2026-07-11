@@ -14,6 +14,18 @@
 
 SQLite migrationは先行実装済みで、Codex側はadapterテストを続けられる。実在Vikunjaへの作成、Webhook、再起動、バックアップ復元だけが実機待ちである。
 
+### 実機起動後の準備（完了）
+
+1. [x] Linuxの`unibell4`へ、このWindowsのSSH公開鍵を登録する。
+2. [x] Vikunja画面でruntime API tokenを発行し、サーバー上の権限600のenvへ保存する。
+
+Vikunja `v2.3.0`のAPI応答は確認済み。project IDはAPI token取得後にCodexがAPIから特定するため、ユーザーが先に調べる必要はない。
+
+### 2026-07-11 実機結合後の判断待ち
+
+- Vikunjaとpj-generalを接続する専用Docker network内に限り、`VIKUNJA_OUTGOINGREQUESTS_ALLOWNONROUTABLEIPS=true`を有効化してよいか。
+- 診断中に出力へ露出した`pj-general-integration`と`dev-codex-api`を削除してよいか。実運用には非表示で作成した`pj-general-runtime`を使用中。
+
 ## 2026-07-09 確認してほしい箇所
 
 - WQHD で横断ダッシュボードから TODO への主導線が、迷わず読める密度になっているか。

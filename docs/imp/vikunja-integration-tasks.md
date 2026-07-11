@@ -33,23 +33,27 @@
 
 ### C. Vikunja実行
 
-- [ ] Linux常設サーバーを用意する、または実行環境を選択する
+- [x] Linux常設サーバーを用意し、Docker Compose実行環境を確認する
 - [x] Compose、Vikunja env、pj-general envのSecretなし雛形を作成する
 - [x] Windows開発環境ではGo・Docker・WSLがないため、実行方式をLinuxサーバー前提にする
-- [ ] 実在するVikunja serverを起動する
+- [x] 実在するVikunja `v2.3.0` serverを起動し、API到達性を確認する
+- [x] LinuxユーザーへWindowsのSSH公開鍵を登録する
 - [ ] project、ユーザー/API tokenを作成する
-- [ ] 実データのtaskを手動で作成・更新して画面を確認する
-- [ ] Webhook送信先と署名検証の方式を確認する
+- [x] project `1 / Inbox`、ユーザー、runtime API tokenを作成する
+- [x] 実データのtaskをAPI作成・画面更新して確認する
+- [x] Webhook送信先と署名検証方式を確認し、project webhookを登録する
+- [ ] private Docker network宛Webhook許可を明示設定し、実配送を完了する
 
 ### D. pj-general結合
 
-- [ ] Vikunja接続先を環境変数またはSQLite設定から読めるようにする
+- [x] Vikunja接続先、公開URL、project ID、token、Webhook secretを環境変数から読む
 - [x] `execution_links`、`execution_task_state`、`sync_events`、`sync_attempts`を追加する
-- [ ] GO時にVikunja taskを作成する
-- [ ] 同一候補の二重登録を防ぐ
-- [ ] 作成済みtask URLを確認待ち詳細と作業者画面に表示する
-- [ ] task更新Webhookを受け、pj-generalへ反映する
-- [ ] 失敗・再試行・外部削除を履歴に残す
+- [x] GO時にVikunja taskを作成する
+- [x] 同一候補の二重登録を防ぐ
+- [x] 作成済みtask URLを確認待ち詳細に表示する
+- [x] task更新Webhook receiverと状態反映を実装する
+- [ ] 実Webhook配送でpj-general反映を確認する
+- [ ] 失敗・再試行・外部削除を履歴に残す（失敗・再試行は完了、外部削除は未完）
 - [ ] upstreamのみで足りる範囲を受入テストで固定する
 
 ### E. 拡張判断
@@ -65,7 +69,7 @@
 
 - [x] Node/Pythonの既存P0テストを通す
 - [x] adapterのAPI v1 payload、Webhook署名、冪等キーのunit testを追加する
-- [ ] GO endpointとWebhook endpointのintegration testを追加する
+- [x] GO endpointとWebhook endpointのintegration testを追加する
 - [x] 実Vikunja向け受入試験仕様を追加する
 - [ ] 実VikunjaとのE2Eを確認する
 - [x] 実装前の設計図を作成する
