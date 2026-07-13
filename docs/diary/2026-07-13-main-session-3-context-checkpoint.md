@@ -26,12 +26,12 @@
 - HTMLローカルリンク、`git diff --check`: 成功
 - 全API回帰は、今回未変更のP0/P1完成度HTMLに対する旧期待文言のため33/34。設計書化差分には起因しない。
 - ローカルcommit: `56203ad`（機能設計書化）、`ed5435f`（Push承認待ち）。この再調査commitは後続で追加する。
-- `origin/main`へのPushは外部送信の承認待ちであり、認証確認も必要である。承認後に先行commitをまとめてPushする。
+- `origin/main`へ先行5 commitをPush済みであり、リモート参照は`db9601b`で一致する。
 
 ## 次の一手
 
 1. 新sessionでユーザーが[設計書化レビュー結果表](../imp/design-documentation-review-summary-2026-07-13.html)を見て、機能面の確認を返す。
 2. 見た目・操作感は、既存のP0受入HTMLと実画面を使いユーザーが判断する。
-3. Pushを許可する場合は、GitHubへの公開範囲（先行する3コミットとこのcheckpoint commit）を明示してから実行する。
+3. Pushは完了済み。次の作業単位を始める前に`git status --short --branch`で作業ツリーを確認する。
 
 実データ、Linux配信、再インポート、secretの表示は行っていない。
