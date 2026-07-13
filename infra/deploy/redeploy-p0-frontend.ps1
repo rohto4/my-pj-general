@@ -29,7 +29,7 @@ function New-CurrentBundles {
   Require-Directory $hubSource
   Require-Directory $tasksSource
 
-  & tar.exe -czf $hubBundle --exclude=apps/web/node_modules --exclude=apps/web/data/p0.sqlite --exclude=apps/web/__pycache__ -C $repoRoot apps/web
+  & tar.exe -czf $hubBundle --exclude=apps/web/node_modules --exclude=apps/web/data/p0.sqlite --exclude=apps/web/__pycache__ --exclude=apps/web/test/__pycache__ -C $repoRoot apps/web
   if ($LASTEXITCODE -ne 0) { throw "Hub bundle creation failed with exit code $LASTEXITCODE" }
 
   & tar.exe -czf $tasksBundle --exclude=.git --exclude=frontend/node_modules --exclude=frontend/dist --exclude=frontend/dist-guide-test -C $tasksSource .

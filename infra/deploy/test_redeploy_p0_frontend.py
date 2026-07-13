@@ -49,6 +49,7 @@ class RedeployP0FrontendTests(unittest.TestCase):
         self.assertIn("apps/web", script)
         self.assertIn("vikunja-listening-lounge", script)
         self.assertIn("--exclude=frontend/node_modules", script)
+        self.assertIn("--exclude=apps/web/test/__pycache__", script)
         self.assertIn("New-CurrentBundles", script[script.index("Require-File"):])
 
     def test_start_script_waits_for_both_http_services_after_recreate(self):
