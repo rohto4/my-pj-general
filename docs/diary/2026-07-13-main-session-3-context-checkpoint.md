@@ -21,7 +21,7 @@
 
 ## 検証とGit
 
-- `apps/web/test/design-documentation-coverage.test.mjs`: 9/9成功
+- `apps/web/test/design-documentation-coverage.test.mjs`: 10/10成功
 - Python unit tests: 8/8成功
 - HTMLローカルリンク、`git diff --check`: 成功
 - 全API回帰は、今回未変更のP0/P1完成度HTMLに対する旧期待文言のため33/34。設計書化差分には起因しない。

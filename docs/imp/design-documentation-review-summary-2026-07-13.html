@@ -45,7 +45,7 @@
   </section>
 
   <div class="table-wrap"><table>
-    <thead><tr><th>機能</th><th>画面 / 操作範囲</th><th>正本設計</th><th>文書量</th><th>分割の仕方</th><th>再現のために記載したこと</th><th>レビュー状態</th></tr></thead>
+    <thead><tr><th>機能</th><th>画面 / 操作範囲</th><th>正本設計</th><th>文書量（ファイル量）</th><th>分割の仕方</th><th>記載上の着眼点（再現条件）</th><th>レビュー状態</th></tr></thead>
     <tbody>
       <tr><td class="feature">入口取込・ソース同期</td><td class="screen">Web手入力<br>vault scan<br>Slack payload</td><td class="docs"><a href="../product/p0-overall-workflow-2026-07.md">体験</a><a href="../spec/intake-source-adapters.md">adapter契約</a><a href="../data/p0-data-flow-2026-07.md">データ</a><a href="../ops/p0-operations-runbook-2026-07.md">復旧</a></td><td class="volume">4 files<br>338 lines</td><td class="split">体験 → adapter/API → candidate正本 → source run/運用</td><td class="focus">現行P0はRaw event storeを使わずcandidateへ直接正規化する事実、決定的ID、skip、source単位の失敗・再実行、観測値を明文化。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
       <tr><td class="feature">Hub候補・判断</td><td class="screen">確認待ち<br>編集 / GO / 不要 / アーカイブ</td><td class="docs"><a href="../product/p0-overall-workflow-2026-07.md">体験</a><a href="../spec/confirmation-queue-p0.md">queue</a><a href="../spec/hub-ui-interaction-contract-p0.md">UI操作</a><a href="../data/object-model-initial.md">object</a><a href="../ops/p0-operations-runbook-2026-07.md">復旧</a></td><td class="volume">5 files<br>454 lines</td><td class="split">利用者判断 → UI操作 → object/decision → 外部連携 → 復旧</td><td class="focus">操作IDの三者照合、仮候補を作らない失敗境界、GO失敗時の判断保持、reconcileとdetachedを分離。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
@@ -61,7 +61,7 @@
   </table></div>
 
   <div class="foot">
-    <section><h2>レビュー時に見る順番</h2><ol><li>関心のある行の「正本設計」を開き、体験・状態/API・データ・外部境界・復旧・証跡が分離されているかを見る。</li><li>「再現のために記載したこと」が、実装を読まずに変更・再実装の判断をできる十分な粒度か確認する。</li><li>見た目・操作感が気になる行だけ、実機受入HTMLと公開画面を見て判断する。</li></ol></section>
+    <section><h2>レビュー時に見る順番</h2><ol><li>関心のある行の「正本設計」を開き、体験・状態/API・データ・外部境界・復旧・証跡が分離されているかを見る。</li><li>「記載上の着眼点（再現条件）」が、実装を読まずに変更・再実装の判断をできる十分な粒度か確認する。</li><li>見た目・操作感が気になる行だけ、実機受入HTMLと公開画面を見て判断する。</li></ol></section>
     <section><h2>この表が扱わないもの</h2><ul><li>P0の実データ操作や幅別画面受入の完了判定。これは<a href="p0-p1-completion-assessment-2026-07-12.html">P0/P1完成度星取表</a>の責務。</li><li>色、質感、余白、ロゴ、情報密度の最終承認。これはユーザーの実画面レビューの責務。</li><li>P1の実装進捗。未実装行は設計を再現できるだけで、実装済みを意味しない。</li></ul></section>
   </div>
 </main>
