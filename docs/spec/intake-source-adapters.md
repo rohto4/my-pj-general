@@ -1,10 +1,12 @@
 # P0 入口別 adapter 仕様
 
+> 状態: Web / Slack payload / knowledge-vaultはP0実装済み。AI相談は追加済み。Misskey節はP1 PoC候補であり、P0実装済みではない。
+
 作成日: 2026-07-09
 
 ## 目的
 
-この文書は、P0 の 4 入口である `web 手入力`、`Slack`、`Misskey`、`knowledge-vault` を `Raw入口イベント` へ変換する adapter の責務を定義する。
+この文書は入口別adapterの責務を定義する。現行P0は共通 `candidates` へ正規化し、P1でRaw event storeへの分離を再評価する。
 
 詳細な本認証、本 AI、外部 DB サーバはここでは確定しない。2026-07-10 時点の P0 本デモでは、SQLite と最小 API で入口データを確認待ちキューへ流す。
 
@@ -33,7 +35,7 @@ adapter が作るのは `Raw入口イベント` までとする。
 | --- | --- | --- |
 | Web manual | drawer から `/api/candidates` へ登録し、SQLite に保存する | 最初の本線入口として維持する |
 | Slack | connector / 手動 import payload を `/api/import/slack` へ渡す。対象は `memo-ideas` チャンネルに限定 | Slack API / event / polling のどれで取るかを後続確定する |
-| Misskey | mock data で確認。note payload 形を想定 | webhook 受信または polling を後続確定する |
+| Misskey | P0未接続 | P1 PoCでREST差分取得 / Streaming / experimental Webhookを比較する |
 | knowledge-vault | `/api/import/knowledge-vault` で `inbox`、`records`、`tasks`、`memory` の Markdown を `KV-*` 候補として取り込む | 対象範囲内はいったん全件対象にし、差分検知、更新時刻、content hash を使って取り込む |
 
 ## Web manual adapter
@@ -147,7 +149,7 @@ G:\knowledge-vault\tasks\handoff\
 
 - Web manual は画面から実入力し、SQLite に永続化する。
 - Slack は `memo-ideas` connector の読み取りを確認済み。現時点で対象投稿はないため、P0では import payload 経路を用意する。
-- Misskey は mock data のまま後続扱いにする。
+- Misskey sourceは無効設定として保持し、P1 PoCまで実データ・mock候補のどちらも本流へ入れない。
 - knowledge-vault はローカル scan を実装済み。検証時点で10件を `KV-*` 候補として取り込んだ。
 - すべての AI 整理結果は確認待ちキューに入り、自動 GO はしない。
 

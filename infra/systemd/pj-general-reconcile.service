@@ -1,0 +1,16 @@
+[Unit]
+Description=Reconcile Vikunja execution state into pj-general
+After=pj-general.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=unibell4
+Group=unibell4
+EnvironmentFile=-/etc/pj-general/reconcile.env
+ExecStart=/usr/bin/python3 /srv/pj-general/workers/reconcile/run.py
+NoNewPrivileges=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=2min

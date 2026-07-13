@@ -7,8 +7,10 @@
 1. `AGENTS.md`
 2. `PROJECT.md`
 3. `tech-stack.md`
-4. `docs/imp/user-tasks.md`
-5. `docs/imp/imp-tasks.md`
+4. `docs/README.md`
+5. `docs/imp/user-tasks.md`
+6. `docs/imp/imp-tasks.md`
+7. `docs/guide/implementation-context-reading-guide.md`（作業役割ごとの最小読込セット）
 
 ## 現在の段階
 
@@ -21,3 +23,5 @@
 - `knowledge-vault` 由来のテンプレート
 - OSS 選定と統合計画に進むための初期ドキュメント
 - 技術スタックと実務ツールの正本 `tech-stack.md`
+- 文書の入口一覧 `docs/README.md`、設計書カバレッジ `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`
+- 圧縮・handoff後に実装を広く読み直さないための `docs/guide/implementation-context-reading-guide.md`

@@ -1,65 +1,79 @@
 # 実装待ち
 
+## 最優先: P0フロント受入（2026-07-12再評価）
+
+P0のバックエンド・連携契約は完了しているが、Hub / Vikunjaの画面操作、無効ボタン、読み取り専用責務、最新データ構造のフロント反映が未受入である。次の目標は `docs/imp/next-goal-p0-frontend-completion-2026-07-12.md`、詳細タスクは `docs/imp/p0-frontend-completion-tasks-2026-07-12.md` を正本とする。
+
+- [x] 全button / link / formの静的監査とAPI対応表を作成する（`p0-frontend-operation-audit-2026-07-12.md`）
+- [x] Hub / Tasksの編集責務、mirror状態、未接続・接続失敗の次操作をHub UIに反映する
+- [ ] Hub候補の保存・保存してGO・GO・不要・アーカイブを、現行プロセスの実画面で受入する
+- [x] Hub管理画面の状態ラベル・操作列・2列配置をLinuxへ配信し、4K縦3分割相当で受入する（受入HTML R03）。bundle SHA-256 `B9EB…7B9`照合、Linux再build、`/api/bootstrap` 200、Chrome実画面確認を完了した。
+- [ ] 実装済み画面の完成度を黄色枠画像でレビューする（RV01 Dashboard密度、RV02 Gantt空白/時間軸、RV03 Kanban 4列、RV04 task detail読み順、RV05 before/after証跡の画面高）。受入HTML上部から順に確認する。
+- [x] Thread Line TLモノグラムを`08-satin-gradient-selected.png`として選定し、同一内容の1254px原寸版と256px高品質縮小版を出力する
+- [ ] Thread Line 256px PNGをHubとTasksの共通44px左レールへ実装する（source実装・回帰済み）。Linux配信、幅別実機受入は別断面として残す。原寸PNGは配信しない。
+- [x] R04: Hub / TasksをLinuxへ再配信し、Hub `/api/bootstrap=200`とTasks `/api/v1/info=200`、候補19 / decision 9 / execution link 4の維持を確認した。実機Kanbanでguideが残存したため、表示名依存の判定をR05へ分離した。
+- [ ] R05: Hub薄橙`Thread Line Hub`、Tasks薄青`Thread Line Tasks`、Inboxアイコン、Kanban guideの`viewKind`抑止をLinuxへ再配信済み。Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、候補19 / decision 9 / execution link 4の維持を確認済み。残りは強制再読込後の実機見た目受入だけである。手順・チェック欄は `p0-frontend-acceptance-checklist-2026-07-12.html` のR05を正本とする。
+- [ ] 定常R06: HubまたはTasksの配信資材を更新した回は、先頭のP0受入チェックR06で`redeploy-p0-frontend.ps1`を実行し、Tasks本文の青・淡青統一とタイトル面を実機確認する。Linux環境が最新版でなければ受入HTMLを赤へ戻し、再配信を先に行う。DB/files/volume削除・再インポートは禁止。
+- [ ] 定常R07: R06と同じ再配信で、Tasksの`マスタ管理`統合を実機確認する。左レールは個別3項目を廃止し、統合画面はプロジェクト・ラベル・チームの3セクション、追加・既存編集導線、4K縦3分割相当の横崩れなしを満たす。個別URL・作成／編集フォームは互換性のため維持する。
+- [ ] Hub左レール: 主メニューを`ダッシュボード / 簡易日程 / タスクキュー / ワークビュー / 簡易管理`へ変更し、同名のスクロール先と一致させる。通常メニューの相談は除き、AI相談と未実装・非活性の詳細管理を同じ下部ボタン群に置く。回帰は成功し、新しいHub bundleを作成済み。次は定常R06/R07の一行scriptでLinuxへ再配信し、実機受入する。
+- [ ] 実VikunjaのHome / Dashboard / Inbox / List / Table / Kanban / Gantt / task detailをguide・empty・action込みで受入する
+- [ ] 現行データ構造とHub表示を実データで照合する
+- [ ] 1280 / WQHD / 4K縦3分割相当のスクリーンショットと操作証跡を残す
+- [ ] RV01 Dashboard: source実装・fork回帰済み。PROJECT OVERVIEW/VIEWSを外し、PJ名サブ表記、処理状況左寄せ、日付未定タスクの完了除外をLinux配信後に1438x715実機で受入する
+- [ ] RV02 Gantt: source実装・fork回帰済み。前2週〜向こう2か月の既定範囲、日付変更確認、キャンセル時の巻き戻し、完了バーの強いグレー表示をLinux配信後に実機で受入する
+- [ ] RV03 Kanban: source実装・fork回帰済み。guideを外し、4列を維持した無制限縦高・内部スクロールバーなしをLinux配信後に実機で受入する
+- [ ] RV04 Task detail: source実装・fork回帰済み。パンくず/タイトル順、4K縦3分割相当で右操作群、説明/コメント文字サイズをLinux配信後に実機で受入する
+- [ ] RV05: 1438x715・同一スクロール位置のbefore/afterへ全比較証跡を再取得する
+- [ ] U03: 最新bundleでGO/編集/不要/アーカイブ後のHTTP応答、画面の操作ID付き`bootstrap.log`、SQLite `decisions.note` の`operation:<ID>`を同一操作IDで照合する。`refreshBootstrap`は観測API失敗でも判断ログを反映する修正済み。
+- [ ] Thread Line左レール: Hubアイコンは銅オレンジ、TasksアイコンはTasks青、輪郭・記号・24px枠・行高は共通化する。sourceとLinux再配信は完了済み、強制再読込後の実機確認待ち。
+- [x] P0追加 / 設計書化カバレッジ: `design-documentation-coverage-assessment-2026-07-13.html`で10機能の設計・実装境界・回帰・運用手順を機能単位で対応付けた。`implementation-context-reading-guide.md`に役割別最小読込セットを定義し、Hub UI / Tasks UI / 複数Projectの不足正本を`docs/product` / `docs/spec` / `docs/data` / `docs/arch`へ分離して補完した。棚卸し・設計書化・継続同期のPJ skillを作成・静的検証済み。実データ変更とLinux配信は行っていない。
+- [x] 設計書化運用レビュー: 設計書カバレッジHTMLの各行を、体験・状態/API・データ不変条件・責務境界・運用・回帰の六証拠種別で再監査した。一次棚卸しの全5/5を維持せず、証拠が明示リンクされていない軸を黄色へ下げ、各行の補完先を記載した。初期読込は751行・約44KB（実測約13,472 token、256Kの約5.3%）で10%以内。役割別ガイドは、リンク先の自動・再帰全読込を禁止し、対象行・対象見出し・必要な受入IDだけを読むよう修正した。実データ変更とLinux配信は行っていない。
+- [ ] 設計書カバレッジ補完: 黄色になった行について、外部境界・運用/復旧・回帰証跡を正本（`docs/product` / `docs/spec` / `docs/data` / `docs/arch` / `docs/ops`）へ明示リンクする。P0の実機受入未達はP0/P1完成度星取表で継続管理し、この作業と混同しない。
+
+Vikunja forkの自動回帰は51 files / 1086 testsが成功済み。実機の最終目視・操作感と、実データを変更するHub判断操作はユーザー受入として残す。
+
 ## 現在の状態
 
-- 要件整理と P0 設計書作成が進行中。
-- P0 本デモ状態は `apps/web` に作成済み。
-- SQLite 永続化、Web 手入力、knowledge-vault import、Slack import payload、確認待ち操作、管理画面 P0 設定、ダッシュボード、ガント補助表示は同じ SQLite データで動く。
-- 現在は P0 仮完了レビュー待ち。
-- ユーザー判断待ちは `docs/imp/user-judge.md` と `docs/imp/user-tasks.md` を正本にする。
-- 完了済みの作業は `docs/imp/imp-comp.md` を正本にする。
+- P0バックエンド・連携契約とR03のLinux/Chrome受入は2026-07-12に完了した。P0フロント受入はRV01〜RV05の完成度レビュー、Thread Line画像調整、U03実データ判断、U04/U05の実画面最終判定が残っている。
+- 正式監査: `docs/imp/p0-completion-audit-2026-07-12.md`
+- 運用runbook: `docs/ops/p0-operations-runbook-2026-07.md`
+- P1ブリーフ: `docs/product/p1-phase-brief-2026-07.md`
+- P1タスク: `docs/imp/p1-implementation-tasks-2026-07.md`
+- P1-AのHub health / SQLite backup / source同期・reconcile観測はローカル実装・回帰済み。Linux常設環境での再build、timer、外部媒体複製、restore drillは未完了。
 
-## Codex が進められるタスク
+## 次にCodexが進めるタスク
 
-- P0 本デモ状態をユーザーレビュー結果に合わせて調整する
-  - 正本: `docs/imp/p0-production-demo-tasks.md`
-  - レビュー硬化: `docs/imp/p0-review-hardening-tasks.md`
-  - 初手: `docs/imp/user-tasks.md` のレビュー結果を受け、SQLite schema、確認待ち詳細、管理画面、import 対象を調整する
-  - 2026-07-10 追加: `docs/imp/p0-sqlite-completion-tasks.md` に、画面再配置、モック排除、管理最小範囲の SQLite 化を記録した
-- Vikunja を外部 TODO 実行基盤として検証・接続する
-  - 採用判断: `docs/imp/user-judge.md` の `UJ-VIKUNJA-01`
-  - 比較正本: `docs/candi-ref/vikunja-fork-plugin-assessment-2026-07.md`
-  - 結合設計正本: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`、`docs/data/vikunja-integration-data-design-2026-07.md`
-  - 実装タスクリスト: `docs/imp/vikunja-integration-tasks.md`
-  - upstream 無改変の自己ホスト、API token、Webhook を用意する。接続先URLを SQLite 設定へ保存し、ダッシュボードの主導線を Vikunja TODO へ切り替える。
-  - 初期は `GO -> Vikunja task作成` の一方向連携に限り、Webhook受信と定期照合による状態反映、双方向同期は別タスクに分離する。
-  - backend plugin は追加API・イベント処理が必要になった場合だけ導入する。UI変更が必要になった場合だけ fork を判断する。
-  - ガントは Vikunja TODO 内の副次ビューとして使い、pj-general に外部ガント専用導線は置かない。
-  - 2026-07-11設計レビューで初回対象をVikunja `v2.3.0` / API v1に固定した。Linux待ちの間はmigrationとadapter testを先行する。
-  - 2026-07-11追加: HubはVikunja project概要・直近タスクを読取表示し、GO後のタスク実行はTasks側で完結する一方向境界へ整理した。HubとTasksのUI導線は接続済み。
-- Hub / Vikunja UIを調和させるデザイン洗練を進める
-  - 正本: `docs/imp/hub-vikunja-ui-harmonization-tasks.md`
-  - Hubをブルー + シルバー + ソリッド基調で2段階洗練し、Tasks側の見た目へ寄せる
-  - データ結合・導線結合・P0動作確認を優先し、実画面での状態確認後に着手する
-- Linux 常設サーバー向けに定期入口同期 worker を導入する
-  - 設計正本: `docs/arch/linux-periodic-intake-architecture.md`
-  - 初期実装: `workers/sync` を切り出し、`systemd timer` から6時間ごとに `oneshot` 実行する
-  - 完了条件: knowledge-vault、Slack、Misskey の source adapter が冪等に候補化でき、sourceごとの結果・失敗・最終成功時刻を確認できる
-  - 後続: PostgreSQL、Redis / BullMQ、Vikunja TODO 同期
-- 設計書内に混ざった `imp-wait` / `imp-task` 的な進行管理記述を `docs/imp/` 系へ分離する
-  - 対象: `docs/spec/*`、`docs/product/*`、`docs/data/*` の後続設計、未決、実装待ちに相当する記述
-  - 方針: 仕様本文には要件・設計判断だけを残し、実装待ち / 判断待ち / 次アクションは `docs/imp/imp-*` または `docs/imp/user-*` に移す
-- P0 薄く実装 1 版をユーザーが触った後の調整を反映する
-  - 画面密度
-  - 確認待ちキューの列
-  - GO / 編集 / 不要 / アーカイブの操作名
-  - TODO主導線とガント補助表示の切り分け
-- P0 薄く実装 1 版を Next.js / shadcn/ui へ移行するか判断する
-  - 現在は依存なし静的プロトタイプ
-  - Node.js PATH 整備後に本来の `Next.js + shadcn/ui` へ移す候補
+P1開始のユーザー確認後、次の順で進める。
 
-## ユーザー判断後に進めるタスク
+1. 常設運用・観測・backup / restoreを整える。
+2. Vikunja Listening Lounge forkを別tagで配信し、stable rollbackを検証する。
+3. knowledge-vaultから定期入口workerを切り出す。
+4. Slack payloadを同じworker契約へ載せる。
+5. 実運用データを蓄積してから、Misskey・重複束ね・部分自動確定・CalendarをPoCする。
+6. PostgreSQL・認証・queueは導入ゲートを満たした場合だけ実装へ進める。
 
-- 現時点で、P0 薄く実装 1 版の開始を止めるユーザー判断後タスクはない。
+## 2026-07-12 Linux配信（進行中）
 
-## 後で進めるタスク
+- [x] Windows検証済みHub `Listening Lounge` の転送bundleを作成: `tmp/pj-general-web-working-tree.tgz`
+- [x] U03のGO／不要／アーカイブ送信前に、実データ・判断ログ変更を明示して確認する画面ダイアログを実装し、Node 28件回帰で確認した。
+- [x] Vikunja Listening Lounge forkの転送bundleを作成: `tmp/vikunja-listening-lounge-working-tree.tgz`
+- [x] Hub bundle / Vikunja bundleのSHA-256を記録: `docs/guide/linux-listening-lounge-deploy.md`
+- [ ] Linux上でHub `pj-general` を再buildし、`/api/health` と本流テーマ表示を確認する
+- [ ] Linux上でVikunja custom imageを別tagでbuildし、stable rollback可能な状態で切り替える
+- [ ] Linux実機でHome / Dashboard / Inbox List / Table / Kanban / Gantt / Task detailとHub導線を受入確認する
 
-- リポジトリ名、製品名、主要ロール名を確定する
-- `goose` 単独追随の更新手順を文書化する
+Linux側の実行手順は `docs/guide/linux-listening-lounge-deploy.md` を正本とする。現在のCodex環境からは `unibell4@192.168.0.200` のSSH公開鍵認証が通らないため、bundle作成までをこちらで完了し、サーバー側の実行は認証回復後に継続する。
 
-## 後回しタスク
+## 後続へ維持する項目
 
-- キャパ管理の詳細設計
-- マルチエージェント開発用の別PJ土壌を作る
-- Codex / MiMo / GLM の互換運用方針を別PJで整理する
-- MCP を軸にしたマルチエージェント接続方針を別PJで評価する
+- 製品名、主要ロール名の確定
+- `goose` upstream追随手順
+- キャパ管理
+- マルチエージェント開発用の別PJ
+- Codex / MiMo / GLMの互換運用
+
+ユーザー判断は `docs/imp/user-judge.md`、ユーザー作業は `docs/imp/user-tasks.md`、完了記録は `docs/imp/imp-comp.md` を正本とする。
+- [ ] P0追加: `p0-vikunja-ux-remediation-2026-07-12.md`に従い、VikunjaのLogin / Home / Dashboard / Inbox / List / Table / Kanban / Gantt / task detailを1280/WQHD/4K縦3分割で再改修し、全画面JPEGのbefore/after証跡を保存する
+- [ ] P0追加: Vikunjaの直接起動をProject一覧へ誘導し、Hubからは特定済みProject Dashboard / taskへ直接遷移する。左メニューはProjectのDashboard / List / Gantt / Table / Kanbanを主導線に再編し、標準概要・今後の予定をP0導線から外す
+- [ ] P0追加: Hubを複数Projectの正本とし、個人PJを既定表示、個別PJ作成時のVikunja Project冪等作成・候補所属・GO先解決・失敗再試行を実装する（`p0-multi-project-linkage-design-2026-07-12.md`）
+- [ ] P0改善: AI要約・抜粋prompt、タグ生成、TODO案を優先表示する候補タイトルのデータ/表示境界を設計し、実装タスクへ分割する（source実装済み: 本文優先抜粋・本文由来要約・既存タグマスタ照合・TODO案優先。既存19件は再インポートせず、新規AI相談候補1件の実機品質受入だけを明示確認後に行う）

@@ -1,5 +1,7 @@
 # 技術概念表 2026-07
 
+> 状態: 将来構成候補。現行P0の実装正本ではない。P0は `docs/product/p0-overall-workflow-2026-07.md`、P1は `docs/product/p1-phase-brief-2026-07.md` を参照する。
+
 ## 目的
 
 この文書は、`pj-general` の P0 を支える技術選定を、実装前に一枚で把握できるようにするための概念表である。
@@ -8,7 +10,7 @@
 
 ## 前提
 
-- P0 の入口は `web 手入力`、`Slack`、`Misskey`、`knowledge-vault`
+- 当初想定した入口は `web 手入力`、`Slack`、`Misskey`、`knowledge-vault`。現行P0の実装済み入口は Web、Slack payload、knowledge-vault、AI相談であり、MisskeyはP1 PoCとする
 - 入口、AI 分別、業務オブジェクト、権限は自前で握る
 - 技術スタック正本は `tech-stack.md`
 - Mermaid 図表ルールは `.agents/skills/mermaid-diagram-style/SKILL.md` に置くが、この対応関係は表の方が読みやすいため表形式で管理する

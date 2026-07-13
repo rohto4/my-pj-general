@@ -9,6 +9,22 @@
 
 比較経緯と候補群の整理は `docs/arch/tech-stack-decision-matrix-2026-07.md` を参照する。
 
+## 現行 P0 実装
+
+P0 の実証済み実装は、将来候補とは分けて次の構成で運用する。
+
+| 領域 | 現行 | 位置づけ |
+| --- | --- | --- |
+| Hub server | Node.js 標準 HTTP server | `apps/web/server.mjs`。P0 の API / 静的配信 |
+| Hub UI | 依存なし HTML / CSS / JavaScript | Listening Lounge 本流、実 SQLite / API を操作 |
+| Hub DB | SQLite | 候補、判断、設定、連携状態、会話履歴の P0 正本 |
+| DB helper | Python 標準 `sqlite3` | `apps/web/db_tool.py`。P0 限定の永続化境界 |
+| 実行 TODO | Vikunja stable `v2.3.0` / API v1 | GO 後の実行正本。frontend fork は `325bc5475` |
+| ローカル LLM | OpenAI 互換 endpoint / Ollama | 読み取り専用 context と、ユーザー確認付き候補化 |
+| Test | Node test runner + Python unittest | Hub API、SQLite、LLM、Vikunja 契約の回帰 |
+
+Next.js / Hono / Drizzle / PostgreSQL / Better Auth / BullMQ は将来構成の第一候補であり、P0 実装済みと誤認しない。
+
 ## プロダクト方針
 
 - 入口、AI 分別、業務オブジェクト、権限は自前で握る

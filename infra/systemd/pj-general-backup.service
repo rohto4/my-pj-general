@@ -1,0 +1,15 @@
+[Unit]
+Description=pj-general and Vikunja verified backup
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/srv/pj-general
+EnvironmentFile=-/etc/pj-general/backup.env
+ExecStart=/srv/pj-general/infra/backup/rotate-and-mirror.sh
+NoNewPrivileges=false
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=30min

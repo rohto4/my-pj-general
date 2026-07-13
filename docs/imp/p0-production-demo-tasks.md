@@ -1,5 +1,7 @@
 # P0 本デモ化タスク表
 
+> 完了済みの履歴タスク。Misskey mock等の当時表現は現行仕様ではなく、`docs/product/p0-overall-workflow-2026-07.md` を優先する。
+
 作成日: 2026-07-10
 
 ## 目的

@@ -1,46 +1,39 @@
 # 次セッションの焦点
 
-## 2026-07-11 現在
+> セッションを切り替える場合は、まず `docs/diary/2026-07-12-session-handoff.md`、`docs/diary/2026-07-12-resume-prompt.md`、`docs/diary/2026-07-13-design-documentation-coverage-handoff.md`を読む。完成度の星取表は `docs/imp/p0-p1-completion-assessment-2026-07-12.html`、設計書の読込境界は `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`、次の目標は `docs/imp/next-goal-p0-frontend-completion-2026-07-12.md`を正本とする。
 
-- HubからVikunja概要・直近タスクを読み取るAPIとダッシュボード表示を追加済み。
-- HubのTasks側ナビ、確認待ち詳細、参考ガントからVikunjaへ遷移できるようにした。
-- GO後はTasks側でタスク実行を完結し、Hubは候補・判断・連携状態を担当する一方向境界へ更新済み。
-- Linux実機で概要APIと画面導線を確認し、Hub / Vikunjaのデザイン洗練まで実施済み。次はユーザーの微調整を受ける段階。
+## 現在地
 
-## 最優先
+- P0バックエンド・連携契約は完了。P0フロントはRV01〜RV05の完成度レビュー、U03/U04/U05最終受入、Thread Line画像調整が残るため正式完了ではない。
+- Hub本流はListening Lounge。
+- Vikunja frontend forkは `codex/pj-general-dashboard` / `325bc5475`。
+- Hub回帰はNode 28件、Python 7件成功。P1のworker / backup / PoC回帰はP0完了後に再開する。
+- P1ブリーフと実装タスクに沿って、P1-A観測・backup雛形、P1-C worker / timer、P1-B build / switch契約までローカル実装済み。
+- Linux配信bundleを転送し、Hubを最新bundleから再build・再作成、Vikunja stableとともに再起動した。DB/files/configの実DBrestore drillも完了。custom Vikunja image、systemd timer、reconcile、外部mirrorはsudo作業待ち。
+- P1-Aのsource同期・reconcile・backup観測は、`source_sync_runs`、`GET /api/observability`、管理画面パネルまでローカル実装・回帰済み。
+- P1-Cのoneshot worker / systemd timer雛形は `workers/sync/` と `infra/systemd/` に追加済み。Linuxでの初回timer実行と連続2回の実機証跡が残作業。
+- P1-Aのreconcile timer、運用metrics、backup rotation雛形、P1 PoC暫定判定、Calendar dry-run、認証/PostgreSQL設計契約も追加済み。Linux実機の配信・restore・実運用データ収集が次の焦点。
 
-- ユーザーはVikunja設計レビューとLinuxサーバー準備を進める
-- CodexはLinux待ちの間にadapterのunit/integration testを先行する。SQLite migrationは完了済み
-- ユーザー判断待ちと Codex 側実装待ちを分けた状態を維持する
-- P0 本デモ状態をレビュー可能に保つ
-- SQLite 永続化、実入口 import、確認待ち操作、管理画面P0設定を壊さず前進する
-- 必要なら UI 仕上げを継続するが、mock へ戻さない
-- `docs/imp/hub-vikunja-ui-harmonization-tasks.md` の第1段階・第2段階を、実機導線確認後に進める
+## 再開時に読むもの
 
-## Codex が進める具体タスク
+1. `docs/guide/implementation-context-reading-guide.md`で対象役割を選ぶ。
+2. `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`の対象行から正本文書を最小読込する。
+3. P0受入では`docs/imp/p0-frontend-acceptance-checklist-2026-07-12.html`の赤・黄の先頭から進める。
+4. P1の再開が承認された場合だけ、`docs/product/p1-phase-brief-2026-07.md`、`docs/imp/p1-implementation-tasks-2026-07.md`、`docs/ops/p0-operations-runbook-2026-07.md`を追加で読む。
 
-1. P0 本デモ状態をユーザーが触った結果を反映する
-2. SQLite schema を後続 PostgreSQL 移行しやすい形へ見直す
-3. knowledge-vault import の重複判定と対象範囲を調整する
-4. Slack `memo-ideas` に投稿が増えたら connector 経由で `/api/import/slack` payload に流す
-5. 確認待ち詳細の編集項目、管理画面 P0 最小範囲、SQLite 継続利用可否のユーザー判断を反映する
-6. `docs/imp/vikunja-integration-tasks.md` のGまでを確認し、設計正本は `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md` とする
-7. 初回実機結合はVikunja `v2.3.0` / API v1へ固定し、`docs/spec/vikunja-integration-acceptance-tests-2026-07.md`で検証する
+## 次の焦点
 
-## 判断待ち
+P1実機運用へ進む前に、P0フロント受入追加タスク（`docs/imp/p0-frontend-completion-tasks-2026-07-12.md`）を実行する。画面の全操作、読み取り専用責務、無効状態、最新データ反映を受入し、RV01〜RV05の黄色枠レビューを上から完了させてからP1へ戻る。
 
-- 現時点で、P0 薄く実装 1 版の開始を止めるユーザー判断待ちはない。
-- Slack の対象 channel は `memo-ideas`。
-- Slack URL は `https://unibell4-dev.slack.com/archives/C0BG4TCPAUD`。
-- Slack `memo-ideas` は 2026-07-10 時点で取り込み対象投稿なし。チャンネル参加メッセージのみ確認済み。
+セッション2で、`docs/imp/p0-frontend-operation-audit-2026-07-12.md` に静的操作監査を追加し、Hubの責務・状態mirror・未接続/接続失敗表示を実装した。次は4173番を現行ソースへ置換した実画面で、Hub操作、実Vikunja、1280 / WQHD / 4K縦3分割の証跡を取得する。4199番の現行APIは200を確認済みだが、アプリ内ブラウザから到達できなかったため、旧4173番プロセスを勝手に停止しない。
 
-## 現在のブロッカー
+Linuxの次回起動は、既存の分離Composeではなく`infra/deploy/`を統一入口として配置する。`start-pj-general.sh --dry-run`でfork bundle・custom image・非secretパスを確認してから一式起動し、Listening Lounge版Vikunjaが正本imageであることを`docker inspect`で確認する。
 
-- P0 本デモのレビュー開始を止めるブロッカーはない。
-- Slack はアプリ本体に認証情報を持たせず、P0では connector / 手動 import payload 経路で扱う。
-- Misskey はまだ mock data のまま。
-- AI 整理結果は全件確認待ちでよい。
-- P0 全体完了時点で、部分自動確定の条件を再設計する。
-- 現在の `apps/web` は依存なしの Node 標準サーバ + Python 標準 `sqlite3` helper で動く。
-- SQLite ファイルは `apps/web/data/p0.sqlite` にローカル生成され、git 管理外。
-- Vikunjaはfork、upstream clone、設計レビュー、実機E2E、Compose/env雛形まで完了。Hub概要APIとTasks側導線の実Linux画面確認が次の検証単位である。
+常設運用・観測とVikunja fork配信のローカル契約は完了。次はLinux実機での配信、timer連続2回、backup/restore、custom→stable rollbackを実施する。PostgreSQL、認証、部分自動確定は実運用ゲートを満たすまで先行しない。
+
+## Linux配信の再開入口
+
+1. `docs/guide/linux-listening-lounge-deploy.md` を読む。
+2. `tmp/pj-general-web-working-tree.tgz` と `tmp/vikunja-listening-lounge-working-tree.tgz` のhashを確認する。
+3. Linux側でVikunja custom imageを別tagでbuildし、stable rollbackを確認する。
+4. systemd sync / backup / reconcile timerを登録し、2回分のjournalとHub停止→復旧証跡を取得する。

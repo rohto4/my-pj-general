@@ -101,4 +101,4 @@ Linux常設サーバー、実Vikunja `v2.3.0`、runtime token、Webhook、pj-gen
 - 外部連携失敗でもpj-generalの判断履歴が残る。
 - clone、fork、結合コード、設計図、データ設計、diary、完了記録が揃う。
 
-上記4条件は2026-07-11に満たしたため、Vikunja / pj-general実データ結合を仮完了とする。Gの未完了項目はUI洗練フェーズへ分離する。
+上記4条件は2026-07-11に満たしたため、Vikunja / pj-general実データ結合を仮完了とする。Gも実装・実機確認済みであり、残るfrontend fork dashboardとTasks画面の追加改善は後続のUI拡張タスクとして分離する。

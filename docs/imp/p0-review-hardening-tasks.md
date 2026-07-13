@@ -1,5 +1,7 @@
 # P0 仮完了レビュー待ちタスク表
 
+> 完了済みの履歴タスク。現行判定は `docs/imp/p0-completion-audit-2026-07-12.md` を正本とする。
+
 作成日: 2026-07-10
 
 ## 目的
@@ -41,4 +43,4 @@ P0 仮完了レビュー待ち。
 - knowledge-vault import は imported / skipped / scanned と最終取り込み時刻を管理画面で確認できる。
 - Slack `memo-ideas` は connector で確認し、現時点ではチャンネル参加メッセージのみで取り込み対象投稿なし。P0 は connector / 手動 payload を `/api/import/slack` に流す方式でレビューする。
 - `docs/imp/user-tasks.md` にレビュー順序、期待結果、判断してほしい点を整理した。
-- `pnpm check` と `/api/bootstrap` を確認済み。API は candidates 16 件、knowledge-vault 由来 10 件、ganttTasks 4 件、sources 4 件、promptTemplates 3 件を返す。
+- `pnpm check` と `/api/bootstrap` を確認済み。Ganttは固定サンプルを返さず、SQLite候補またはVikunja実行状態に日付がある行だけを返す。日付付きデータがない場合は空状態を表示する。

@@ -46,6 +46,6 @@ Vikunjaとpj-generalの結合を、画面が開くことだけで完了扱いに
 ## 合格条件
 
 - VJ-001からVJ-015まで結果と証拠を記録する。
-- VJ-002、VJ-003、VJ-004、VJ-005、VJ-006、VJ-008、VJ-009、VJ-014は仮完了前の必須項目とする。
+- VJ-002、VJ-003、VJ-004、VJ-005、VJ-006、VJ-008、VJ-009、VJ-014はP0完了前の必須項目とする。
 - 未合格項目がある場合は、回避策ではなく未完タスクとして`docs/imp/vikunja-integration-tasks.md`へ戻す。
 - plugin / frontend fork / backend forkの必要性は、受入テストと日常操作で観測した不足を根拠に判断する。

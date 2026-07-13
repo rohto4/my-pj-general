@@ -9,3 +9,7 @@ coverage/
 bun.lockb
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]
+tmp/
+.codex/

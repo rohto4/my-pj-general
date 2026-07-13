@@ -4,26 +4,46 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>pj-general P0</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./listening-lounge.css" />
   </head>
-  <body>
+  <body data-theme="listening-lounge">
+    <div class="room-atmosphere" aria-hidden="true">
+      <span class="room-pattern"></span>
+      <span class="room-shelf"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="room-plant"><i></i><i></i><i></i><i></i><b></b></span>
+      <span class="room-lamp"></span>
+      <span class="room-sofa"></span>
+    </div>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary">
         <div class="brand">
-          <div class="brand-mark">P0</div>
-          <div>
-            <div class="brand-name">pj-general</div>
-            <div class="brand-sub">P0 試作</div>
+          <div class="brand-mark">
+            <img class="brand-mark-image" src="./assets/thread-line-mark-master-256.png" alt="TL" />
+          </div>
+          <div class="brand-copy">
+            <div class="brand-name">Thread Line Hub</div>
           </div>
         </div>
         <nav class="nav-list">
-          <a href="#dashboard" class="nav-link active">横断</a>
-          <a href="#tasks" class="nav-link" id="tasksNavLink">Tasks側</a>
-          <a href="#queue" class="nav-link">確認待ち</a>
-          <a href="#worker" class="nav-link">作業者</a>
-          <a href="#admin" class="nav-link">管理</a>
+          <a href="#dashboard" class="nav-link active">ダッシュボード</a>
+          <a href="#gantt" class="nav-link">簡易日程</a>
+          <a href="#queue" class="nav-link">タスクキュー</a>
+          <a href="#worker" class="nav-link">ワークビュー</a>
+          <a href="#admin" class="nav-link">簡易管理</a>
         </nav>
-        <div class="sidebar-note">
+        <div class="sidebar-side-actions" aria-label="補助操作">
+          <button class="nav-side-chat" type="button" data-open-chat aria-label="AI相談をサイドで開く">
+            <span aria-hidden="true">⌁</span>
+            <span><strong>AI相談</strong><small>サイドで開く</small></span>
+          </button>
+          <button class="nav-side-chat is-disabled" type="button" aria-disabled="true" disabled title="詳細管理は未実装です">
+            <span aria-hidden="true">▦</span>
+            <span><strong>詳細管理</strong><small>準備中</small></span>
+          </button>
+        </div>
+        <div class="sidebar-note debug-note">
           <span class="note-label">P0 ルール</span>
           <span>AI候補は、ユーザー操作まで全件確認待ちに置く。</span>
         </div>
@@ -37,6 +57,7 @@
           </div>
           <div class="topbar-actions">
             <button class="icon-button" type="button" data-scroll-target="queue" title="確認待ちキュー">Q</button>
+            <button class="icon-button" type="button" data-open-chat title="AI相談">C</button>
             <button class="primary-button" type="button" data-open-intake>書き入れ</button>
           </div>
         </header>
@@ -45,7 +66,7 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Overview</p>
-              <h2 id="dashboard-title">横断ダッシュボード</h2>
+              <h2 id="dashboard-title">ダッシュボード</h2>
             </div>
             <span class="status-pill" id="dashboardStatus">SQLite 読込中</span>
           </div>
@@ -81,7 +102,8 @@
               </div>
               <div class="task-overview-summary" id="vikunjaSummary"></div>
               <div class="task-overview-list" id="vikunjaRecentTasks"></div>
-              <a class="secondary-button inline-button is-disabled" id="tasksOpenLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
+              <p class="task-responsibility" data-task-responsibility><strong>Hubで編集:</strong> 候補・判断・GO。<strong>Tasks側で編集:</strong> title・期限・担当・進捗・完了。ここは読み取り表示です。</p>
+              <a class="secondary-button inline-button is-disabled tasks-primary-link" id="tasksOpenLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
             </section>
             <section class="panel dashboard-attention">
               <div class="panel-header">
@@ -104,14 +126,15 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Tasks view</p>
-              <h2 id="gantt-title">参考ガント表示</h2>
+              <h2 id="gantt-title">簡易日程</h2>
             </div>
             <div class="section-heading-actions">
               <span class="status-pill">Tasks側で管理</span>
-              <a class="text-link is-disabled" id="ganttExternalLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
+              <a class="text-link is-disabled tasks-primary-link" id="ganttExternalLink" href="#tasks" target="_blank" rel="noreferrer" aria-disabled="true">Tasks側を開く</a>
             </div>
           </div>
           <section class="panel gantt-panel">
+            <p class="task-responsibility" data-task-responsibility>この予定表示は状態mirrorです。期限・担当・進捗の変更はTasks側で行い、Hubには再取得後に反映されます。</p>
             <div class="gantt-header">
               <span>タスク</span>
               <span>担当</span>
@@ -127,7 +150,7 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Review</p>
-              <h2 id="queue-title">確認待ちキュー</h2>
+              <h2 id="queue-title">タスクキュー</h2>
             </div>
             <span class="status-pill">all pending first</span>
           </div>
@@ -171,11 +194,47 @@
           </div>
         </section>
 
+        <section class="section chat-section" id="chat" aria-labelledby="chat-title">
+          <h2 id="chat-title" class="sr-only">AI相談</h2>
+          <div class="chat-layout">
+            <aside class="panel chat-context-card chat-context-strip" aria-label="相談に渡す現在情報">
+              <div class="chat-context-intro">
+                <div>
+                  <p class="eyebrow">LIVE CONTEXT</p>
+                  <h3>この相談が見ている情報</h3>
+                </div>
+                <p class="muted" id="chatContextMeta">コンテキスト情報を読み込んでいます</p>
+              </div>
+              <div id="chatContextSnapshot" class="chat-context-snapshot"></div>
+            </aside>
+            <section class="panel chat-panel" aria-label="AI相談の会話">
+              <div class="chat-toolbar">
+                <div class="chat-toolbar__meta">
+                  <strong>AI相談</strong>
+                  <span class="muted" id="chatThreadMeta">履歴を読み込んでいます</span>
+                  <span class="status-pill" id="chatProviderStatus">接続確認中</span>
+                  <span class="chat-runtime-meta" id="chatModelMeta">モデル情報を読み込んでいます</span>
+                </div>
+                <button class="text-button" type="button" data-scroll-target="queue">確認待ちを見る</button>
+              </div>
+              <div class="chat-messages" id="chatPageMessages" aria-live="polite"></div>
+              <form class="chat-composer" id="chatPageForm">
+                <label class="sr-only" for="chatPageInput">相談内容</label>
+                <div class="chat-composer-row">
+                  <textarea id="chatPageInput" name="content" rows="2" placeholder="例：今週やることが散らかっている。優先順位を一緒に整理したい"></textarea>
+                  <button class="primary-button" type="submit">相談する</button>
+                </div>
+                <div class="chat-composer-meta muted"><span id="chatPageStatus">ローカルLLMへ接続します</span> · 提案は自動登録されません</div>
+              </form>
+            </section>
+          </div>
+        </section>
+
         <section class="section" id="worker" aria-labelledby="worker-title">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Worker view</p>
-              <h2 id="worker-title">作業者用 / タスクサマリ</h2>
+              <h2 id="worker-title">ワークビュー</h2>
             </div>
             <span class="status-pill">Codex trigger</span>
           </div>
@@ -204,12 +263,24 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Admin</p>
-              <h2 id="admin-title">管理画面の最小範囲</h2>
+              <h2 id="admin-title">簡易管理</h2>
             </div>
             <span class="status-pill">SQLite 設定</span>
           </div>
           <div class="admin-status" id="adminStatus"></div>
           <div class="admin-grid">
+            <section class="panel admin-observability">
+              <div class="panel-header">
+                <div>
+                  <h3>運用観測</h3>
+                  <p class="muted">source同期、Vikunja再照合、Hub backupの直近結果</p>
+                </div>
+                <button class="secondary-button" type="button" id="refreshObservability">更新</button>
+              </div>
+              <div class="observability-status" id="observabilityStatus">観測結果を読み込み中</div>
+              <div class="observability-metrics" id="observabilityMetrics"></div>
+              <div class="observability-list" id="observabilityRuns"></div>
+            </section>
             <section class="panel">
               <h3>入口設定</h3>
               <div class="admin-control-list" id="sourceSettings"></div>
@@ -232,20 +303,20 @@
               <div class="tag-cloud editable" id="tagMaster"></div>
             </section>
             <section class="panel">
-              <h3>ロール表示</h3>
-              <div class="admin-control-list" id="roleSettings"></div>
-            </section>
-            <section class="panel">
-              <h3>AI確定方針</h3>
-              <div class="admin-control-list" id="automationSettings"></div>
-            </section>
-            <section class="panel">
               <h3>プロンプトテンプレート</h3>
               <div class="admin-control-list" id="promptSettings"></div>
             </section>
             <section class="panel">
               <h3>取り込み対象</h3>
               <div class="admin-control-list" id="scopeSettings"></div>
+            </section>
+            <section class="panel">
+              <h3>ロール表示</h3>
+              <div class="admin-control-list" id="roleSettings"></div>
+            </section>
+            <section class="panel">
+              <h3>AI確定方針</h3>
+              <div class="admin-control-list" id="automationSettings"></div>
             </section>
           </div>
         </section>
@@ -309,6 +380,26 @@
         </div>
         <div class="object-preview" id="objectPreview"></div>
       </section>
+    </aside>
+    <button class="floating-chat-button" type="button" data-open-chat>相談</button>
+    <div class="drawer-backdrop chat-drawer-backdrop" id="chatDrawerBackdrop" hidden></div>
+    <aside class="chat-drawer" id="chatDrawer" aria-label="AI相談サイドウィンドウ" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <p class="eyebrow">Local assistant</p>
+          <h2>AI相談</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-chat title="Close chat">×</button>
+      </div>
+      <div class="chat-messages" id="chatDrawerMessages" aria-live="polite"></div>
+      <form class="chat-composer" id="chatDrawerForm">
+        <label class="sr-only" for="chatDrawerInput">相談内容</label>
+        <textarea id="chatDrawerInput" name="content" rows="4" placeholder="相談内容"></textarea>
+        <div class="chat-composer-footer">
+          <span class="muted" id="chatDrawerStatus">履歴を読み込んでいます</span>
+          <button class="primary-button" type="submit">送信</button>
+        </div>
+      </form>
     </aside>
     <script src="./app.js"></script>
   </body>

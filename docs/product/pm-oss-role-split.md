@@ -18,10 +18,10 @@
 | --- | --- | --- | --- |
 | 書き入れ口 / 作成口 | Plane、Leantime | 軽量入力、アイデアを行動に寄せる導線 | source、原文、AI分類 |
 | 横断ダッシュボード | Plane、Leantime | 今日見るべきこと、期限・予定・実行状態の要約 | 入口別量、候補品質、判断ログ |
-| TODO / タスクリスト | Leantime | list / table / kanban、担当・期限・優先度の読み順 | GO前の確認、source provenance |
-| タスク詳細 | Leantime | subtask、コメント、依存、進捗、期日 | AI要約、抜粋、不要判定 |
+| TODO / タスクリスト | Vikunja | list / table / kanban、担当・期限・優先度の読み順 | GO前の確認、source provenance |
+| タスク詳細 | Vikunja | subtask、コメント、依存、進捗、期日 | AI要約、抜粋、不要判定 |
 | カレンダー | Leantime、Cal.com | 計画済みTODOの時間的な見通し | Google Calendar登録前のGO |
-| ガント | Leantime | milestone、期間、依存をまとめて読む補助ビュー | 未確定候補の情報 |
+| ガント | Vikunja | 期間、依存をまとめて読む補助ビュー | 未確定候補の情報 |
 | 人員計画・横断計画 | OpenProject | 将来の比較材料 | ロール、閲覧範囲、AI判断 |
 
 ## Vikunja との責務境界

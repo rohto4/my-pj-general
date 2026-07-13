@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cozy Workspace UI"
+  short_description: "Design calm, rich workspace interfaces"
+  default_prompt: "Use -cozy-workspace-ui to redesign this workspace as a rich, calm, non-card-heavy interface."

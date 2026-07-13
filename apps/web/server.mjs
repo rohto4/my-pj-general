@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
@@ -47,6 +47,12 @@ function sendJson(response, status, payload) {
   response.end(JSON.stringify(payload));
 }
 
+function renderChatPage(sourceHtml) {
+  return sourceHtml
+    .replace("<title>pj-general P0</title>", "<title>AI相談 | pj-general P0</title>")
+    .replace('<body data-theme="listening-lounge">', '<body class="chat-page" data-theme="listening-lounge">');
+}
+
 function runDb(command, payload = {}) {
   const result = spawnSync(python, [dbTool, command], {
     input: JSON.stringify(payload),
@@ -69,6 +75,299 @@ function vikunjaConfig() {
     webhookSecret: process.env.VIKUNJA_WEBHOOK_SECRET || "",
   };
   return config;
+}
+
+function localLlmConfig() {
+  const configuredBase = (process.env.LOCAL_LLM_BASE_URL || process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+  const baseUrl = configuredBase.endsWith("/v1") ? configuredBase : `${configuredBase}/v1`;
+  const provider = process.env.LOCAL_LLM_PROVIDER
+    || (process.env.OLLAMA_BASE_URL ? "ollama" : process.env.LOCAL_LLM_BASE_URL ? "openai-compatible" : "ollama");
+  return {
+    enabled: process.env.LOCAL_LLM_ENABLED !== "false",
+    baseUrl,
+    provider,
+    model: process.env.LOCAL_LLM_MODEL || "gemma4:latest",
+    apiKey: process.env.LOCAL_LLM_API_KEY || "",
+    timeoutMs: Math.max(Number.parseInt(process.env.LOCAL_LLM_TIMEOUT_MS || "60000", 10), 5000),
+    tools: process.env.LOCAL_LLM_ENABLE_TOOLS !== "false",
+    think: process.env.LOCAL_LLM_THINK === "true",
+  };
+}
+
+async function publicLocalLlmConfig() {
+  const config = localLlmConfig();
+  const configuredContextLength = Number.parseInt(process.env.LOCAL_LLM_CONTEXT_LENGTH || "", 10);
+  let contextLength = Number.isFinite(configuredContextLength) && configuredContextLength > 0
+    ? configuredContextLength
+    : null;
+  if (!contextLength && config.enabled && config.provider === "ollama") {
+    try {
+      const ollamaRoot = config.baseUrl.replace(/\/v1$/, "");
+      const modelResponse = await fetch(`${ollamaRoot}/api/show`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: config.model }),
+        signal: AbortSignal.timeout(healthTimeoutMs()),
+      });
+      if (modelResponse.ok) {
+        const modelInfo = (await modelResponse.json()).model_info || {};
+        const contextEntry = Object.entries(modelInfo).find(([key, value]) => (
+          key.endsWith(".context_length") && Number.isFinite(Number(value)) && Number(value) > 0
+        ));
+        if (contextEntry) contextLength = Number(contextEntry[1]);
+      }
+    } catch {
+      contextLength = null;
+    }
+  }
+  return {
+    enabled: config.enabled,
+    baseUrl: config.baseUrl,
+    provider: config.provider,
+    model: config.model,
+    contextLength,
+    tools: config.tools,
+  };
+}
+
+function healthTimeoutMs() {
+  return Math.min(Math.max(Number.parseInt(process.env.HEALTH_DEPENDENCY_TIMEOUT_MS || "1500", 10), 250), 10000);
+}
+
+async function checkVikunjaHealth() {
+  const config = vikunjaConfig();
+  const configuredValues = [config.baseUrl, config.publicUrl, config.projectId, config.apiToken];
+  if (configuredValues.every((value) => !value)) return { status: "not_configured", configured: false };
+  if (configuredValues.some((value) => !value)) return { status: "misconfigured", configured: false };
+  const startedAt = performance.now();
+  try {
+    const response = await fetch(`${config.baseUrl}${config.apiBasePath}/projects/${encodeURIComponent(config.projectId)}`, {
+      headers: { authorization: `Bearer ${config.apiToken}` },
+      signal: AbortSignal.timeout(healthTimeoutMs()),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return { status: "ok", configured: true, latencyMs: Math.round(performance.now() - startedAt) };
+  } catch {
+    return { status: "unavailable", configured: true, latencyMs: Math.round(performance.now() - startedAt) };
+  }
+}
+
+async function checkLocalLlmHealth() {
+  const config = localLlmConfig();
+  if (!config.enabled) return { status: "disabled", enabled: false, provider: config.provider, model: config.model };
+  const headers = {};
+  if (config.apiKey) headers.authorization = `Bearer ${config.apiKey}`;
+  const startedAt = performance.now();
+  try {
+    const response = await fetch(`${config.baseUrl}/models`, {
+      headers,
+      signal: AbortSignal.timeout(healthTimeoutMs()),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return {
+      status: "ok",
+      enabled: true,
+      provider: config.provider,
+      model: config.model,
+      latencyMs: Math.round(performance.now() - startedAt),
+    };
+  } catch {
+    return {
+      status: "unavailable",
+      enabled: true,
+      provider: config.provider,
+      model: config.model,
+      latencyMs: Math.round(performance.now() - startedAt),
+    };
+  }
+}
+
+async function getSystemHealth() {
+  const database = runDb("database-health");
+  const [vikunja, localLlm] = await Promise.all([checkVikunjaHealth(), checkLocalLlmHealth()]);
+  const degraded = database.status !== "ok"
+    || ["misconfigured", "unavailable"].includes(vikunja.status)
+    || localLlm.status === "unavailable";
+  return {
+    status: degraded ? "degraded" : "ok",
+    checkedAt: new Date().toISOString(),
+    database,
+    dependencies: { vikunja, localLlm },
+  };
+}
+
+function chatToolDefinitions() {
+  return [
+    {
+      type: "function",
+      function: {
+        name: "get_threadline_context",
+        description: "Threadlineの現在のHub候補、実行状態、Vikunja概要を取得する。推測せず、相談への回答に必要なときだけ使う。",
+        parameters: {
+          type: "object",
+          properties: {
+            scope: { type: "string", enum: ["all", "tasks", "candidates"] },
+          },
+          additionalProperties: false,
+        },
+      },
+    },
+  ];
+}
+
+async function getThreadlineChatContext(scope = "all") {
+  const [hub, vikunja] = await Promise.all([runDb("chat-context"), getVikunjaOverview()]);
+  if (scope === "tasks") return { execution_state: hub.execution_state, vikunja };
+  if (scope === "candidates") return { hub: hub.hub };
+  return { ...hub, vikunja };
+}
+
+function buildChatSystemPrompt(context) {
+  return [
+    "あなたはThreadlineのローカル相談アシスタントです。日本語で、相談相手として具体的かつ簡潔に答えてください。",
+    "現在のHub候補とTasks側の情報を参照できます。情報がない場合は推測せず、確認が必要だと伝えてください。",
+    "必要なら読み取り専用のget_threadline_context toolを使って、Hub候補またはTasks状況の要約を確認してください。タスク登録やGOはtoolで実行できません。",
+    "タスクらしい依頼を検出した場合は、回答本文で『タスク候補にしますか？』と確認し、確認用の構造化ブロックを末尾に追加してください。",
+    "構造化ブロックは、候補を提案するときだけ次の形式で出してください。候補はまだpendingであり、ユーザーのボタン操作なしに登録やGOをしてはいけません。",
+    "候補の要約は入力にない推測や定型の導入句を入れない。判断に必要な事実・目的・制約だけを日本語1〜2文で書く。",
+    "todoは画面でそのまま実行タイトルとして読める具体的な行動句にする。『〜を確認する』『〜を整理する』だけの曖昧な表現にしない。",
+    "titleはtodoと同じ実行名を優先し、タグを推測で増やさない。不足があればmissingへ明記する。",
+    "THREADLINE_TASK_PROPOSALS",
+    "```json",
+    '[{"title":"短いタイトル","summary":"要約","todo":"実行すること","kind":"todo","schedule":"候補なし","confidence":"medium","missing":[]}]',
+    "```",
+    "END_THREADLINE_TASK_PROPOSALS",
+    "現在のThreadline context:",
+    JSON.stringify(context, null, 2),
+  ].join("\n");
+}
+
+function messageContent(message) {
+  if (Array.isArray(message?.content)) {
+    return message.content.map((part) => typeof part === "string" ? part : part?.text || "").join("");
+  }
+  return String(message?.content || "");
+}
+
+async function callLocalLlm(history, context) {
+  const config = localLlmConfig();
+  if (!config.enabled) throw new Error("ローカルLLM接続が無効です");
+  const system = { role: "system", content: buildChatSystemPrompt(context) };
+  const messages = [system, ...history.filter((message) => ["user", "assistant"].includes(message.role)).map((message) => ({
+    role: message.role,
+    content: message.content,
+  }))];
+  const headers = { "content-type": "application/json" };
+  if (config.apiKey) headers.authorization = `Bearer ${config.apiKey}`;
+
+  async function request(withTools) {
+    const providerOptions = config.provider === "ollama" ? { think: config.think } : {};
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+        temperature: 0.2,
+        max_tokens: 1200,
+        stream: false,
+        ...providerOptions,
+        ...(withTools ? { tools: chatToolDefinitions(), tool_choice: "auto" } : {}),
+      }),
+      signal: AbortSignal.timeout(config.timeoutMs),
+    });
+    if (!response.ok) throw new Error(`provider ${response.status}`);
+    return response.json();
+  }
+
+  let payload;
+  try {
+    payload = await request(config.tools);
+  } catch (error) {
+    if (!config.tools) throw new Error("ローカルLLMに接続できません");
+    try {
+      payload = await request(false);
+    } catch {
+      throw new Error("ローカルLLMに接続できません");
+    }
+  }
+
+  const firstMessage = payload?.choices?.[0]?.message;
+  if (!firstMessage) throw new Error("ローカルLLMから回答がありません");
+  if (Array.isArray(firstMessage.tool_calls) && firstMessage.tool_calls.length > 0) {
+    const toolMessages = [...messages, firstMessage];
+    for (const toolCall of firstMessage.tool_calls) {
+      if (toolCall?.function?.name !== "get_threadline_context") {
+        toolMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify({ error: "unknown tool" }),
+        });
+        continue;
+      }
+      let argumentsValue = {};
+      try {
+        argumentsValue = JSON.parse(toolCall.function.arguments || "{}");
+      } catch {
+        argumentsValue = {};
+      }
+      const scope = ["all", "tasks", "candidates"].includes(argumentsValue.scope)
+        ? argumentsValue.scope
+        : "all";
+      const scopedContext = await getThreadlineChatContext(scope);
+      toolMessages.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(scopedContext),
+      });
+    }
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: config.model,
+        messages: toolMessages,
+        temperature: 0.2,
+        max_tokens: 1200,
+        stream: false,
+        ...(config.provider === "ollama" ? { think: config.think } : {}),
+      }),
+      signal: AbortSignal.timeout(config.timeoutMs),
+    });
+    if (!response.ok) throw new Error("ローカルLLMに接続できません");
+    const followup = await response.json();
+    const answer = messageContent(followup?.choices?.[0]?.message).trim();
+    if (!answer) throw new Error("ローカルLLMから回答本文がありません");
+    return answer;
+  }
+  const answer = messageContent(firstMessage).trim();
+  if (!answer) throw new Error("ローカルLLMから回答本文がありません");
+  return answer;
+}
+
+function parseChatTaskProposals(content) {
+  const pattern = /THREADLINE_TASK_PROPOSALS\s*```(?:json)?\s*([\s\S]*?)```\s*END_THREADLINE_TASK_PROPOSALS/;
+  const match = content.match(pattern);
+  if (!match) return { content: content.trim(), suggestions: [] };
+  let suggestions = [];
+  try {
+    const parsed = JSON.parse(match[1]);
+    suggestions = (Array.isArray(parsed) ? parsed : [parsed])
+      .filter((item) => item && typeof item.title === "string" && item.title.trim())
+      .slice(0, 5)
+      .map((item) => ({
+        title: item.title.trim().slice(0, 200),
+        summary: String(item.summary || item.title).slice(0, 1000),
+        todo: String(item.todo || item.title).slice(0, 500),
+        kind: ["todo", "idea", "consideration", "concern", "schedule_candidate"].includes(item.kind) ? item.kind : "todo",
+        schedule: String(item.schedule || "候補なし").slice(0, 200),
+        confidence: ["high", "medium", "low"].includes(item.confidence) ? item.confidence : "medium",
+        missing: Array.isArray(item.missing) ? item.missing.map(String).slice(0, 10) : [],
+      }));
+  } catch {
+    suggestions = [];
+  }
+  return { content: content.replace(match[0], "").trim(), suggestions };
 }
 
 function emptyVikunjaOverview(reason = "not-configured") {
@@ -150,8 +449,8 @@ function verifyVikunjaSignature(rawBody, signature, secret) {
   return timingSafeEqual(Buffer.from(signature, "utf8"), Buffer.from(expected, "utf8"));
 }
 
-async function createVikunjaExecution(candidateId) {
-  const prepared = runDb("prepare-execution", { id: candidateId });
+async function createVikunjaExecution(candidateId, operationId) {
+  const prepared = runDb("prepare-execution", { id: candidateId, operation_id: operationId });
   if (prepared.existing) return prepared.link;
   const config = vikunjaConfig();
   if (!config.baseUrl || !config.projectId || !config.apiToken) {
@@ -173,7 +472,7 @@ async function createVikunjaExecution(candidateId) {
           authorization: `Bearer ${config.apiToken}`,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ title: candidate.title, description }),
+        body: JSON.stringify({ title: candidate.todo || candidate.title, description }),
         signal: AbortSignal.timeout(10000),
       },
     );
@@ -185,6 +484,7 @@ async function createVikunjaExecution(candidateId) {
       attempt_id: prepared.attempt_id,
       project_id: config.projectId,
       external_url: `${config.publicUrl}/tasks/${task.id}`,
+      operation_id: operationId,
       task,
     });
   } catch (error) {
@@ -199,53 +499,122 @@ async function createVikunjaExecution(candidateId) {
 }
 
 async function reconcileVikunjaExecutions() {
+  const syncRun = runDb("start-source-sync", { source: "vikunja_reconcile" });
   const config = vikunjaConfig();
-  if (!config.baseUrl || !config.apiToken) throw new Error("Vikunja connection is not configured");
-  const links = runDb("list-execution-links");
-  const summary = { checked: links.length, updated: 0, detached: 0, failed: 0 };
-  for (const link of links) {
-    try {
-      const apiResponse = await fetch(
-        `${config.baseUrl}${config.apiBasePath}/tasks/${encodeURIComponent(link.external_task_id)}`,
-        {
-          headers: { authorization: `Bearer ${config.apiToken}` },
-          signal: AbortSignal.timeout(10000),
-        },
-      );
-      if (apiResponse.status === 404) {
-        runDb("record-reconcile-result", { candidate_id: link.candidate_id, result: "detached" });
-        summary.detached += 1;
-        continue;
+  try {
+    if (!config.baseUrl || !config.apiToken) throw new Error("Vikunja connection is not configured");
+    const links = runDb("list-execution-links");
+    const summary = { checked: links.length, updated: 0, detached: 0, failed: 0 };
+    for (const link of links) {
+      try {
+        const apiResponse = await fetch(
+          `${config.baseUrl}${config.apiBasePath}/tasks/${encodeURIComponent(link.external_task_id)}`,
+          {
+            headers: { authorization: `Bearer ${config.apiToken}` },
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+        if (apiResponse.status === 404) {
+          runDb("record-reconcile-result", { candidate_id: link.candidate_id, result: "detached" });
+          summary.detached += 1;
+          continue;
+        }
+        const responseBody = await apiResponse.text();
+        if (!apiResponse.ok) throw new Error(`Vikunja API ${apiResponse.status}: ${responseBody.slice(0, 500)}`);
+        runDb("record-reconcile-result", {
+          candidate_id: link.candidate_id,
+          result: "updated",
+          task: JSON.parse(responseBody),
+        });
+        summary.updated += 1;
+      } catch (error) {
+        const detail = error.cause?.message ? `${error.message}: ${error.cause.message}` : error.message;
+        runDb("record-reconcile-result", {
+          candidate_id: link.candidate_id,
+          result: "failed",
+          error: detail,
+        });
+        summary.failed += 1;
       }
-      const responseBody = await apiResponse.text();
-      if (!apiResponse.ok) throw new Error(`Vikunja API ${apiResponse.status}: ${responseBody.slice(0, 500)}`);
-      runDb("record-reconcile-result", {
-        candidate_id: link.candidate_id,
-        result: "updated",
-        task: JSON.parse(responseBody),
-      });
-      summary.updated += 1;
-    } catch (error) {
-      const detail = error.cause?.message ? `${error.message}: ${error.cause.message}` : error.message;
-      runDb("record-reconcile-result", {
-        candidate_id: link.candidate_id,
-        result: "failed",
-        error: detail,
-      });
-      summary.failed += 1;
     }
+    runDb("finish-source-sync", {
+      run_id: syncRun.run_id,
+      state: summary.failed ? "partial" : "succeeded",
+      scanned: summary.checked,
+      created: summary.updated,
+      skipped: summary.detached,
+      failed: summary.failed,
+    });
+    return summary;
+  } catch (error) {
+    runDb("finish-source-sync", { run_id: syncRun.run_id, state: "failed", failed: 1, error: error.message });
+    throw error;
   }
-  return summary;
 }
 
 async function handleApi(request, response, url) {
   try {
+    if (request.method === "GET" && url.pathname === "/api/health") {
+      sendJson(response, 200, await getSystemHealth());
+      return true;
+    }
+    if (request.method === "GET" && url.pathname === "/api/observability") {
+      sendJson(response, 200, runDb("observability"));
+      return true;
+    }
     if (request.method === "GET" && url.pathname === "/api/bootstrap") {
       sendJson(response, 200, runDb("bootstrap"));
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/integrations/vikunja/overview") {
       sendJson(response, 200, await getVikunjaOverview());
+      return true;
+    }
+    if (request.method === "GET" && url.pathname === "/api/chat/bootstrap") {
+      const [chat, context] = await Promise.all([
+        Promise.resolve(runDb("chat-bootstrap", { thread_id: "chat-default" })),
+        getThreadlineChatContext(),
+      ]);
+      sendJson(response, 200, { ...chat, config: await publicLocalLlmConfig(), context });
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/chat/messages") {
+      const body = JSON.parse((await readBody(request)) || "{}");
+      const content = String(body.content || "").trim();
+      if (!content) {
+        sendJson(response, 400, { error: "相談内容を入力してください" });
+        return true;
+      }
+      const threadId = body.threadId || "chat-default";
+      const userMessage = runDb("chat-save-message", { thread_id: threadId, role: "user", content });
+      try {
+        const [history, context] = await Promise.all([
+          Promise.resolve(runDb("chat-bootstrap", { thread_id: threadId })),
+          getThreadlineChatContext(),
+        ]);
+        const rawAnswer = await callLocalLlm(history.messages, context);
+        const parsed = parseChatTaskProposals(rawAnswer);
+        const assistantMessage = runDb("chat-save-message", {
+          thread_id: threadId,
+          role: "assistant",
+          content: parsed.content || "回答を生成できませんでした。",
+          metadata: { model: localLlmConfig().model, suggestionCount: parsed.suggestions.length },
+        });
+        const suggestions = parsed.suggestions.length
+          ? runDb("chat-create-suggestions", { thread_id: threadId, message_id: assistantMessage.id, suggestions: parsed.suggestions })
+          : [];
+        sendJson(response, 200, { userMessage, assistantMessage, suggestions, context, config: publicLocalLlmConfig() });
+      } catch (error) {
+        error.statusCode = 502;
+        sendJson(response, 502, { error: error.message, userMessage });
+      }
+      return true;
+    }
+    const chatSuggestionMatch = url.pathname.match(/^\/api\/chat\/suggestions\/([^/]+)\/accept$/);
+    if (request.method === "POST" && chatSuggestionMatch) {
+      const suggestionId = decodeURIComponent(chatSuggestionMatch[1]);
+      const result = runDb("chat-accept-suggestion", { id: suggestionId });
+      sendJson(response, 201, result);
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/candidates") {
@@ -256,7 +625,8 @@ async function handleApi(request, response, url) {
     const executionMatch = url.pathname.match(/^\/api\/candidates\/([^/]+)\/execution$/);
     if (request.method === "POST" && executionMatch) {
       const candidateId = decodeURIComponent(executionMatch[1]);
-      const link = await createVikunjaExecution(candidateId);
+      const payload = JSON.parse((await readBody(request)) || "{}");
+      const link = await createVikunjaExecution(candidateId, payload.operation_id);
       sendJson(response, link.sync_state === "synced" ? 200 : 201, link);
       return true;
     }
@@ -346,7 +716,7 @@ async function handleApi(request, response, url) {
     }
     return false;
   } catch (error) {
-    sendJson(response, 500, { error: error.message });
+    sendJson(response, error.statusCode || 500, { error: error.message });
     return true;
   }
 }
@@ -356,6 +726,21 @@ runDb("bootstrap");
 createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://localhost:${port}`);
   if (url.pathname.startsWith("/api/") && (await handleApi(request, response, url))) {
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/chat") {
+    const html = renderChatPage(readFileSync(join(root, "index.html"), "utf8"));
+    response.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+    });
+    response.end(html);
+    return;
+  }
+  if (request.method === "GET" && url.pathname === "/theme-room-03") {
+    response.writeHead(302, { location: "/", "cache-control": "no-store" });
+    response.end();
     return;
   }
 

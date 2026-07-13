@@ -1,5 +1,69 @@
 # 完了記録
 
+## 2026-07-13 設計書化カバレッジ・役割別読込境界
+
+- `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`を、P0/P1完成度星取表とは別の5段階・クリック編集可能な設計書カバレッジ正本として追加した。入口取込、Hub候補・判断、Hub UI、Hub↔Vikunja、Tasks UI、再配信、LLM、複数Project、P1認証/PostgreSQL、継続同期の10機能について、正本・証跡・最小実装読込境界を対応付けた。
+- P0/P1星取表の「設計書化カバレッジ / 役割別読込境界」は全10軸5/5・要確認なしへ更新した。旧ソース評価だけをこの更新時に初期化するため、他行のブラウザ内クリック評価は保持する。
+- 不足していたHub UI操作契約、Tasks UI契約、複数Projectの体験・データ・連携契約・構成を、`docs/product` / `docs/spec` / `docs/data` / `docs/arch`の責務へ分離して補完した。実装済みかどうかと文書化の完成度を混同せず、P0実機受入の未達は従来のP0/P1星取表・受入HTMLで別管理する。
+- `docs/guide/implementation-context-reading-guide.md`を追加し、圧縮・handoff後は役割別の最小正本文書を先に読み、必要時だけ対象実装へ進むルールを`AGENTS.md`へ同期した。
+- PJ専用skill `audit-design-documentation-coverage`、`document-implementation-contracts`、`maintain-design-documentation`を追加した。Node静的回帰8件と`git diff --check`で検証する。skill-creatorのPython quick validatorはPyYAML非同梱のため実行できず、依存追加は行わない。
+- 横断再利用できる原則のみを`G:\knowledge-vault\knowledge\dev\design-documentation-coverage-and-minimal-context-reading.md`へ転記した。PJ固有の受入状態・実装詳細・未完TODOはPJ内正本に残している。
+- 実データ変更、Linux配信、再インポート、secretの参照・保存は行っていない。
+
+## 2026-07-13 RV01〜RV04 Vikunja再受入のsource実装
+
+- DashboardはPROJECT OVERVIEW guideとVIEWSを外し、Project名を薄い補助表記にした「<PJ名>のタスク概要」、左寄せの処理状況、完了taskを除いた`日付未定タスク`へ再構成した。
+- Ganttは既定範囲を前14日〜向こう62日、日付ドラッグ/resize時の確認ダイアログ、キャンセル時にAPI更新を送らない境界、完了barを`0.28` opacityへ変更した。
+- Kanbanはguideと固定縦高/内部縦scrollを外し、4列を維持したまま列内のtaskを全表示する。Task detailはbreadcrumbをtitle前へ移し、1438px相当でも右側に18remのsticky操作面を残し、説明・コメントの文字を0.82remにした。
+- fork unitは51 files / 1090 testsが成功した。Linux custom image再build、1438x715 before/after JPEG、実画面受入は未完了であり、実データ更新は行っていない。
+
+## 2026-07-13 Thread Line縮小版PNGのsource統合
+
+- ユーザー提供の正式縮小アセット`docs/product/thread-line-logo-handoff-2026-07-12/assets/thread-line-mark-master-256.png`を、Hub `apps/web/assets/`とVikunja fork `frontend/src/assets/`へ配信対象として配置した。原寸`thread-line-mark-master.png`は制作・保管用のままとし、サイトへは含めない。
+- HubとTasksの左レールはともに44pxの直角フレーム、1px輪郭、6px藍色オフセット、`object-fit: cover`で同一のTLマークを表示する。Hub輪郭は銅、Tasks輪郭はTasks青である。
+- Hub Node 31件、Vikunja fork unit 51 files / 1090 tests、production buildが成功した。Linuxへのbundle更新・再build・実画面受入は未実施であり、実データ変更・再インポートは行っていない。
+
+## 2026-07-12 P0フロント受入: R03実機完了
+
+- ユーザーが現行Hub bundleをhash確認後にLinuxへ展開し、`pj-general` serviceだけを再build・再作成した。
+- `/api/bootstrap` 200、管理画面の状態ラベル位置、取込／有効化／無効化の縦並び、管理カード2列配置、4K縦3分割相当の横崩れなしをChromeで確認した。
+- Vikunjaの再作成、DB/files/volume削除、再インポートは実施していない。
+
+## 2026-07-12 P0フロント実装断面: U03確認境界
+
+- HubのGO／不要／アーカイブと保存してGOについて、送信前に「実データと判断ログを変更する」確認ダイアログを表示する境界を実装した。
+- Node回帰28件、Python回帰7件、Hub/VikunjaのNode構文、星取表・受入HTML script構文、`git diff --check`を通過した。
+- 更新Hub bundle `tmp/pj-general-web-working-tree.tgz`を作成し、SHA-256 `B9EB93B0ABEC1769C503AA6A3828A75BCC6A101F9809BE9720EF314922A7B7B9`をR03手順・runbook・handoffへ同期した。
+- 残りはThread Line PNG実装、U03/U04/U05の実画面受入であり、実データ変更・再インポートは行っていない。
+
+## 2026-07-12 P0正式完了・P1計画
+
+- P0の必須導線を、Hub回帰17件と既存Linux実機E2E証跡で再監査し、正式完了と判定した。
+- P0正本から未実装のMisskey / Calendar / IdeaCard、自動AI整理を必須扱いする古い記述を除き、実装済み入口・Vikunja実行・状態mirrorへ同期した。
+- Listening Lounge本流とVikunja frontend fork最終commit `325bc5475`、14状態の実データUI監査を完了証跡へ反映した。
+- `docs/ops/p0-operations-runbook-2026-07.md` に起動、backup、restore、縮退、fork rollbackを整理した。
+- 現在の実DB量と運用実績を基準にP1を再設計し、常設運用・観測、fork配信、定期入口workerを最優先にした。
+- Misskey、重複束ね、部分自動確定、Calendar、PostgreSQL、認証を採用・PoC・条件付き保留へ分類し、P1ブリーフと実装タスクを作成した。
+
+## 2026-07-12 P1-A ローカルhealth・backup
+
+- `GET /api/health` を追加し、SQLite quick_check・件数とVikunja / local LLMの依存状態をsecret・URL・DB pathなしで確認できるようにした。
+- 未設定・無効を正常縮退、設定不足・到達不能を `degraded` として区別した。
+- SQLite online backup commandとPowerShell wrapperを追加し、timestamp世代、生成後quick_check、SHA-256、件数証跡を返すようにした。
+- 実DBから候補19件のbackupを作成し、integrity `ok`を確認した。
+- Node 17件、Python 3件、checkを通過した。coverage commandはchild process sourceを列挙しないためcoverage証拠から除外した。
+
+## 2026-07-12 AI相談UX再設計
+
+- 1280 x 720の実画面監査で、短文会話が細い縦箱へ潰れる、接続statusが暗く読めない、composerが初期表示外へ落ちる問題を特定した。
+- 独立相談画面を、横一列のlive context、全幅会話、常時到達できるcomposerへ再構成した。後続の短高対応で説明用の大見出しと3段階フローを除去した。
+- 空会話へ役割説明と入力スターターを追加し、Ollama / Gemma4の実接続情報を画面へ表示した。
+- Windows版Ollama上の `gemma4:latest` へ実推論し、応答 `OK` と全ロード量のVRAM配置を確認した。
+- UI契約テストを追加し、`apps/web/check.ps1` を通過した。
+- 左サイドメニューへ常設のサイド相談ボタンを追加し、620px幅のdrawerが開くことを実操作で確認した。
+- 会話数・thread・接続状態を1行化し、入力と送信を同じ行へ配置した。`max-height: 900px` / `650px` でAI相談内だけ文字と余白を縮小する。
+- 1280 x 720でdocument overflowなし、live context 26px、message領域533px、入力・送信各52pxの完全表示を確認した。Node回帰18件、check、diff checkが成功した。
+
 ## 2026-07-11
 
 - Windows 11ミニPCをUbuntu Server上のVikunja / pj-general実行環境へ移行するための、USB作成、OS導入、SSH、Firewall、Docker Compose、永続化、Secret保管、完了確認手順を docs/guide/linux-server-setup-for-vikunja.md に整理した
@@ -143,3 +207,315 @@
 - 装飾的なグラデーション、大きなピル形状、過剰な角丸を減らし、業務ツールとしてのソリッドな見た目へ寄せた。
 - 実画面でダッシュボードのTasks概要、直近タスク、QueueのTasks側リンク、Tasks側URLを確認した。
 - Vikunja upstream本体は変更せず、Hub側の視覚と導線を寄せる方針を維持した。次はユーザーの微調整を受ける段階とする。
+
+# 2026-07-11 Cozy Rich Theme Lab 4案
+
+- 現行プロダクト・クリエイティブサイト24件を調査し、参考URLと抽出原則を `docs/candi-ref/modern-rich-cozy-ui-references-2026-07.md` に記録した。
+- PJ用skill `design-cozy-workspace-ui` を作成し、角丸予算、狭幅再構成、実データ維持、スクリーンショット監査を固定した。
+- 旧2案を破棄し、`theme-room-01` から `theme-room-04` の4案へ置き換えた。
+- 本流のDOM、操作コード、SQLite、APIを共有し、テーマ専用データやモックを作らない境界を維持した。
+- 添付相当の1265px幅と1920px幅で、横overflow 0、入口別と候補種類の下端差0px、2px超の構造角丸0件を確認した。
+- 書き入れdrawer、AI相談drawer、確認待ち種類filterを実ブラウザで確認した。
+- Node 12件、Python 3件を通過した。
+
+# 2026-07-11 ローカルLLM相談窓口 v1
+
+- Hub SQLiteへ `chat_threads`、`chat_messages`、`chat_task_suggestions` を追加し、会話履歴をprovider側へ依存せず保存するようにした。
+- OpenAI互換 `POST /v1/chat/completions` adapterを追加し、Ollama `gemma4:latest`、llama.cpp等を環境変数で切替可能にした。Ollamaの思考モデルは既定で `think: false` とし、回答本文が空になる挙動を回避した。
+- Hub候補と実行状態、Vikunja project概要・直近taskを毎回contextとして渡す。tokenやsecretはcontext、履歴、公開レスポンスへ含めない。
+- 構造化 `THREADLINE_TASK_PROPOSALS` をparseし、ユーザーのボタン操作後だけ既存 `candidates.status=pending` へ追加する。直接GOやVikunja task作成は行わない。
+- `/chat` 独立画面と、通常画面から開くサイドウィンドウを追加し、同じthreadと候補操作を共有した。
+- 固定応答統合テスト、Ollama実endpoint、`apps/web/check.ps1`、Node 12件、Python 3件を確認した。
+
+# 2026-07-12 ローカルLLMエージェント相談窓口の要件統合
+
+- 既存の `/chat` 独立画面、Hubサイドウィンドウ、SQLite会話履歴、候補pending化を今回の「相談から直でタスク候補化する窓口」の実装正本として整理した。
+- `get_threadline_context` の読み取り専用toolに `all` / `tasks` / `candidates` scopeを反映し、agentが必要なThreadline情報だけを取得できるようにした。
+- タスク作成・GOはLLMへ許可せず、画面のユーザー操作から既存確認待ちキューへ送る境界を維持した。
+- tool callingの2段階応答、Tasks scopeの返却範囲、回答継続を統合テストで確認した。
+
+# 2026-07-12 固定Ganttサンプルの除去
+
+- `apps/web/db_tool.py` の固定 `GANTT_TASKS` を削除し、SQLite候補の予定日とVikunja実行状態の期限からTasks連携予定表示を生成するようにした。
+- 日付を持たない候補はGanttへ表示せず、現在週起点の4週目盛りと空状態を表示する。固定日付・固定タスク名によるモック表示は残さない。
+- API回帰テストで、初期Ganttが空であること、日付付きSQLite候補追加後だけ行が現れることを確認した。
+
+# 2026-07-12 Listening Lounge 本流昇格
+
+- 4案比較からユーザーが選定した `Listening Lounge` を、通常URL `/` の恒久テーマへ昇格した。
+- `room-base.css` とテーマ3の意匠を `apps/web/listening-lounge.css` に統合し、本流HTMLから直接読む構成へ変更した。
+- 一時テーマ切替と4案routeを本流配信から外し、旧 `/theme-room-03` は `/` へリダイレクトした。
+- 本流DOM、SQLite、API、書き入れ、AI相談を維持し、テーマ専用データやモックを追加していない。
+- 1280x1400と1920x1080で、横overflow 0、入口別と候補種類の下端差0px、2px超の構造角丸0件を確認した。
+
+# 2026-07-12 Linux配信bundle準備
+
+- Linux側の旧配信をHTTPで確認した。Hub `/api/health` は404で、HTMLにもListening Lounge / AI相談の現行マーカーがなく、再起動だけでは刷新内容が反映されない状態だった。
+- Hub `apps/web` とVikunja Listening Lounge forkの現行working treeを、永続データ・依存物を除いた転送bundleへ固めた。
+- Vikunja sidebar identity headerの契約テストを修正し、Vikunja対象テスト12件を通過した。
+- 再build・実機受入は、Codex環境からLinux SSH公開鍵認証が通らないため未完了。正本手順は `docs/guide/linux-listening-lounge-deploy.md`。
+
+# 2026-07-12 P1-A source observability
+
+- `source_sync_runs` をSQLiteへ追加し、knowledge-vault / Slack importの開始・完了・cursor・scanned / created / skipped / failedを記録するようにした。
+- Vikunja reconcileも同じrun契約で記録し、`GET /api/observability` からsource別の直近結果とHub backup世代のintegrity / SHA-256 / 件数を取得できるようにした。
+- 管理画面へ運用観測パネルを追加し、source同期、reconcile、backupの直近結果を画面で確認できるようにした。
+- Node回帰20件、Python 3件、`apps/web/check.ps1` を通過した。Linux実機でのtimer、外部媒体複製、Vikunja restore drillは未完了。
+
+# 2026-07-12 P1-C sync oneshot
+
+- `workers/sync/run.py` を追加し、knowledge-vaultとSlack payloadを同じSQLite同期契約で単発実行できるようにした。
+- `source_sync_runs` のcursor before/after、created / skipped / failedを使い、同じ入力の連続2回を冪等に処理する。
+- lock fileの排他、source単位の失敗分離、systemd `Type=oneshot` / 6時間timer / `Persistent=true` の雛形を `infra/systemd/` に追加した。
+- worker unittest 4件を通過。Linux上でのsystemd実行、Slack connectorからのpayload生成、常設secret配置は未実機確認。
+
+# 2026-07-12 P1-A backup rotation
+
+- `infra/backup/rotate-and-mirror.sh` を追加し、Hub / Vikunja DB、Vikunja files、secret設定を世代単位で退避し、`manifest.sha256`を生成するようにした。
+- `KEEP_GENERATIONS`による世代保持と、`MIRROR_ROOT`を指定した場合だけ外部媒体へ複製するsystemd daily timerを追加した。
+- backup policy unittest 2件を通過。Linux実機での初回backup、外部媒体、restore-testは未完了。
+
+# 2026-07-12 P1-B release scripts
+
+- `infra/vikunja/build-listening-lounge.sh` でrelease versionとcustom image tagを固定し、`switch-image.sh` でstable/customをデータvolume非変更のまま切り替えられるようにした。
+- stable rollbackは `vikunja/vikunja:2.3.0` のimage参照へ戻すだけの契約とし、スクリプトテスト2件を通過した。
+- Docker build・Linux起動・実データrollbackはSSH認証待ちのため未実機確認。
+
+# 2026-07-12 P1運用metrics
+
+- `/api/observability` に候補総数・確認待ち・不足項目、入口別・種類別・信頼度別、判断・GO・Tasks完了の集計を追加した。
+- 管理画面の運用観測パネルへ候補 / 確認待ち / GO / Tasks完了 / 不足ありの5指標を追加した。
+- Node回帰20件で、同期・backup証跡とmetricsの実データ応答を確認した。
+
+# 2026-07-12 P1-A reconcile timer
+
+- `workers/reconcile/run.py` と `pj-general-reconcile.timer` を追加し、Hub復旧後に15分間隔でVikunjaの実行状態を再照合できるようにした。
+- 接続不能時は終了コード1とJSONの`unavailable`を返し、systemd journalへ残す。Linux実機でのHub停止→復旧連続確認は未完了。
+
+# 2026-07-12 P1 PoC readiness
+
+- 現行実DBの19候補（全件pending、decision 0、execution link 0、missing 19）を観測し、Misskey / 類似 / 部分自動確定 / Calendar / PostgreSQL / Auth PoCを暫定保留として整理した。
+- 最終判定ではなく、GO・不要・完了・source runの実運用データを収集してから採用 / 保留 / 対象外へ昇格する入口を `docs/imp/p1-poc-readiness-2026-07-12.md` に固定した。
+- `workers/poc/dry_run.py` を追加し、現行19候補から類似4組を提示、部分自動確定はeligible 0 / blocked 19を確認した。いずれもDB変更と自動GOは行っていない。
+
+# 2026-07-12 P1 restore drill
+
+- `infra/vikunja/backup-and-verify.py` がHub / Vikunja DBを別restore-testへ復元し、integrity、対象件数、`execution_links`件数、backup/restore SHA-256を出力するようにした。
+- fixture DBによるrestore drill test 1件を通過。Linux実DB、files、secret設定を含む実機restoreはSSH認証後に実施する。
+
+# 2026-07-12 P1 verification matrix
+
+- P1要件をローカル証跡とLinux実機証跡へ分離した検証マトリクスを `docs/imp/p1-verification-matrix-2026-07-12.md` に追加した。
+
+# 2026-07-12 P1 PoC契約整理
+
+- `workers/poc/calendar_dry_run.py` とテストを追加し、現行実DBでCalendar一方向eventを外部書き込みなしでdry-runした（approved 0件、`wouldCreate=0`、`externalCalls=0`）。
+- Better Auth導入前の resource-action matrix を `docs/spec/auth-resource-action-matrix-p1.md` に整理した。GO、外部task作成、restore、secret参照は明示確認またはownerに限定する。
+- PostgreSQL移行の対象、件数・hash・外部ID比較、rollback境界を `docs/spec/postgresql-migration-dry-run-contract-p1.md` に固定した。実DBdry-runは導入ゲート後まで保留する。
+
+# 2026-07-12 P1 Vikunja guide / release procedure
+
+- VikunjaのHome、Dashboard、Inbox、List、Table、Kanban、Gantt、Task detailを、役割・入力・結果・次操作のinventoryとして `tmp/ui-review/vikunja-listening-lounge/README.md` に固定した。
+- 共通`WorkspaceGuide` / `WorkspaceEmpty`とview別guide、折りたたみ状態、0件状態をfrontend forkへ反映し、対象unit 24件・stylelint・production buildを通過した。
+- `docs/guide/linux-listening-lounge-deploy.md` にstable `v2.3.0`を基準にしたupstream fetch / range-diff / rebase / 回帰 / custom build / rollback手順を追加した。Linux実機実行はSSH認証後に行う。
+
+# 2026-07-12 P1 source sync domain separation
+
+- `apps/web/source_sync.py`へknowledge-vault / Slack import domainを分離し、HTTP境界の`db_tool`互換wrapperと`workers/sync`が同じ実装を共有するようにした。
+- source sync domain 2件とworker 4件の回帰を通過し、Web handler経由とoneshot worker経由の同期run契約が同じであることを確認した。
+
+# 2026-07-12 P1配信bundle再生成
+
+- `apps/web/source_sync.py`とCalendar PoCを含めるためHub / P1 bundleを再生成した。
+- 最新SHA-256はHub `9AE0C741D645EE1F3CEE3EBC88B8C079DD63A72DC038C6302592C211F2F65EE0`、P1 `6A73873F8D6119F61AC170B0BB3AF5BDAC13B7BD9C5F7BBB8F1B39B880659CD5`。配信手順のmanifestも更新した。
+
+# 2026-07-12 P1完了監査
+
+- P1の完了条件を`docs/imp/p1-completion-audit-2026-07-12.md`へ整理し、ローカル証明済み・設計済み・Linux/実運用待ちを分離した。
+- 直前時点ではSSH公開鍵認証待ちだったため、Linux再配信・timer・restore・rollbackを保留していた（後続のLinux実機更新で再配信とrestoreを実施）。
+
+# 2026-07-12 Linux実機再配信・再起動
+
+- SSH公開鍵登録後、Linux `universe`へ接続し、Hub/P1/Vikunja bundleのSHA-256一致を確認した。
+- 再起動前に実DB backup/restore drillを実行し、Hub candidates 19、execution links 2、Vikunja tasks 2、backup/restore hash一致を取得した。
+- 最新Hub bundleから`pj-general/web:p0`を再build・再作成し、Vikunja stable `v2.3.0`とともに再起動した。再起動後も19候補、2 link、2 taskを保持し、再インポートは行わなかった。
+- Hub `/api/health`はDB/Vikunja `ok`、Ollama未接続で`degraded`。`/api/observability`へ実DBHub backup世代を表示できるよう`P0_BACKUP_DIR`を設定した。
+- custom Vikunja image build、systemd `/etc`登録、外部mirror、Hub停止→reconcileはsudoパスワード入力待ちで残っている。
+
+# 2026-07-12 P0フロント受入 セッション2・静的監査
+
+- `docs/imp/p0-frontend-operation-audit-2026-07-12.md`に、Hub / Vikunja主要画面のbutton・link・form、API対応、無効・読み取り専用・empty状態を集約した。
+- Hub UIへ、候補・判断・GOはHub、title・期限・担当・進捗・完了はTasks側という編集責務、Tasks状態mirror、未接続/接続失敗時の次操作を追加した。
+- `Tasks概要`ナビはHub内anchorに固定し、Tasks外部リンクと混同しないようにした。Node 21件、Python 5件、構文チェックを通過した。
+- 4199番の現行ソースは`/api/bootstrap` 200を確認した。一方、アプリ内ブラウザからは4199番へ到達できず、4173番は現行`/api/bootstrap`を返さない旧プロセスだった。実データへ変更・再インポートは行っていない。
+- 旧テーマ比較タスクと旧Hub/Vikunja調和タスクは、Listening Lounge本流とP0フロント受入の正本へ統合済みのため削除した。
+
+# 2026-07-12 Linux Hub recovery helper
+
+- `infra/vikunja/recover-pj-general.sh` を追加した。HubコンテナのCompose labelから実Compose定義・serviceを自動特定し、`--status`、`--redeploy-hub`、`--restart-all`、`--dry-run`の分岐で安全に復旧できる。
+- volume削除、Compose project全体の停止、データ再インポート、env内容の出力は行わない。Hub bundle展開前に`apps/web/Dockerfile`を検査し、想定外deploy rootへの展開を止める。
+- Pythonの安全ガードテストを追加して成功。Windows環境にはbash / WSL distroが無いため、bash構文実行はLinux実機で`--help`と`--dry-run`を先に確認する。
+- Listening Lounge forkをVikunjaの既定復旧imageとして扱うよう、`--restart-all`は`rohto4/vikunja:2.3.0-pj-general-listening-lounge`を明示して再作成する。別imageを使う場合だけ`--vikunja-image`を指定する。
+
+# 2026-07-12 統一起動構成の準備
+
+- `infra/deploy/compose.yaml`へHubとListening Lounge版Vikunjaを統合し、既定imageを`rohto4/vikunja:2.3.0-pj-general-listening-lounge`に固定した。
+- `infra/deploy/start-pj-general.sh`は、fork bundleからのsource展開・custom image build・Hub/Vikunja一式起動・health確認を1入口にまとめた。`--dry-run` / `--status`も備え、volume削除・再インポートはしない。
+- Linux実機へは未配置・未実行。次回は現行データを保ったまま、統一deploy rootへ配置してdry-runから開始する。
+
+# 2026-07-12 統一起動の初回コンテナ引継ぎガード
+
+- Linuxで統一起動scriptの初回`--dry-run`を確認した。custom Listening Lounge imageは存在済みで、Hub/Vikunjaの一式起動コマンドだけが表示された。
+- `infra/deploy/start-pj-general.sh`へ`--adopt-existing`を追加し、旧split Composeが所有する同名`pj-general` / `vikunja`コンテナを通常実行で誤って置き換えないようにした。
+- 明示指定時だけ旧コンテナを削除して統一Composeのコンテナへ置換する。volume、bind mountのDB/files、image、再インポートを操作しない。Linuxで更新scriptのdry-runと実行を確認するまで、P0フロント実画面受入はブロック状態を維持する。
+
+# 2026-07-12 P0受入チェックHTML
+
+- P0 / P0追加の残確認を`docs/imp/p0-frontend-acceptance-checklist-2026-07-12.html`へ集約した。Listening Loungeの星取表テーマを継承し、Linux/配信のブロックを赤、見た目・操作感・実データ変更を伴う受入を黄として上から実行できるようにした。
+- 各項目は完了／未達の排他的チェック、未達理由・画面幅・task IDを残すコメント欄、Codexへ貼る報告プロンプトの生成・コピーを備える。入力はブラウザのlocalStorageだけに保存し、secretや実データをHTMLへ出力しない。
+- 星取表のP0 / P0追加は、実証済みまたは手順が固定された黄／赤セルとして5段階表現を統一した。ガント担当者のobject表示修正はR01としてLinux再配信待ちである。
+- ワークスペース付属runtimeで、Hub Node回帰24件、Hub Python回帰7件、統一起動Python回帰2件を実行し成功した。従来PATHにNode/Pythonがないことはテスト未実行の理由にせず、付属runtimeを明示して実行する。
+- 受入HTMLのA01（実機基盤）とA02（回帰・Hub画面幅）は初期状態で完了チェック済みとした。過去の星クリック値が新しいP0/P0追加の5/5基準を上書きしないよう、星取表のlocalStorage keyをv2へ更新した。
+- `app.js`と`server.mjs`のNode構文検査、および`git diff --check`を実行し、エラーなしを確認した。PowerShell実行ポリシーにより検証wrapperの直接実行はできないが、同じNode構文検査と個別回帰は付属runtimeで実施済みである。
+- P0受入フィードバックに基づき、HubのGanttは初回描画・visibilitychange・resize後に再layoutし、判断ログはDBの最新順を再取得するよう修正した。候補の表示名、判断ログ、Gantt、Vikunja作成task名はTODO案を優先する。Node 25件、Python 9件で回帰成功し、R02の再配信待ちである。
+
+## 2026-07-12 knowledge-vault 転記
+
+- 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
+- 日時: 2026-07-12 19:05:49 +09:00
+- 対象: 同期run観測と冪等worker、secret非露出のhealth / observability、backup / restore検証、stable/custom imageの安全なrollback、dry-run中心の復旧ガード。
+
+# 2026-07-12 Thread Line TLロゴ選定・SVG仕様化
+
+- ユーザーが銀白ホワイトグラスの中光沢案を最終選定し、`assets/07-silver-white-glass-selected.png`へ視覚基準として保存した。
+- 生成画像を直接配信せず、`VECTOR-SPEC.md`へ1000単位のpath、orbit太さ、色、四芒星位置、master / Hub / Tasks配色差を固定した。
+- `NEXT-SESSION-PROMPT.md`を画像探索用からSVG実装用へ更新した。次回はSVG単体previewを先に承認し、Hub / Tasks実装、Linux配信、Docker、実データ操作を別断面として扱う。
+- 今回はPJ固有のブランド選定と実装待ち整理であり、横断ナレッジへの転記対象なしと判断した。
+
+# 2026-07-12 Thread Line master SVG出力
+
+- 最終視覚基準をT/Lの低光沢サテン立体感と穏やかなgradientを持つ`08-satin-gradient-selected.png`へ更新した。
+- `thread-line-mark-master.svg`を透明背景、bitmap埋め込みなし、1000単位の決定論的pathとして出力した。
+- XML parse、透明背景、bitmap未埋め込み、Chrome headlessによるlight/dark背景描画を確認した。Hub / Tasks文脈配色とアプリ組み込みは後続タスクに残した。
+
+# 2026-07-12 Thread Line SVG方針撤回・PNG確定
+
+- SVG再構成で字形、orbit曲率・太さ、光沢が原画像から大きく劣化したため、SVG候補を不採用として削除した。
+- `08-satin-gradient-selected.png`と同一内容の`thread-line-mark-master.png`（1254px）と、高品質bicubic縮小の`thread-line-mark-master-256.png`（256px）を正式アセット候補として出力した。
+- 今後は画像の描き直しやSVG化を行わず、PNGをそのまま実装して実表示サイズで確認する。
+
+# 2026-07-12 P0完成度レビュー証跡
+
+- 既存のVikunja実機受入JPEGを元に、RV01〜RV05の黄色枠付きレビュー画像を`tmp/ui-review/p0-review-2026-07-12/`へ保存した。
+- Dashboard密度、Gantt空白/時間軸、Kanban 4列/内部スクロール、task detail読み順、before/after証跡の画面高不一致を、問題確定ではなくユーザー判断対象として切り出した。
+- P0受入チェックHTMLの上部へレビュー項目を追加し、画像リンク・完了/未達チェック・コメント・報告プロンプト生成を接続した。実データ変更なし。
+
+# 2026-07-12 P0受入JPEGギャラリー
+
+- `docs/imp/p0-frontend-acceptance-checklist-2026-07-12.html`の再受入JPEG一覧を、before/afterのサムネイル18枚をHTML内に表示するギャラリーへ拡張した。
+- サムネイルクリックで拡大表示し、閉じるボタン・背景クリック・Escキーで戻れる。画像の元ファイル、実データ、localStorageの受入結果は変更していない。
+- `apps/web/test/p0-checklist-gallery.test.mjs`を追加し、ギャラリー・拡大表示用のDOMと代表JPEGリンクを回帰検証した。
+
+# 2026-07-12 U03判断ログ再描画ガード
+
+- `refreshBootstrap`をbootstrap取得とobservability取得へ分離し、observability APIだけが失敗しても候補・判断ログを反映するようにした。
+- `apps/web/test/api.test.mjs`へ、refreshBootstrapの分離・fallbackを確認する回帰を追加した。実データ操作は行っていない。
+
+# 2026-07-12 Tasks左レールのアイコン配色
+
+- Vikunja forkの左レールでHubと同じUnicode記号・輪郭・24px幅・行高を使い、Hubは銅オレンジ、Tasksは`--threadline-tasks-accent`の青で表示するテーマ修正を追加した。
+- `threadline-listening-lounge.test.ts`へ配色・記号の回帰を追加し、forkの対象テスト13件が成功した。Linux配信とユーザー実機確認は未完了。
+
+# 2026-07-13 P0再配信・受入チェック断面
+
+- P0受入HTMLへ赤ブロッカーR04を追加し、Thread Line共通44px識別とRV01〜RV04の最新sourceを一つのLinux再配信手順へ集約した。過去のR02/R03/V01は履歴の完了として保持し、今回の実行対象と混同しない。
+- Hub bundleはSQLite・テストを除く実行対象だけへ再生成し、SHA-256を`E913041297C18D257BEEE560F239CB3AE828D8C06F40C7E45F96CAA3152E693A`へ更新した。Tasks bundleは不要な`frontend/dist-guide-test`を除外して再生成し、`BC0C8B8B7462FA5524C973B690AFC0C083DD34B7A55C54E55B5D227993D64C7A`へ更新した。
+- R04はHub `/api/bootstrap` 200とVikunja `/api/v1/info` 200を待機後に確認する。DB/files/volumeの削除、env表示、再インポートは手順に含めない。
+- Hub受入チェック回帰31件（Node test runner）と`git diff --check`を実行し、テストは成功、空白エラーはなしを確認した。Linux実行と実データ変更は行っていない。
+
+# 2026-07-13 星取表の実態再評価
+
+- P0 / P0追加のHTML星取表で、P0本体にも未受入のUI/UX・連携・安全を残すよう評価を下げ、黄色の要確認セルを追加した。契約・SQLite・回帰の達成を、未確認の画面品質や実機運用の満点根拠として扱わない。
+- `現在の作業`をR04のLinux再配信待ちに同期し、Thread Line・RV01〜RV04の赤ブロッカー、RV01〜RV05/U01〜U03/U05の黄受入を明示した。ユーザーがクリックした星のローカル保存とHTML内の編集機能は維持する。
+- Node回帰31件と`git diff --check`を再実行して成功した。実データ変更は行っていない。
+
+# 2026-07-13 U02 新規候補の要約・タグ品質改善
+
+- knowledge-vault / Slackの新規候補は、Markdown見出しを除いた本文を抜粋し、本文・入口・相対参照に基づく要約を作るようにした。固定の「取り込んだ確認候補」という文だけを要約に使わない。
+- 既存の表示可能なタグマスタから、本文の`gantt` / `tasks` / `ui` / `schedule` / `review` / `research`等の語と一致するタグだけを追加選択する。入口の来歴タグは維持する。TODO案は候補タイトルを優先し、一覧・判断ログ・GO先の表示名と一致させる。
+- AI相談のsystem promptにも、推測や定型文を含めない要約、具体的な行動句のTODO、タグを推測で増やさない指示を追加した。既存候補19件は再インポートせず変更していない。
+- Node回帰31件、Python回帰8件が成功した。新規AI相談候補1件を作る実機品質受入は実データ変更のため、ユーザーの明示確認を待つ。
+
+# 2026-07-13 R04前の公開画面確認
+
+- 読み取り専用でChromeの公開Hub / Tasksを確認した。Hub左レールは旧`P0 / pj-general`表示のまま、Tasks左レールは旧`Vikunja / Tasks workspace`、Kanbanには旧`KANBAN VIEW` guideが残っている。
+- よってR04の未配信は実画面で確認済みであり、Thread Line 256px識別・RV03のguide非表示を完了扱いにしない。候補、task、設定、ブラウザ内データは変更していない。
+
+# 2026-07-13 U03 判断操作IDの照合実装
+
+- Hubの編集・不要・アーカイブ・GO送信は操作IDを発行し、API応答の`decision.operationId`、`bootstrap.log[].operationId`、SQLite `decisions.note`の`operation:<ID>`を同一IDで照合できるようにした。判断ログ画面にも操作IDを表示する。
+- テスト先行で編集・不要・アーカイブ・GOの各経路を追加し、HTTP応答と最新ログの一致を検証した。Hub Node回帰31件、Python回帰8件、`git diff --check`は成功した。実データ操作、再インポート、Linux Docker操作は実施していない。
+- Hub実行bundleをSQLite・テスト・一時ディレクトリを除いて再生成し、SHA-256を`E8EBE20B4C7913437BF8C2FE9F83D7B5FD656C2DBC7257D6A95B138FE9B74AA7`へ更新した。R04はこのHub hashと既存Tasks hashを照合してから実行する。
+
+## 2026-07-13 U03 ブラウザ上のHTTP証跡
+
+- 判断後のHub通知にも`HTTP 200`と操作IDを表示し、受入者が開発者ツールを開かずにAPI成功・画面判断ログ・SQLiteを同じ操作IDで照合できるようにした。
+- Hub bundleは`4AF5C14E7F180B2C31E9C9E4C119B7D315CE53DDA57C76AF226F3457FC5F3AC6`へ再更新した。R04はこのhashを正本とする。実データ変更、再インポート、Linux Docker操作はしていない。
+
+## 2026-07-13 knowledge-vault 転記
+
+- 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
+- 日時: 2026-07-13 07:23:07 +09:00
+- 対象: U02の本文根拠に基づく候補要約・既存タグ制約・来歴保持・再インポート回避、およびU03の操作IDをHTTP応答・画面ログ・SQLiteで一致させる追跡性。
+
+## 2026-07-13 R04実機反映とR05左レール最終修正
+
+- ユーザーがR04をLinuxへ再配信し、Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`を確認した。Hub実データはcandidates 19 / decisions 9 / execution links 4を維持し、再インポート、DB/files/volume削除は行っていない。
+- 公開Kanbanのguideが残った実機差分を確認し、表示名`Kanban`への依存ではなく固定の`viewKind === 'kanban'`で抑止する修正をテスト先行で実装した。
+- 左レールはHubを薄橙`Thread Line Hub`、Tasksを薄青`Thread Line Tasks`へ揃え、旧副題を除去し、Inbox等のProject行へTasks青の24pxアイコンを追加した。Hub Node 31件、Tasksテーマ17件、Tasks型検査が成功した。
+- 最新bundleはHub `84A85F4398856176441C8490E5A73104844353C8A0BB7E17883A071626B286C8`、Tasks `9FCB7996DEABFBCAFA78DE8F4D81F7A48FF80A4852DA1884E41A8C5E8065E334`。次のR05は`infra/deploy/redeploy-p0-frontend.ps1`をWindows PowerShellで一行実行するだけとし、hash照合、source-only展開、再build、両API 200の確認をscript内へ集約した。
+- 初版scriptはPowerShell/SSHのTTY経由でhash環境変数が空になり、展開前のhash照合で安全に停止した。R05 scriptはhashをremote shellの位置引数として渡すよう修正し、script回帰2件と`-DryRun`を再実行した。失敗時点でDB/files/volume、既存source、実データには触れていない。
+- 位置引数を標準入力で渡す方式も、対象SSHでは対話shell扱いになったため展開前に安全停止した。R05 scriptはhelperを`/tmp`へ転送後、通常のSSH remote commandとして`bash /tmp/redeploy-p0-frontend-remote.sh <hub-hash> <tasks-hash>`を起動する方式へ再修正した。これによりsudoは割り当て済みTTYから通常どおり入力できる。
+- remote command引数の伝達差異を完全に避けるため、Windows scriptがHub/TasksのSHA-256だけを書いた一時manifestを生成・転送し、remote helperは`/tmp/pj-general-p0-redeploy-hashes.txt`から期待hashを読む方式へ最終化した。manifestはsecretやenvを含まず、Windows側は実行終了時に削除する。
+
+## 2026-07-13 R05再配信完了
+
+- ユーザーが`infra/deploy/redeploy-p0-frontend.ps1`を一行実行し、Hub/Tasks bundleをhash照合後に安全に展開・再buildした。起動直後の接続失敗は待受中の一時状態であり、最終的にHub `/api/bootstrap=200`とTasks `/api/v1/info=200`を確認して成功した。
+- 実データはSQLite integrity `ok`、candidates 19 / decisions 9 / execution links 4を維持した。DB/files/volume削除、再インポート、env/secret表示は行っていない。
+- R05のLinux配信ブロッカーは解消した。残りはChromeで強制再読込後にThread Line左レールとKanban guide非表示を確認する黄色の実機受入である。
+
+## 2026-07-13 R06 Tasks本文テーマの青・淡青統一
+
+- R05後の実機確認で、Tasksの本文にHub由来のオレンジが残ることを確認した。TasksはHubと形状・情報密度を共有しつつ、本文のブランドアクセントはTasks青と淡青だけを使う要件へ固定した。
+- fork themeのprimary/link/focus/選択行/left rail/button/card/task/dashboard/calendarおよびlogin装飾の銅オレンジをTasks青`#5176d8`／淡青`#89b8ff`へ置換した。テーマ回帰18件、stylelint、production buildが成功した。fork全体の`vue-tsc`は既存上流型不整合で失敗するが、本SCSS変更の新規型エラーではない。
+- 更新Tasks bundle SHA-256は`B841C75C21D6D4B10BA262189B9533287C30E23A6D0C0E3FCA73A836359A57DE`。再配信は既存の一行`redeploy-p0-frontend.ps1`だけで行い、DB/files/volume削除・再インポートをしない。実機のオレンジ残存なし確認はR06へ残す。
+- 続く実機レビューで、Tasksの薄青が識別リンク全体を塗っており、Hubのタイトル面だけを塗る骨格とずれることを確認した。Tasks識別面をマーク右のタイトル面だけへ変更し、更新bundle SHA-256を`4EB8CF69FDF03FE7586CCD95E94E80B36293CD2B612AD7B14373D184097CECCA`へ更新した。R06で同時に再配信・受入する。
+- TasksのProject／Label／Teamを`マスタ管理`へ統合した。左レールは単一の`マスタ管理`入口とし、3セクションで登録・確認、既存の個別URLと作成／編集フォームは互換性のため維持した。テーマ回帰19件、stylelint、production buildを確認し、更新Tasks bundle SHA-256を`D166BBCBCC56414D00E4278C4710B91FC750054902CEAF9DA090D82DCF39B85D`へ更新した。Linux再配信と実機受入はR06/R07として残す。
+
+## 2026-07-13 knowledge-vault 転記（R04/R05遠隔再配信ガード）
+
+- 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
+- 日時: 2026-07-13 13:25:18 +09:00
+- 対象: R04/R05で確認した、bundle SHA-256の一時manifest伝達、hash一致前の展開禁止、TTY・標準入力・環境変数の伝達失敗時の安全停止、最終API 200確認、SQLite integrity・件数確認、削除・再インポート・secret表示を行わないsource-only再配信ガード。
+
+## 2026-07-13 Hub左レール再編とP0受入定常ゲート
+
+- Hub左レールを`ダッシュボード / 簡易日程 / タスクキュー / ワークビュー / 簡易管理`の5導線へ再編し、各項目のHub内スクロール先見出しも同名へ同期した。
+- 通常メニューの相談は廃止し、AI相談と未実装・非活性の`詳細管理`を同じ下部ボタン群へ分離した。詳細管理は状態変更を起こさず「準備中」を示す。
+- 上から実行するP0受入チェックでは、R06/R07を先頭の「定常作業 / 配信状態と実機反映」へ固定した。HubまたはTasksの配信資材を更新した回は同じ安全な再配信scriptで両方を反映し、Linux環境が最新版でなければ「未達」で赤に戻す。
+- `redeploy-p0-frontend.ps1`は実行直前にHub / Tasksのsource-only bundleを現行sourceから再生成するよう変更した。古い`tmp/*.tgz`を誤って配信せず、以後は同script一行とSSH / sudoの対話パスワード入力だけで最新版を安全に反映できる。新Hub左レール資材のLinux反映前はR06/R07を赤のまま維持する。
+- 左レールのハッシュ遷移は絶対パス付きリンクと手計算offsetを廃止し、同一ページの相対hashと共有scroll処理へ統一した。Dashboard / Gantt / Queue / Worker / Adminの各セクションは同じscroll marginで見出し位置を揃える。Hub Node回帰34件が成功した。
+
+## 2026-07-13 knowledge-vault 転記（P0定常受入ゲート）
+
+- 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
+- 日時: 2026-07-13 19:23:50 +09:00
+- 対象: Hub/Tasksの固有UI変更ではなく、配信資材更新時に同一の安全な再配信手順を使い、Linux実機の最新版反映をP0受入の先頭で確認し、未反映なら未達として完了扱いにしない定常ゲート。
+
+## 2026-07-13 設計書化カバレッジ再監査と読込粒度是正
+
+- 圧縮後の必須初期化は `AGENTS.md` / `PROJECT.md` / `tech-stack.md` / `README.md` / `docs/imp/user-tasks.md` の751行・約44KB。実測13,472 tokenで256Kコンテキストの約5.3%であり、合意した10%以内であることを確認した。
+- カバレッジHTMLが参照する38個のローカル正本は最大293行で、見出し単位の最長節も85行だった。現時点に「1機能だけのために500行超を読ませる設計本文」はない。
+- 一方、役割別ガイドが受入HTMLを常時セットへ含めると、HTMLのCSS/JavaScriptを含めて10%超になり得た。ガイドを、`imp-tasks`・受入HTML・カバレッジHTMLを作業時／対象ID・対象行だけに限定し、リンク先の自動・再帰全読込を明示的に禁止する形へ修正した。
+- 設計書カバレッジの初期全5/5は正本リンクの存在確認に過ぎなかったため、六証拠種別（体験、状態/API、データ、外部境界、運用、受入/回帰）で再監査した。外部境界、運用/復旧、回帰証跡が明示リンクされていない軸を黄色へ下げ、各行に補完内容を表示した。P0実機受入の未達とは混同しない。
+- `apps/web/test/design-documentation-coverage.test.mjs` は8/8成功、全ローカルリンク存在、`git diff --check` はエラーなし（既存のCRLF警告のみ）。実データ変更、Linux配信、再インポートは行っていない。

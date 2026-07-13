@@ -1,28 +1,16 @@
-# 実装方針メモ
+# 実装方針
 
-## フェーズ 0: 地盤整備
+## P0: 契約実証
 
-- ルート構造の初期化
-- テンプレート、skills、commands の流用
-- docs 運用の初期化
-- 外部 repo を参照しつつ、Codex で skill を内製追加できる体制を整える
+完了。Hubの入口・候補・判断と、Vikunjaの実行TODOを一方向で接続し、状態mirror、AI相談、管理、Listening Loungeを実証した。
 
-## フェーズ 1: 要件前整理
+## P1: 常設運用と観測
 
-- ユースケース整理
-- 利用者ロール整理
-- データの大分類整理
-- 候補 OSS の評価軸確定
+1. backup / restore / health / reconcileを運用可能にする。
+2. Vikunja frontend forkをrollback可能に配信する。
+3. 定期入口workerをknowledge-vaultから導入する。
+4. 実運用の判断・GO・完了データを蓄積する。
+5. Misskey、重複束ね、部分自動確定、Calendarを小さくPoCする。
+6. PostgreSQL、認証、queueは観測した導入ゲートに従う。
 
-## フェーズ 2: OSS 選定と統合方針
-
-- 候補 OSS の比較
-- コア採用対象の仮決定
-- UI 統合 / バックエンド分離 / データ同期の方針決定
-- 外部土台だけで足りない作業を、どの skill として内製するか決める
-
-## フェーズ 3: MVP 設計
-
-- MVP の最小ユースケースを固定
-- 境界ごとの責務を定義
-- 実装順を決める
+詳細は `docs/product/p1-phase-brief-2026-07.md` と `docs/imp/p1-implementation-tasks-2026-07.md` を正本とする。

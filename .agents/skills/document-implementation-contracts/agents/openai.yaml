@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation to Docs"
+  short_description: "Convert verified behavior into canonical documentation"
+  default_prompt: "Use $document-implementation-contracts to turn this implemented feature into canonical project documentation."

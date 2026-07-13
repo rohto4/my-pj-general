@@ -50,9 +50,8 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    S["入口\nWeb / Slack / knowledge-vault"]:::input
-    R["Raw / Normalized\n出典・本文・発生時刻"]:::data
-    C["Candidate\nAI整理・不足項目・候補状態"]:::data
+    S["入口\nWeb / Slack payload\nknowledge-vault / AI相談"]:::input
+    C["Candidate\n出典・本文・不足項目\n全件pending"]:::data
     Q{"確認待ち\nGO / 編集 / 不要 / 保留"}:::decision
     O["GO決定\n判断履歴を保存"]:::decision
     A["Vikunja API\nTODO作成・更新"]:::external
@@ -62,7 +61,7 @@ flowchart LR
     L["Execution Link\n候補ID ↔ Task ID"]:::data
     H["Audit / Sync\n受信・再試行・差分"]:::sync
 
-    S --> R --> C --> Q
+    S --> C --> Q
     Q -->|GO| O --> A --> T
     O --> L
     T --> W --> H --> C
@@ -95,7 +94,7 @@ flowchart LR
 - 登録時は候補のタイトル、要約、TODO案、候補IDなどをTasks側へ渡す。登録後のタスク本文・期限・担当・進捗はTasks側で編集する。
 - Hubはページ表示時のVikunja API読取でプロジェクト概要と直近タスクを表示し、SQLiteへ別のタスク一覧を複製しない。SQLiteには候補との対応リンクとWebhook / 再照合で得た状態ミラーだけを保持する。
 - Webhookと再照合は「Tasks側の実行状態をHubの確認表示へ戻す」ためのものであり、候補本文やGO判断を書き換える双方向同期ではない。
-- Hub内の参考ガントは既存候補の補助表示として残せるが、主導線はTasks側のTODO・ガント画面とし、HubのナビゲーションからTasks側プロジェクトへ直接遷移できるようにする。
+- Hub内のTasks連携予定表示は既存候補の補助表示として残せるが、主導線はTasks側のTODO・ガント画面とし、HubのナビゲーションからTasks側プロジェクトへ直接遷移できるようにする。
 
 ## 拡張方式の判断
 
@@ -131,10 +130,10 @@ flowchart LR
 - ソースクローン: `G:\devwork\clone-dir\vikunja-upstream`
 - GitHub fork: `https://github.com/rohto4/vikunja` を作成済み。初期はupstreamとの差分なしで保持する
 - Windows開発環境: Docker / WSL / Go がPATHにないため、ソース確認と実行バイナリを分離する
-- Linux常設環境: Vikunja本体、pj-general API、Webhook receiverをComposeで配置し、継続運用前にPostgreSQLへ移行する
-- 初回実機結合: SQLiteで境界、ID対応、冪等性を検証する。常設多入口運用の完了条件にはしない
+- Linux常設環境: Vikunja本体、pj-general API、Webhook receiverをComposeで配置する。P1初期もSQLiteを許容し、複数writer・認証・規模・lock競合の導入ゲートを満たした時だけPostgreSQLへ移行する
+- 初回実機結合: SQLiteで境界、ID対応、冪等性を検証済み
 
-## 仮完了の受入条件
+## P0完了の受入条件
 
 - 実在するVikunja projectへ、pj-generalのGO操作から実在するtaskが作成される。
 - 同じ候補を再度GOしても二重taskを作らない。
@@ -180,3 +179,11 @@ flowchart LR
 ### 実Webhookの運用境界
 
 専用Docker network内に限定して`outgoingrequests.allownonroutableips`を有効化した。target URLはpj-general serviceへ固定し、HMAC署名、payload hash冪等保存、定期再照合を併用する。実taskの未完了・完了変更がpj-generalへ反映されることを確認済み。
+
+## 2026-07-12 frontend fork結果
+
+- frontend forkを採用し、Hubと共通のListening Loungeへ統一した。
+- branchは `codex/pj-general-dashboard`、最終local commitは `325bc5475`。
+- project dashboard、今日から30日、未日付task、既存view導線を実データで確認した。
+- backend API、認証、権限、Webhook契約は変更していない。
+- Linux常設配信、stable rollback、upstream追随はP1の運用タスクとする。

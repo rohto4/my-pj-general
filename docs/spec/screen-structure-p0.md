@@ -13,7 +13,7 @@ P0 でユーザーが触る画面構成を定義する。
 | 画面 | 目的 | 初期実装 | 参照 |
 | --- | --- | --- | --- |
 | 横断ダッシュボード | 確認待ち、GO済み、予定候補、取り込み元、判断ログを俯瞰する | 左サマリ列、処理フロー、優先確認、判断ログ | OpenProject、shadcn/ui Blocks |
-| TODO / タスク管理へ遷移 | GO済みタスクを日常的に実行・更新する | Vikunja TODO を主遷移先にする。P0接続前は、接続予定状態と簡易サマリを表示する | Vikunja Tasks |
+| TODO / タスク管理へ遷移 | GO済みタスクを日常的に実行・更新する | Vikunja TODO を主遷移先にし、接続状態と概要を表示する | Vikunja Tasks |
 | ガント補助表示 | TODO / ScheduleCandidate の期間、担当、進捗、依存を必要時だけ読む | P0 の read-only weekly timeline は補助表示。外部ガント専用遷移は作らない | Vikunja Gantt |
 | 確認待ちキュー | AI 整理結果を人が GO / 編集 / 不要 / アーカイブに分ける | table、filter、detail pane、actions | shadcn/ui Tasks、Plane Intake |
 | 作業者用 / タスクサマリ | 今日見るタスクと Codex 起動支援を確認する | today focus、Codex prompt preview | Linear、Plane |
@@ -50,7 +50,7 @@ P0 本デモ状態では、操作状態は SQLite の `candidates.status` と `d
 | --- | --- |
 | Web | drawer の manual intake を SQLite へ保存 |
 | Slack | `memo-ideas` / `C0BG4TCPAUD`。connector / 手動 import payload を `/api/import/slack` へ渡す |
-| Misskey | mock note |
+| Misskey | P0未接続。候補件数0の無効sourceとして表示 |
 | knowledge-vault | `inbox`, `records`, `tasks`, `memory` を `/api/import/knowledge-vault` で `KV-*` 候補化 |
 
 ## P0 では作らないこと

@@ -1,0 +1,52 @@
+name: pj-general-deploy
+
+services:
+  pj-general:
+    build:
+      context: ../../apps/web
+    image: pj-general/web:p0
+    container_name: pj-general
+    restart: unless-stopped
+    env_file:
+      - ${HUB_ENV_FILE:?set HUB_ENV_FILE in .env}
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      P0_DB_PATH: /data/p0.sqlite
+      P0_BACKUP_DIR: /data/backups/hub
+      PYTHON: python3
+    ports:
+      - "${SERVER_LAN_IP:?set SERVER_LAN_IP in .env}:4173:4173"
+    volumes:
+      - ${HUB_DATA_DIR:?set HUB_DATA_DIR in .env}:/data
+    networks:
+      - pj-general-net
+
+  vikunja:
+    image: ${VIKUNJA_IMAGE:-rohto4/vikunja:2.3.0-pj-general-listening-lounge}
+    container_name: vikunja
+    restart: unless-stopped
+    env_file:
+      - ${VIKUNJA_ENV_FILE:?set VIKUNJA_ENV_FILE in .env}
+    environment:
+      # Public browser URL is non-secret deployment data. It must be explicit
+      # when the existing Vikunja env enables CORS.
+      VIKUNJA_SERVICE_PUBLICURL: http://${SERVER_LAN_IP:?set SERVER_LAN_IP in .env}:3456/
+    ports:
+      - "${SERVER_LAN_IP:?set SERVER_LAN_IP in .env}:3456:3456"
+    volumes:
+      - ${VIKUNJA_DATA_DIR:?set VIKUNJA_DATA_DIR in .env}/files:/app/vikunja/files
+      - ${VIKUNJA_DATA_DIR:?set VIKUNJA_DATA_DIR in .env}/db:/db
+    networks:
+      - pj-general-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://127.0.0.1:3456/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  pj-general-net:
+    name: ${PJ_GENERAL_NETWORK:-pj-general-net}
+    external: true

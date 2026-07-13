@@ -28,12 +28,15 @@
 5. `docs/imp/user-tasks.md`
 6. 必要に応じて `docs/imp/user-judge.md`
 7. 必要に応じて `docs/imp/imp-tasks.md`
-8. 必要に応じて `docs/imp/imp-plan.md`
-9. 必要に応じて `docs/diary/*`
-10. 必要に応じて `docs/spec/*`
-11. 必要に応じて `docs/candi-ref/*`
-12. 必要に応じて `.agents/skills/*/SKILL.md`
-13. 必要に応じて `commands/*.md`
+8. `docs/guide/implementation-context-reading-guide.md` を読み、作業役割に対応する最小読込セットを選ぶ
+9. 必要に応じて `docs/imp/imp-plan.md`
+10. 必要に応じて `docs/diary/*`
+11. 必要に応じて `docs/spec/*`
+12. 必要に応じて `docs/candi-ref/*`
+13. 必要に応じて `.agents/skills/*/SKILL.md`
+14. 必要に応じて `commands/*.md`
+
+役割別読込ガイドで対象外の実装ツリーを先に広く読まない。設計書だけで状態・操作・境界を断定できない場合は、`docs/imp/design-documentation-coverage-assessment-2026-07-13.html`に示す対象実装だけを読む。不足事実は先に`docs/imp/imp-tasks.md`へ記録し、該当する設計正本へ補完する。
 
 ## AGENTS.md 非対応環境
 
@@ -71,6 +74,13 @@
 - `AGENTS.md` には詳細判断表を重複記載しない。実行時の必須ルールだけを置く。
 - `PROJECT.md` は PJ 固有の目的、スコープ、正本関係、恒久的な構造、採用済みの重要判断を示す場所であり、タスク、進捗、次走テーマ、セッション履歴、判断材料の生ログ、参照元一覧を書かない。
 - タスク、進捗、判断待ち、完了記録は `docs/imp/*`、セッション履歴や handoff は `docs/diary/*`、候補・比較・参照元は `docs/candi-ref/*` または `docs/setting/*`、採用判断の根拠は該当する `docs/arch/*` / `docs/spec/*` / `docs/product/*` / `tech-stack.md` に置く。
+
+## 割り込み・実装断面・Git履歴
+
+- 大きな割り込み判断は、まず `docs/imp/*` に次タスクとして記録する。緊急停止を除き、進行中の実装を途中で別目的へ切り替えない。
+- 作業の切替前に、進行中の最小単位をテスト、実装/設計文書、配信artifact、未完了・ブロッカー表示まで同期し、再開可能な断面へ閉じる。
+- 断面を閉じた後に、その単位だけをGit commitとして残す。未検証の新機能、実データ変更、別目的のリファクタリングを同じcommitへ混在させない。
+- 割り込みが実データ変更を伴う場合は、既存断面を閉じた後に、操作前の確認を得てから着手する。
 
 ## `docs/imp/` の命名
 

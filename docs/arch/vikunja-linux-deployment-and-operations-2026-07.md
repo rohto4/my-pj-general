@@ -42,7 +42,7 @@ flowchart TB
 - 公開入口: `pj-general`とVikunjaを別hostまたはpathで分離する。
 - 実行方式: Docker Composeを第一候補にする。Dockerが使えない場合はsystemdで公式バイナリを起動する。
 - Release: 初回検証はVikunja `v2.3.0`を固定し、更新はバックアップと受入試験後に行う。
-- DB: 初回結合検証はSQLiteを許容するが、6時間ごとの多入口収集を含む常設運用前にPostgreSQLへ移行する。
+- DB: P1初期もSQLiteを許容する。複数writer、認証、規模、lock競合の導入ゲートを満たした時だけPostgreSQLへ移行する。
 - HTTPS: Reverse Proxyで終端し、Webhook受信をTLS必須にする。
 - 認証情報: API token、Webhook secret、DB passwordはリポジトリやSQLite設定へ保存しない。
 - pj-general側の候補・判断・出典はVikunjaへ移さず、pj-general DBを正本にする。
@@ -74,6 +74,9 @@ flowchart TB
 - 毎日のDB dump、設定ファイル、Vikunja/PJ release version、plugin/fork commitを保存する。
 - 復旧後は、`execution_links`とVikunja taskの対応を照合する。
 - Webhook payloadは無期限に保持せず、監査に必要な期間を設定する。ただしevent identityまたはpayload hash、処理状態、失敗理由は履歴として残す。
+
+現行の自動化雛形は `infra/backup/rotate-and-mirror.sh` と
+`infra/systemd/pj-general-backup.{service,timer}` に置く。DBのonline backup後、Vikunja filesとsecret設定を同じ世代へ退避し、`manifest.sha256`を生成する。`KEEP_GENERATIONS`で世代を整理し、`MIRROR_ROOT`をマウント済みの別媒体へ設定した場合だけ同じ世代を複製する。MIRROR_ROOTを未設定のままにすれば、外部媒体への書き込みは行わない。
 
 ## 更新手順
 

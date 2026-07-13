@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Doc Audit"
+  short_description: "Audit docs, code boundaries, and evidence coverage"
+  default_prompt: "Use $audit-design-documentation-coverage to audit this project's implementation and design-documentation coverage."

@@ -1,22 +1,21 @@
 import json
 import os
+import re
 import sqlite3
 import sys
 import hashlib
+import uuid
 from datetime import datetime
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("P0_DB_PATH", ROOT / "data" / "p0.sqlite"))
+BACKUP_DIR = Path(os.environ.get("P0_BACKUP_DIR", ROOT.parent.parent / "tmp" / "backup" / "hub"))
 
 
-GANTT_TASKS = [
-    {"id": "GT-001", "title": "P0画面構成を固める", "owner": "Codex", "progress": 65, "start": 4, "span": 22, "state": "active", "dependency": "UI参考資料"},
-    {"id": "GT-002", "title": "確認待ちキューを調整する", "owner": "Codex", "progress": 78, "start": 15, "span": 28, "state": "active", "dependency": "AI候補モデル"},
-    {"id": "GT-003", "title": "読み取り専用ガントを作る", "owner": "Codex", "progress": 42, "start": 36, "span": 24, "state": "late", "dependency": "TODO予定候補"},
-    {"id": "GT-004", "title": "ユーザーが画面を触って確認する", "owner": "ユーザー", "progress": 10, "start": 62, "span": 26, "state": "active", "dependency": "P0薄い画面"},
-]
+DATE_PATTERN = re.compile(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)")
+OPERATION_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{2,95}$")
 
 
 def connect():
@@ -28,6 +27,49 @@ def connect():
 
 def now():
     return datetime.now().isoformat(timespec="seconds")
+
+
+def decision_operation_id(note):
+    if not note or not note.startswith("operation:"):
+        return None
+    operation_id = note.split(" ", 1)[0].removeprefix("operation:")
+    return operation_id if OPERATION_ID_PATTERN.fullmatch(operation_id) else None
+
+
+def decision_note(operation_id, summary):
+    if operation_id is None:
+        return summary
+    if not OPERATION_ID_PATTERN.fullmatch(str(operation_id)):
+        raise ValueError("operation_id must be 3-96 characters of letters, numbers, _ or -")
+    return f"operation:{operation_id} {summary}"
+
+
+def insert_decision(conn, candidate_id, action, summary, operation_id=None, timestamp=None):
+    created_at = timestamp or now()
+    cursor = conn.execute(
+        "insert into decisions(candidate_id, action, note, created_at) values (?, ?, ?, ?)",
+        (candidate_id, action, decision_note(operation_id, summary), created_at),
+    )
+    return {
+        "id": cursor.lastrowid,
+        "candidateId": candidate_id,
+        "action": action,
+        "operationId": operation_id,
+        "createdAt": created_at,
+    }
+
+
+def extract_date(value):
+    if not value:
+        return None
+    match = DATE_PATTERN.search(str(value))
+    if not match:
+        return None
+    try:
+        datetime.strptime(match.group(1), "%Y-%m-%d")
+    except ValueError:
+        return None
+    return match.group(1)
 
 
 def execute_schema(conn):
@@ -146,6 +188,54 @@ def execute_schema(conn):
           error text,
           attempted_at text not null
         );
+        create table if not exists source_sync_runs (
+          id integer primary key autoincrement,
+          run_id text not null unique,
+          source text not null,
+          state text not null,
+          started_at text not null,
+          finished_at text,
+          cursor_before text,
+          cursor_after text,
+          scanned integer not null default 0,
+          created integer not null default 0,
+          skipped integer not null default 0,
+          failed integer not null default 0,
+          error text
+        );
+        create table if not exists chat_threads (
+          id text primary key,
+          title text not null,
+          provider text not null,
+          model text not null,
+          status text not null default 'active',
+          created_at text not null,
+          updated_at text not null
+        );
+        create table if not exists chat_messages (
+          id integer primary key autoincrement,
+          thread_id text not null,
+          role text not null,
+          content text not null,
+          metadata_json text not null default '{}',
+          created_at text not null
+        );
+        create table if not exists chat_task_suggestions (
+          id text primary key,
+          thread_id text not null,
+          message_id integer not null,
+          title text not null,
+          summary text not null,
+          todo text not null,
+          kind text not null,
+          schedule text not null,
+          confidence text not null,
+          missing_json text not null default '[]',
+          status text not null default 'proposed',
+          candidate_id text,
+          created_at text not null,
+          updated_at text not null
+        );
         """
     )
 
@@ -171,6 +261,210 @@ def schema_info(conn):
             )
         unique_indexes[table] = columns
     return {"tables": tables, "uniqueIndexes": unique_indexes}
+
+
+HEALTH_COUNT_TABLES = (
+    "sources",
+    "candidates",
+    "decisions",
+    "execution_links",
+    "execution_task_state",
+    "sync_events",
+    "sync_attempts",
+    "source_sync_runs",
+    "chat_threads",
+    "chat_messages",
+    "chat_task_suggestions",
+)
+
+
+def database_health(conn):
+    return database_health_for_path(conn, DB_PATH)
+
+
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def backup_database(conn):
+    conn.commit()
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    destination = BACKUP_DIR / f"p0-{stamp}.sqlite"
+    with sqlite3.connect(destination) as backup_conn:
+        conn.backup(backup_conn)
+    with sqlite3.connect(f"file:{destination.as_posix()}?mode=ro", uri=True) as verify_conn:
+        verify_conn.row_factory = sqlite3.Row
+        verification = database_health_for_path(verify_conn, destination)
+    if verification["integrity"] != "ok":
+        destination.unlink(missing_ok=True)
+        raise ValueError("backup integrity check failed")
+    return {
+        "path": str(destination.resolve()),
+        "createdAt": now(),
+        "sizeBytes": destination.stat().st_size,
+        "sha256": file_sha256(destination),
+        "integrity": verification["integrity"],
+        "counts": verification["counts"],
+    }
+
+
+def database_health_for_path(conn, path):
+    integrity_rows = conn.execute("pragma quick_check").fetchall()
+    integrity = "ok" if len(integrity_rows) == 1 and integrity_rows[0][0] == "ok" else "failed"
+    tables = {
+        row[0]
+        for row in conn.execute("select name from sqlite_master where type = 'table'").fetchall()
+    }
+    counts = {
+        table: conn.execute(f'select count(*) from "{table}"').fetchone()[0]
+        for table in HEALTH_COUNT_TABLES
+        if table in tables
+    }
+    return {
+        "status": "ok" if integrity == "ok" else "error",
+        "integrity": integrity,
+        "counts": counts,
+        "sizeBytes": path.stat().st_size if path.exists() else 0,
+    }
+
+
+def source_sync_run(conn, run_id):
+    row = conn.execute("select * from source_sync_runs where run_id = ?", (run_id,)).fetchone()
+    if row is None:
+        raise ValueError(f"source sync run not found: {run_id}")
+    return dict(row)
+
+
+def start_source_sync(conn, payload):
+    source = str(payload.get("source") or "unknown")[:120]
+    timestamp = now()
+    run_id = f"{source}:{uuid.uuid4().hex}"
+    conn.execute(
+        """
+        insert into source_sync_runs(
+          run_id, source, state, started_at, cursor_before
+        ) values (?, ?, 'running', ?, ?)
+        """,
+        (run_id, source, timestamp, payload.get("cursor_before")),
+    )
+    return source_sync_run(conn, run_id)
+
+
+def finish_source_sync(conn, payload):
+    run_id = str(payload.get("run_id") or "")
+    if not run_id:
+        raise ValueError("source sync run_id is required")
+    state = str(payload.get("state") or "succeeded")
+    if state not in {"succeeded", "failed", "partial"}:
+        raise ValueError(f"invalid source sync state: {state}")
+    row = source_sync_run(conn, run_id)
+    conn.execute(
+        """
+        update source_sync_runs
+        set state = ?, finished_at = ?, cursor_after = ?, scanned = ?, created = ?,
+            skipped = ?, failed = ?, error = ?
+        where run_id = ?
+        """,
+        (
+            state,
+            now(),
+            payload.get("cursor_after"),
+            max(int(payload.get("scanned") or 0), 0),
+            max(int(payload.get("created") or 0), 0),
+            max(int(payload.get("skipped") or 0), 0),
+            max(int(payload.get("failed") or 0), 0),
+            str(payload.get("error") or "")[:1000] or None,
+            run_id,
+        ),
+    )
+    return source_sync_run(conn, run_id)
+
+
+def list_source_sync_runs(conn, limit=30):
+    rows = conn.execute(
+        "select * from source_sync_runs order by id desc limit ?",
+        (max(min(int(limit), 100), 1),),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def latest_backup_observability(limit=10):
+    if not BACKUP_DIR.exists():
+        return []
+    result = []
+    for path in sorted(BACKUP_DIR.glob("p0-*.sqlite"), key=lambda item: item.stat().st_mtime, reverse=True)[:limit]:
+        try:
+            with sqlite3.connect(str(path)) as verify_conn:
+                verify_conn.row_factory = sqlite3.Row
+                verification = database_health_for_path(verify_conn, path)
+            result.append(
+                {
+                    "name": path.name,
+                    "createdAt": datetime.fromtimestamp(path.stat().st_mtime).isoformat(timespec="seconds"),
+                    "sizeBytes": path.stat().st_size,
+                    "sha256": file_sha256(path),
+                    "integrity": verification["integrity"],
+                    "counts": verification["counts"],
+                }
+            )
+        except (OSError, sqlite3.Error):
+            result.append({"name": path.name, "integrity": "unavailable"})
+    return result
+
+
+def observability(conn):
+    runs = list_source_sync_runs(conn)
+    latest_by_source = {}
+    for run in runs:
+        latest_by_source.setdefault(run["source"], run)
+    return {
+        "sourceSyncRuns": runs,
+        "latestBySource": latest_by_source,
+        "latestBackups": latest_backup_observability(),
+        "operations": operational_metrics(conn),
+    }
+
+
+def count_by(conn, column, table="candidates"):
+    allowed = {"status", "source_id", "kind", "confidence", "action"}
+    if column not in allowed:
+        raise ValueError(f"unsupported metrics column: {column}")
+    rows = conn.execute(f'select "{column}", count(*) as total from "{table}" group by "{column}"').fetchall()
+    return {str(row[0] or "unknown"): row[1] for row in rows}
+
+
+def operational_metrics(conn):
+    candidate_counts = count_by(conn, "status")
+    candidate_counts["total"] = conn.execute("select count(*) from candidates").fetchone()[0]
+    source_counts = count_by(conn, "source_id")
+    kind_counts = count_by(conn, "kind")
+    confidence_counts = count_by(conn, "confidence")
+    decision_counts = count_by(conn, "action", "decisions")
+    missing_count = 0
+    for row in conn.execute("select missing_json from candidates").fetchall():
+        try:
+            missing_count += 1 if json.loads(row[0] or "[]") else 0
+        except json.JSONDecodeError:
+            missing_count += 1
+    linked = conn.execute("select count(*) from execution_links").fetchone()[0]
+    completed = conn.execute("select count(*) from execution_task_state where done = 1").fetchone()[0]
+    approved = decision_counts.get("approved", 0)
+    decision_total = sum(decision_counts.values())
+    return {
+        "candidateCounts": candidate_counts,
+        "sourceCounts": source_counts,
+        "kindCounts": kind_counts,
+        "confidenceCounts": confidence_counts,
+        "missingCandidates": missing_count,
+        "decisionCounts": decision_counts,
+        "goRate": round(approved / decision_total * 100, 2) if decision_total else None,
+        "executionCounts": {"linked": linked, "completed": completed},
+    }
 
 
 def ensure_tag(conn, name):
@@ -254,17 +548,17 @@ def seed(conn):
         ("slack", "Slack memo-ideas", "https://unibell4-dev.slack.com/archives/C0BG4TCPAUD", 1, "connector"),
         ("knowledge_vault", "knowledge-vault", "G:/knowledge-vault", 1, "local_scan"),
         ("misskey", "Misskey (未接続)", "misskey://not-connected", 0, "connector"),
+        ("chat", "AI相談", "chat://local-llm", 1, "local_agent"),
     ]
     conn.executemany("insert or ignore into sources(id, label, path, enabled, source_kind) values (?, ?, ?, ?, ?)", sources)
     conn.execute(
         "update sources set label = ?, path = ?, source_kind = ? where id = ?",
         ("Misskey (未接続)", "misskey://not-connected", "connector", "misskey"),
     )
-    for task in GANTT_TASKS:
-        conn.execute(
-            "insert or ignore into gantt_tasks(id, title, owner, progress, start, span, state, dependency) values (?, ?, ?, ?, ?, ?, ?, ?)",
-            (task["id"], task["title"], task["owner"], task["progress"], task["start"], task["span"], task["state"], task["dependency"]),
-        )
+    static_gantt_marker = conn.execute("select 1 from settings where key = ?", ("migration.remove-static-gantt.v1",)).fetchone()
+    if static_gantt_marker is None:
+        conn.execute("delete from gantt_tasks where id in ('GT-001', 'GT-002', 'GT-003', 'GT-004')")
+        ensure_setting(conn, "migration.remove-static-gantt.v1", {"appliedAt": now()})
     ensure_setting(conn, "automation.mode", {"label": "P0確認方針", "value": "all_pending_first"})
     ensure_setting(conn, "slack.memo_ideas", {"channel": "C0BG4TCPAUD", "mode": "connector_payload_import"})
     load_admin_controls(conn)
@@ -318,13 +612,92 @@ def rows_to_candidates(conn):
     return result
 
 
+def display_assignee(assignees):
+    if not isinstance(assignees, list) or not assignees:
+        return "未設定"
+    first = assignees[0]
+    if isinstance(first, dict):
+        for key in ("username", "name", "email"):
+            value = first.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return "未設定"
+    if isinstance(first, str) and first.strip():
+        return first.strip()
+    return "未設定"
+
+
+def gantt_rows(conn):
+    rows = conn.execute(
+        """
+        select
+          c.id as candidate_id,
+          c.title,
+          c.todo,
+          c.kind,
+          c.source_label,
+          c.schedule,
+          c.missing_json,
+          ets.done,
+          ets.due_date,
+          ets.percent_done,
+          ets.assignees_json
+        from candidates c
+        left join execution_task_state ets on ets.candidate_id = c.id
+        where c.status not in ('rejected', 'archived')
+        order by c.updated_at desc, c.id asc
+        """
+    ).fetchall()
+    result = []
+    for row in rows:
+        schedule_date = extract_date(row["schedule"])
+        due_date = extract_date(row["due_date"])
+        start_date = schedule_date or due_date
+        end_date = due_date or schedule_date
+        if not start_date:
+            continue
+        if end_date < start_date:
+            end_date = start_date
+        try:
+            missing = json.loads(row["missing_json"] or "[]")
+        except json.JSONDecodeError:
+            missing = []
+        try:
+            assignees = json.loads(row["assignees_json"] or "[]") if row["assignees_json"] else []
+        except json.JSONDecodeError:
+            assignees = []
+        progress = 100 if row["done"] else int(row["percent_done"] or 0)
+        result.append(
+            {
+                "id": row["candidate_id"],
+                "candidateId": row["candidate_id"],
+                "title": row["todo"] or row["title"],
+                "owner": display_assignee(assignees),
+                "progress": max(0, min(progress, 100)),
+                "state": "done" if row["done"] else "active",
+                "dependency": " / ".join(str(item) for item in missing) if missing else "なし",
+                "source": row["source_label"],
+                "schedule": row["schedule"],
+                "startDate": start_date,
+                "endDate": end_date,
+            }
+        )
+    return result
+
+
 def bootstrap(conn):
     candidates = rows_to_candidates(conn)
     log = [
-        {"action": row["action"], "title": row["title"], "time": row["created_at"]}
+        {
+            "id": row["id"],
+            "action": row["action"],
+            "title": row["todo"] or row["title"],
+            "time": row["created_at"],
+            "operationId": decision_operation_id(row["note"]),
+        }
         for row in conn.execute(
             """
-            select d.action, c.title, d.created_at
+            select d.id, d.action, d.note, c.title, c.todo, d.created_at
             from decisions d join candidates c on c.id = d.candidate_id
             order by d.id desc limit 20
             """
@@ -332,7 +705,7 @@ def bootstrap(conn):
     ]
     sources = [dict(row) for row in conn.execute("select * from sources order by id").fetchall()]
     tags = [dict(row) for row in conn.execute("select * from tags order by name").fetchall()]
-    gantt = [dict(row) for row in conn.execute("select * from gantt_tasks order by id").fetchall()]
+    gantt = gantt_rows(conn)
     templates = [dict(row) for row in conn.execute("select * from prompt_templates order by id").fetchall()]
     execution_links = [dict(row) for row in conn.execute("select * from execution_links order by created_at").fetchall()]
     execution_task_states = [dict(row) for row in conn.execute("select * from execution_task_state order by candidate_id").fetchall()]
@@ -357,6 +730,179 @@ def bootstrap(conn):
     }
 
 
+def ensure_chat_thread(conn, thread_id=None):
+    thread_id = thread_id or "chat-default"
+    row = conn.execute("select * from chat_threads where id = ?", (thread_id,)).fetchone()
+    if row is None:
+        timestamp = now()
+        conn.execute(
+            "insert into chat_threads(id, title, provider, model, created_at, updated_at) values (?, ?, ?, ?, ?, ?)",
+            (thread_id, "AI相談", "openai-compatible", os.environ.get("LOCAL_LLM_MODEL", "gemma4:latest"), timestamp, timestamp),
+        )
+        row = conn.execute("select * from chat_threads where id = ?", (thread_id,)).fetchone()
+    return dict(row)
+
+
+def chat_messages(conn, thread_id, limit=40):
+    rows = conn.execute(
+        "select id, thread_id, role, content, metadata_json, created_at from chat_messages where thread_id = ? order by id desc limit ?",
+        (thread_id, limit),
+    ).fetchall()
+    result = []
+    for row in reversed(rows):
+        item = dict(row)
+        item["metadata"] = json.loads(item.pop("metadata_json") or "{}")
+        result.append(item)
+    return result
+
+
+def chat_suggestions(conn, thread_id):
+    rows = conn.execute(
+        "select * from chat_task_suggestions where thread_id = ? order by created_at desc",
+        (thread_id,),
+    ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        item["missing"] = json.loads(item.pop("missing_json") or "[]")
+        result.append(item)
+    return result
+
+
+def chat_bootstrap(conn, payload):
+    thread = ensure_chat_thread(conn, payload.get("thread_id"))
+    return {
+        "thread": thread,
+        "messages": chat_messages(conn, thread["id"]),
+        "suggestions": chat_suggestions(conn, thread["id"]),
+    }
+
+
+def save_chat_message(conn, payload):
+    thread = ensure_chat_thread(conn, payload.get("thread_id"))
+    role = payload.get("role") or "user"
+    if role not in {"user", "assistant", "system", "tool"}:
+        raise ValueError("unsupported chat role")
+    content = str(payload.get("content") or "").strip()
+    if not content:
+        raise ValueError("chat message is empty")
+    timestamp = now()
+    cursor = conn.execute(
+        "insert into chat_messages(thread_id, role, content, metadata_json, created_at) values (?, ?, ?, ?, ?)",
+        (thread["id"], role, content, json.dumps(payload.get("metadata") or {}, ensure_ascii=False), timestamp),
+    )
+    conn.execute("update chat_threads set updated_at = ? where id = ?", (timestamp, thread["id"]))
+    row = conn.execute(
+        "select id, thread_id, role, content, metadata_json, created_at from chat_messages where id = ?",
+        (cursor.lastrowid,),
+    ).fetchone()
+    item = dict(row)
+    item["metadata"] = json.loads(item.pop("metadata_json") or "{}")
+    return item
+
+
+def create_chat_suggestions(conn, payload):
+    thread = ensure_chat_thread(conn, payload.get("thread_id"))
+    message_id = int(payload["message_id"])
+    result = []
+    for suggestion in payload.get("suggestions") or []:
+        suggestion_id = f"chat-suggestion-{uuid.uuid4().hex}"
+        timestamp = now()
+        conn.execute(
+            """
+            insert into chat_task_suggestions(
+              id, thread_id, message_id, title, summary, todo, kind, schedule,
+              confidence, missing_json, status, created_at, updated_at
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?)
+            """,
+            (
+                suggestion_id,
+                thread["id"],
+                message_id,
+                suggestion.get("title") or "無題のタスク候補",
+                suggestion.get("summary") or suggestion.get("title") or "",
+                suggestion.get("todo") or suggestion.get("title") or "",
+                suggestion.get("kind") or "todo",
+                suggestion.get("schedule") or "候補なし",
+                suggestion.get("confidence") or "medium",
+                json.dumps(suggestion.get("missing") or [], ensure_ascii=False),
+                timestamp,
+                timestamp,
+            ),
+        )
+        row = conn.execute("select * from chat_task_suggestions where id = ?", (suggestion_id,)).fetchone()
+        item = dict(row)
+        item["missing"] = json.loads(item.pop("missing_json") or "[]")
+        result.append(item)
+    return result
+
+
+def chat_context(conn):
+    candidates = conn.execute(
+        """
+        select id, title, status, kind, source_label, confidence, missing_json, schedule
+        from candidates
+        where status not in ('rejected', 'archived')
+        order by updated_at desc
+        limit 20
+        """
+    ).fetchall()
+    candidate_items = []
+    for row in candidates:
+        item = dict(row)
+        item["missing"] = json.loads(item.pop("missing_json") or "[]")
+        candidate_items.append(item)
+    execution = [
+        dict(row)
+        for row in conn.execute(
+            "select candidate_id, title, done, due_date, percent_done, assignees_json from execution_task_state order by mirrored_at desc limit 20"
+        ).fetchall()
+    ]
+    return {
+        "hub": {
+            "candidate_count": conn.execute("select count(*) from candidates").fetchone()[0],
+            "pending_count": conn.execute("select count(*) from candidates where status = 'pending'").fetchone()[0],
+            "candidates": candidate_items,
+        },
+        "execution_state": execution,
+    }
+
+
+def accept_chat_suggestion(conn, suggestion_id):
+    suggestion = conn.execute("select * from chat_task_suggestions where id = ?", (suggestion_id,)).fetchone()
+    if suggestion is None:
+        raise ValueError(f"chat suggestion not found: {suggestion_id}")
+    if suggestion["candidate_id"]:
+        candidate = conn.execute("select * from candidates where id = ?", (suggestion["candidate_id"],)).fetchone()
+        return {"suggestion": dict(suggestion), "candidate": dict(candidate) if candidate else None}
+    item = create_candidate(
+        conn,
+        {
+            "title": suggestion["title"],
+            "body": suggestion["summary"],
+            "summary": suggestion["summary"],
+            "todo": suggestion["todo"],
+            "schedule": suggestion["schedule"],
+            "kind": suggestion["kind"],
+            "source": "chat",
+            "sourceLabel": "AI相談",
+            "sourcePath": f"chat://thread/{suggestion['thread_id']}",
+            "tags": ["chat", "ai-suggested"],
+            "confidence": suggestion["confidence"],
+            "missing": json.loads(suggestion["missing_json"] or "[]"),
+        },
+    )
+    timestamp = now()
+    conn.execute(
+        "update chat_task_suggestions set status = 'candidate_pending', candidate_id = ?, updated_at = ? where id = ?",
+        (item["id"], timestamp, suggestion_id),
+    )
+    return {
+        "suggestion": dict(conn.execute("select * from chat_task_suggestions where id = ?", (suggestion_id,)).fetchone()),
+        "candidate": item,
+    }
+
+
 def next_candidate_id(conn):
     rows = conn.execute("select id from candidates where id like 'AI-%'").fetchall()
     max_id = 0
@@ -369,53 +915,54 @@ def next_candidate_id(conn):
 
 
 def create_candidate(conn, payload):
+    title = payload.get("title") or "Untitled intake"
+    body = payload.get("body") or payload.get("summary") or title
     item = {
         "id": next_candidate_id(conn),
         "status": "pending",
-        "title": payload.get("title") or "Untitled intake",
+        "title": title,
         "kind": payload.get("kind") or "idea",
         "source": payload.get("source") or "web",
         "sourceLabel": payload.get("sourceLabel") or "manual",
-        "sourcePath": payload.get("url") or "web://manual",
+        "sourcePath": payload.get("sourcePath") or payload.get("url") or "web://manual",
         "tags": payload.get("tags") or ["manual"],
         "confidence": payload.get("confidence") or "medium",
-        "missing": ["schedule decision"] if payload.get("schedule") == "none" else [],
+        "missing": payload.get("missing") or (["schedule decision"] if payload.get("schedule") == "none" else []),
         "occurred": datetime.now().strftime("%Y-%m-%d"),
-        "excerpt": payload.get("body") or payload.get("title") or "Untitled intake",
-        "summary": (payload.get("body") or payload.get("title") or "Untitled intake")[:140],
-        "todo": f"{payload.get('title') or 'Untitled intake'} を整理する",
-        "schedule": "候補なし" if payload.get("schedule") == "none" else "2026-07-10 / 30 min",
-        "preview": f"{payload.get('kind') or 'idea'}: {payload.get('title') or 'Untitled intake'}",
+        "excerpt": payload.get("excerpt") or body,
+        "summary": payload.get("summary") or body[:140],
+        "todo": payload.get("todo") or f"{title} を整理する",
+        "schedule": payload.get("schedule") or "候補なし",
+        "preview": payload.get("preview") or f"{payload.get('kind') or 'idea'}: {title}",
     }
     insert_candidate(conn, item)
     conn.execute("insert into decisions(candidate_id, action, note, created_at) values (?, ?, ?, ?)", (item["id"], "created", "manual intake", now()))
     return item
 
 
-def update_status(conn, candidate_id, status):
+def update_status(conn, candidate_id, status, operation_id=None):
     row = conn.execute("select id from candidates where id = ?", (candidate_id,)).fetchone()
     if not row:
         raise ValueError(f"candidate not found: {candidate_id}")
     conn.execute("update candidates set status = ?, updated_at = ? where id = ?", (status, now(), candidate_id))
-    conn.execute("insert into decisions(candidate_id, action, note, created_at) values (?, ?, ?, ?)", (candidate_id, status, "queue action", now()))
-    return {"id": candidate_id, "status": status}
+    decision = insert_decision(conn, candidate_id, status, "queue action", operation_id)
+    return {"id": candidate_id, "status": status, "decision": decision}
 
 
-def prepare_execution(conn, candidate_id):
+def prepare_execution(conn, candidate_id, operation_id=None):
     candidate = conn.execute("select * from candidates where id = ?", (candidate_id,)).fetchone()
     if candidate is None:
         raise ValueError(f"candidate not found: {candidate_id}")
     existing = conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone()
     if existing is not None:
-        return {"existing": True, "link": dict(existing)}
+        return {"existing": True, "link": dict(existing), "operation_id": operation_id}
 
     timestamp = now()
     if candidate["status"] != "approved":
         conn.execute("update candidates set status = 'approved', updated_at = ? where id = ?", (timestamp, candidate_id))
-        conn.execute(
-            "insert into decisions(candidate_id, action, note, created_at) values (?, 'approved', 'Vikunja execution requested', ?)",
-            (candidate_id, timestamp),
-        )
+        decision = insert_decision(conn, candidate_id, "approved", "Vikunja execution requested", operation_id, timestamp)
+    else:
+        decision = None
     attempt_key = f"vikunja:{candidate_id}:create:{datetime.now().isoformat(timespec='microseconds')}"
     cursor = conn.execute(
         """
@@ -424,7 +971,7 @@ def prepare_execution(conn, candidate_id):
         """,
         (candidate_id, attempt_key, timestamp),
     )
-    return {"existing": False, "attempt_id": cursor.lastrowid, "candidate": dict(candidate)}
+    return {"existing": False, "attempt_id": cursor.lastrowid, "candidate": dict(candidate), "decision": decision, "operation_id": operation_id}
 
 
 def complete_execution(conn, payload):
@@ -480,7 +1027,10 @@ def complete_execution(conn, payload):
         ),
     )
     conn.execute("update sync_attempts set state = 'succeeded', error = null where id = ?", (payload["attempt_id"],))
-    return dict(conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone())
+    result = dict(conn.execute("select * from execution_links where candidate_id = ?", (candidate_id,)).fetchone())
+    if payload.get("operation_id"):
+        result["operation_id"] = payload["operation_id"]
+    return result
 
 
 def fail_execution(conn, payload):
@@ -618,8 +1168,10 @@ def update_candidate(conn, candidate_id, payload):
         for tag in tags:
             tag_id = ensure_tag(conn, tag)
             conn.execute("insert or ignore into candidate_tags(candidate_id, tag_id) values (?, ?)", (candidate_id, tag_id))
-    conn.execute("insert into decisions(candidate_id, action, note, created_at) values (?, ?, ?, ?)", (candidate_id, fields["status"], "edited candidate", now()))
-    return next(item for item in rows_to_candidates(conn) if item["id"] == candidate_id)
+    decision = insert_decision(conn, candidate_id, fields["status"], "edited candidate", payload.get("operation_id"))
+    result = next(item for item in rows_to_candidates(conn) if item["id"] == candidate_id)
+    result["decision"] = decision
+    return result
 
 
 def delete_candidate(conn, candidate_id):
@@ -641,110 +1193,15 @@ def classify_text(text):
 
 
 def import_knowledge_vault(conn, payload):
-    root = Path(payload.get("root") or "G:/knowledge-vault")
-    controls = load_admin_controls(conn)
-    configured_targets = [item["id"] for item in controls["scopes"] if item.get("enabled")]
-    targets = payload.get("targets") or configured_targets
-    limit = int(payload.get("limit") or 30)
-    imported = 0
-    skipped = 0
-    files = []
-    for target in targets:
-        base = root / target
-        if not base.exists():
-            continue
-        files.extend([path for path in base.rglob("*.md") if path.is_file()])
-    files = sorted(files, key=lambda path: path.stat().st_mtime, reverse=True)[:limit]
-    for path in files:
-        try:
-            text = path.read_text(encoding="utf-8-sig", errors="ignore").strip()
-        except OSError:
-            skipped += 1
-            continue
-        if not text:
-            skipped += 1
-            continue
-        digest = hashlib.sha1(str(path).encode("utf-8")).hexdigest()[:10]
-        candidate_id = f"KV-{digest}"
-        if conn.execute("select 1 from candidates where id = ?", (candidate_id,)).fetchone():
-            skipped += 1
-            continue
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        heading = next((line.lstrip("# ").strip() for line in lines if line.startswith("#")), "")
-        title = heading or path.stem
-        excerpt = "\n".join(lines[:4])[:360]
-        relative = path.relative_to(root).as_posix() if root in path.parents else path.name
-        top = relative.split("/")[0]
-        item = {
-            "id": candidate_id,
-            "status": "pending",
-            "title": title[:120],
-            "kind": classify_text(text),
-            "source": "knowledge_vault",
-            "sourceLabel": top,
-            "sourcePath": str(path).replace("\\", "/"),
-            "tags": ["knowledge-vault", top, "imported"],
-            "confidence": "medium",
-            "missing": ["owner confirm"],
-            "occurred": datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d"),
-            "excerpt": excerpt,
-            "summary": f"knowledge-vault/{relative} から取り込んだ確認候補。",
-            "todo": f"{title[:80]} を確認する",
-            "schedule": "候補なし",
-            "preview": f"VaultCandidate: {title[:80]}",
-        }
-        insert_candidate(conn, item)
-        imported += 1
-    conn.execute(
-        "update sources set last_imported_at = ? where id = ?",
-        (now(), "knowledge_vault"),
-    )
-    return {"imported": imported, "skipped": skipped, "scanned": len(files)}
+    from source_sync import import_knowledge_vault as import_domain
+
+    return import_domain(conn, payload)
 
 
 def import_slack(conn, payload):
-    messages = payload.get("messages") or []
-    imported = 0
-    skipped = 0
-    imported_ids = []
-    for message in messages:
-        text = (message.get("text") or "").strip()
-        if not text or "チャンネルに参加" in text:
-            skipped += 1
-            continue
-        ts = str(message.get("ts") or message.get("time") or now())
-        digest = hashlib.sha1(f"slack:{ts}:{text}".encode("utf-8")).hexdigest()[:10]
-        candidate_id = f"SL-{digest}"
-        if conn.execute("select 1 from candidates where id = ?", (candidate_id,)).fetchone():
-            skipped += 1
-            continue
-        title = text.splitlines()[0][:100]
-        item = {
-            "id": candidate_id,
-            "status": "pending",
-            "title": title,
-            "kind": classify_text(text),
-            "source": "slack",
-            "sourceLabel": payload.get("channelName") or "memo-ideas",
-            "sourcePath": payload.get("channelUrl") or "https://unibell4-dev.slack.com/archives/C0BG4TCPAUD",
-            "tags": ["slack", "memo-ideas", "imported"],
-            "confidence": "medium",
-            "missing": ["owner confirm"],
-            "occurred": payload.get("occurred") or datetime.now().strftime("%Y-%m-%d"),
-            "excerpt": text[:360],
-            "summary": "Slack memo-ideas から取り込んだ確認候補。",
-            "todo": f"{title} を確認する",
-            "schedule": "候補なし",
-            "preview": f"SlackCandidate: {title}",
-        }
-        insert_candidate(conn, item)
-        imported += 1
-        imported_ids.append(candidate_id)
-    conn.execute(
-        "update sources set last_imported_at = ? where id = ?",
-        (now(), "slack"),
-    )
-    return {"imported": imported, "skipped": skipped, "scanned": len(messages), "ids": imported_ids}
+    from source_sync import import_slack as import_domain
+
+    return import_domain(conn, payload)
 
 
 def update_source(conn, source_id, payload):
@@ -806,12 +1263,22 @@ def main():
         seed(conn)
         if command == "bootstrap":
             output = bootstrap(conn)
+        elif command == "chat-bootstrap":
+            output = chat_bootstrap(conn, payload)
+        elif command == "chat-context":
+            output = chat_context(conn)
+        elif command == "chat-save-message":
+            output = save_chat_message(conn, payload)
+        elif command == "chat-create-suggestions":
+            output = create_chat_suggestions(conn, payload)
+        elif command == "chat-accept-suggestion":
+            output = accept_chat_suggestion(conn, payload["id"])
         elif command == "create-candidate":
             output = create_candidate(conn, payload)
         elif command == "update-status":
-            output = update_status(conn, payload["id"], payload["status"])
+            output = update_status(conn, payload["id"], payload["status"], payload.get("operation_id"))
         elif command == "prepare-execution":
-            output = prepare_execution(conn, payload["id"])
+            output = prepare_execution(conn, payload["id"], payload.get("operation_id"))
         elif command == "complete-execution":
             output = complete_execution(conn, payload)
         elif command == "fail-execution":
@@ -820,6 +1287,12 @@ def main():
             output = list_execution_links(conn)
         elif command == "record-reconcile-result":
             output = record_reconcile_result(conn, payload)
+        elif command == "start-source-sync":
+            output = start_source_sync(conn, payload)
+        elif command == "finish-source-sync":
+            output = finish_source_sync(conn, payload)
+        elif command == "observability":
+            output = observability(conn)
         elif command == "process-vikunja-webhook":
             output = process_vikunja_webhook(conn, payload)
         elif command == "update-candidate":
@@ -842,6 +1315,10 @@ def main():
             output = update_tag(conn, payload["id"], payload)
         elif command == "schema-info":
             output = schema_info(conn)
+        elif command == "database-health":
+            output = database_health(conn)
+        elif command == "backup-database":
+            output = backup_database(conn)
         else:
             raise ValueError(f"unknown command: {command}")
         conn.commit()

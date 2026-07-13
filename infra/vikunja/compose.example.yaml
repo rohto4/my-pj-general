@@ -1,6 +1,6 @@
 services:
   vikunja:
-    image: vikunja/vikunja:2.3.0
+    image: ${VIKUNJA_IMAGE:-vikunja/vikunja:2.3.0}
     container_name: vikunja
     restart: unless-stopped
     env_file:

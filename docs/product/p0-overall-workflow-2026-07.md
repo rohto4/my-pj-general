@@ -1,105 +1,91 @@
-# P0 全体要約ワークフロー図 2026-07
+# P0 全体要約ワークフロー 2026-07
 
 ## 目的
 
-この文書は、P0 でユーザーがどんな流れを使えるようになるかを、業務目線で要約したワークフロー図である。
-
-技術構成ではなく、`思いつきが入ってから整理され、TODO 化され、必要なら予定化されるまで` の全体像を固定する。
+P0 で実際に利用できる、入口から実行 TODO までの業務フローを固定する。
 
 ## P0 の達成条件
 
-- `web 手入力`
-- `Slack`
-- `Misskey`
-- `knowledge-vault`
+P0 は次の実装済み入口を同じ確認待ちキューへ集約する。
 
-この 4 入口から情報を受けられること。
+- Web 手入力
+- knowledge-vault Markdown 取り込み
+- Slack `memo-ideas` の connector / 手動 payload 取り込み
+- ローカル LLM 相談からの、ユーザー確認付き候補追加
 
-そのうえで、次がつながること。
-
-- プール
-- AI 整理
-- ユーザー GO
-- TODO 化
-- 必要なら予定化
-- ガント表示
+Misskey 実接続と Google Calendar 登録は P0 に含めない。入口から候補化し、ユーザーが編集・GOし、Vikunja で実行し、実行状態を Hub へ反映できることを P0 の一続きの達成条件とする。
 
 ## 全体要約ワークフロー
 
 ```mermaid
 flowchart LR
-    User(["ユーザー<br/>確認・GO<br/>訂正入力"]):::user
-    Sources["4入口<br/>Web / Slack / Misskey<br/>knowledge-vault"]:::inputMain
-    Pool["プール<br/>思いつき・話題・候補"]:::main
-    AI["自動処理<br/>AI整理<br/>タグ・要約・候補化"]:::auto
-    Review{"ユーザー操作<br/>整理後候補一覧<br/>GO / 保留 / 修正"}:::decision
-    Register["昇格 / 登録<br/>アイデア・検討事項<br/>気になる事・TODO"]:::main
-    Schedule["予定化<br/>候補は自動生成<br/>登録はユーザーGO"]:::main
-    Dashboard["見える化<br/>横断ダッシュボード<br/>現在地を確認"]:::main
-
-    TodoNote["TODO補足<br/>タイトル / 所要時間案<br/>関連リンク / タグ"]:::support
-    CodexNote["Codex支援<br/>フォルダ作成<br/>初期プロンプト出力"]:::support
+    User(["ユーザー<br/>入力・確認・GO"]):::user
+    Sources["実装済み入口<br/>Web / Slack payload<br/>knowledge-vault / AI相談"]:::inputMain
+    Pool["Hub候補<br/>出典・本文・分類<br/>全件 pending"]:::main
+    Review{"確認待ち<br/>編集 / GO<br/>不要 / アーカイブ"}:::decision
+    Task["Vikunja実行TODO<br/>1候補1task"]:::external
+    Mirror["状態反映<br/>Webhook / 再照合<br/>完了・期限・担当"]:::main
+    Dashboard["横断表示<br/>候補・判断・Tasks概要<br/>日付付き実データ"]:::main
+    Chat["ローカルLLM<br/>読取context<br/>候補提案"]:::auto
 
     User -->|手入力| Sources
-    User -->|確認・修正| Review
-    User -->|登録GO| Register
-    User -->|Calendar GO| Schedule
+    User -->|相談| Chat
+    Chat -->|候補として追加| Sources
     Sources --> Pool
-    Pool --> AI
-    AI --> Review
-    Review -->|まだ| Pool
-    Review -->|GO| Register
-    Register --> Schedule
-    Schedule --> Dashboard
-    Register -.-> TodoNote
-    Dashboard -.-> CodexNote
+    User -->|確認・修正| Review
+    Pool --> Review
+    Review -->|GO| Task
+    Review -->|編集・不要・保管| Pool
+    Task --> Mirror
+    Mirror --> Dashboard
+    Pool --> Dashboard
 
     classDef user fill:#e8f5e9,stroke:#73b77a,color:#183d1f,stroke-width:2px,font-size:16px,font-weight:bold
     classDef inputMain fill:#fff0e4,stroke:#d9965c,color:#4a2a10,stroke-width:1.8px,font-size:16px,font-weight:bold
     classDef main fill:#ffe8d6,stroke:#d9965c,color:#4a2a10,stroke-width:1.8px,font-size:16px,font-weight:bold
     classDef auto fill:#f3e8ff,stroke:#a986d8,color:#302044,stroke-width:1.8px,font-size:16px,font-weight:bold
     classDef decision fill:#fff0f0,stroke:#d87878,color:#4a1515,stroke-width:1.8px,font-size:16px,font-weight:bold
-    classDef support fill:#f5f7fa,stroke:#aab4c0,color:#26313f,stroke-width:1.2px,font-size:13px,font-weight:normal
+    classDef external fill:#e3f2fd,stroke:#64a6d9,color:#17324d,stroke-width:1.8px,font-size:16px,font-weight:bold
 ```
 
-## この図で固定したいこと
+## 固定する境界
 
-- 入口は 4 つでも、まずは `入口イベント` として受ける
-- いきなり確定登録せず、`AI 整理後候補一覧` を経由する
-- 初期の AI は `ノンストップ自動確定` ではなく `提案 + 人の GO`
-- 図では `ユーザー` actor から矢印が出ている箇所を人の操作点とする
-- 紫系の `自動処理` は AI / job が進める箇所とする
-- TODO 化と予定化は分けて考える
-- `1 タスクから複数予定` を許容する
-- 横断ダッシュボードは、最終的な見える化の集約点とする
+- 入口ごとの差は source adapter に閉じ、共通候補として受ける。
+- いきなり実行登録せず、全件を確認待ちにする。
+- AI相談も `提案 + 人の候補追加 + 人の GO` とする。
+- GO 後の実行編集は Vikunja で行う。Hub は候補本文を逆同期しない。
+- Tasks側の完了・期限・担当・進捗だけを Hub の実行状態へミラーする。
+- P0 の GO は Vikunja task 作成であり、Calendar event は作らない。
 
-## 画面の主な責務
+## 画面の責務
 
-### 1. 横断ダッシュボード
+### 横断ダッシュボード
 
-- 全データの流入と現在地を見える化する
-- TODO、予定、整理候補、昇格済みアーカイブを追えるようにする
-- MVP ではガント表示もここに含める
+- 候補、判断、Vikunja 概要、実行状態を集約する。
+- 日付を持つ SQLite 候補・Vikunja実行状態だけを Tasks 連携予定表示へ投影する。
 
-### 2. 書き入れ口 / 作成口
+### 書き入れ口
 
-- Web 手入力の最小入口
-- 手で思いつきを入れる最短導線
+- Web 手入力を最短で pending 候補にする。
 
-### 3. 管理画面
+### 確認待ち
 
-- 分類タグマスタ
-- Codex プロンプトテンプレート
-- 入口ごとの設定
+- 候補を編集し、GO / 不要 / アーカイブを判断する。
 
-### 4. 実績 / 履歴参照
+### AI相談
 
-- P0 では優先度は低い
-- ただし将来、昇格の履歴や予定実績の参照先になる
+- Hub / Tasks の許可済み要約を読み、回答と候補を提案する。
+- LLM 自身は候補追加・GO・タスク編集を実行しない。
 
-## P0 以後に広げるもの
+### 管理
 
-- AI の即確定自動化
-- ゆるい重複束ね
-- キャパ管理
-- 外部協力者向け権限の本実装
+- source、tag、role表示、AI方針、取り込み範囲、prompt template を管理する。
+
+## P1 以後に広げるもの
+
+- Misskey 実接続
+- Google Calendar 連携
+- 定期入口同期 worker
+- 重複束ねと部分自動確定の PoC
+- 認証・組織権限
+- PostgreSQL / queue 基盤

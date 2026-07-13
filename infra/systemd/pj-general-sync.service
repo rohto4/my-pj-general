@@ -1,0 +1,18 @@
+[Unit]
+Description=pj-general source sync (knowledge-vault and Slack payload)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=unibell4
+Group=unibell4
+WorkingDirectory=/srv/pj-general
+EnvironmentFile=-/etc/pj-general/sync.env
+RuntimeDirectory=pj-general-sync
+ExecStart=/usr/bin/python3 /srv/pj-general/workers/sync/run.py --db /home/unibell4/.local/share/pj-general/p0.sqlite --knowledge-vault-root /srv/knowledge-vault --limit 30 --lock-file /run/pj-general-sync/sync.lock
+NoNewPrivileges=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=15min

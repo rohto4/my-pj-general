@@ -90,6 +90,10 @@ G:\devwork\pj-general
 ## PJ 固有の決定事項
 
 - この PJ の開発運用は当面 Codex 専用として扱う。
+- Hub は、入口・候補・ユーザー判断・連携状態を保持する正本とする。
+- Vikunja は GO 後の実行 TODO の正本とし、Hub から一方向に登録して、実行状態だけを Hub へミラーする。
+- P0 の Hub は単一利用者向けの Node.js 標準 HTTP server + Python SQLite helper で成立させ、将来スタックへの移行判断は実運用データを得てから行う。
+- Hub と Vikunja の恒久テーマは、夜色・藍・銅・ウールグレーを使う `Listening Lounge` とする。
 - Codex 専用運用土台の参照元は `aaif-goose/goose` を第一候補とする。
 - MCP 実装や CLI 操作の参照元は `PrefectHQ/fastmcp` を第一候補とする。
 - MCP 参照サーバの把握には `modelcontextprotocol/servers` を使う。

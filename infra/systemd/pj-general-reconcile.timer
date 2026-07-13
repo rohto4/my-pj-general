@@ -1,0 +1,11 @@
+[Unit]
+Description=Reconcile Vikunja execution state every fifteen minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=60s
+Unit=pj-general-reconcile.service
+
+[Install]
+WantedBy=timers.target

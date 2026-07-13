@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Docs Sync"
+  short_description: "Synchronize canonical docs after verified changes"
+  default_prompt: "Use $maintain-design-documentation to synchronize canonical docs after this feature change."

@@ -47,7 +47,7 @@ P0 本デモでは `gantt_tasks` テーブルの SQLite データを使って表
 
 - ダッシュボードの主遷移先は Vikunja の TODO 画面にする。
 - Vikunja では同じ task から list / table / kanban / gantt を開けるため、ガント単独の外部遷移は作らない。
-- P0 の簡易ガントは、Leantime 接続前の補助サマリとして残すか、TODOリンクに置換するかを実装時に決める。
+- HubのTasks連携予定表示は日付付き実データだけを補助表示し、主導線はVikunjaのList / Table / Kanban / Ganttとする。
 
 ## P0 完了後に検討すること
 

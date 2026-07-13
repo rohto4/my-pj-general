@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
+import hashlib
 import sqlite3
 from pathlib import Path
 
@@ -25,6 +26,14 @@ def table_count(path, table):
         if found is None:
             return None
         return database.execute(f'select count(*) from "{table}"').fetchone()[0]
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def restore_test(backup, destination):
@@ -54,9 +63,11 @@ def main():
         backup_integrity = integrity(backup)
         restore_integrity = restore_test(backup, restored)
         count = table_count(restored, count_table)
+        links = table_count(restored, "execution_links")
         print(
             f"{name} backup={backup_integrity} restore={restore_integrity} "
-            f"{count_table}={count} bytes={backup.stat().st_size}"
+            f"{count_table}={count} execution_links={links if links is not None else 0} "
+            f"bytes={backup.stat().st_size} sha256={sha256(backup)} restore_sha256={sha256(restored)}"
         )
     print(f"backup-ready path={backup_dir}")
 

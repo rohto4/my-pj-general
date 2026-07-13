@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0 / P1 完成度・星取表 | pj-general</title>
+  <style>
+    :root {
+      --ink: #e8edf5;
+      --muted: #a9b5c7;
+      --navy: #0d141e;
+      --panel: #151e2b;
+      --panel-2: #1c2736;
+      --line: #405067;
+      --blue: #6f91ff;
+      --blue-dim: #273b72;
+      --copper: #d9774b;
+      --copper-dim: #5e3428;
+      --warn: #efb968;
+      --good: #8bd6b0;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--navy); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        var(--navy);
+      background-size: 32px 32px;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main { max-width: 1680px; margin: 0 auto; padding: 28px 30px 48px; }
+    .eyebrow { color: var(--copper); font-size: 12px; letter-spacing: .18em; font-weight: 800; }
+    h1 { margin: 6px 0 4px; font-size: clamp(24px, 3vw, 42px); letter-spacing: .02em; }
+    h2 { margin: 0; font-size: 20px; }
+    p { margin: 6px 0; color: var(--muted); }
+    .head { border-bottom: 2px solid var(--copper); padding-bottom: 18px; }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0; }
+    .card { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; }
+    .card strong { display: block; font-size: 28px; line-height: 1.1; }
+    .card small { color: var(--muted); }
+    .p0 strong { color: var(--blue); }
+    .p0-ui strong { color: var(--warn); }
+    .p1 strong { color: var(--copper); }
+    .next strong { color: var(--good); font-size: 18px; }
+    .current-work { margin: 18px 0; border: 1px solid var(--copper); background: linear-gradient(90deg, rgba(217,119,75,.13), rgba(21,30,43,.96)); }
+    .current-work-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .current-work-head p { margin: 0; font-size: 13px; }
+    .work-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 1px; background: var(--line); }
+    .work-card { min-height: 126px; padding: 14px 16px; background: var(--panel); }
+    .work-card h3 { margin: 0; font-size: 15px; }
+    .work-card p { font-size: 13px; }
+    .work-card ul { margin: 8px 0 0 18px; padding: 0; color: var(--muted); font-size: 13px; }
+    .work-state { display: inline-block; margin-top: 8px; padding: 3px 7px; border: 1px solid var(--copper); color: #ffd5c3; background: var(--copper-dim); font-size: 12px; font-weight: 800; }
+    .work-card.evidence { border-left: 4px solid var(--blue); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+    button { font: inherit; }
+    .tool {
+      color: var(--ink); background: var(--panel-2); border: 1px solid var(--line);
+      padding: 8px 12px; cursor: pointer;
+    }
+    .tool:hover, .tool:focus-visible { border-color: var(--copper); outline: 2px solid transparent; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 13px; }
+    .legend span { white-space: nowrap; }
+    .dot { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border: 1px solid currentColor; vertical-align: -1px; }
+    .dot.good { background: var(--blue); color: var(--blue); }
+    .dot.warn { background: var(--warn); color: var(--warn); }
+    .dot.blocked { background: #b86464; color: #b86464; }
+    .dot.empty { background: #2a3445; color: #5e6c80; }
+    .chart { border: 1px solid var(--line); background: rgba(21,30,43,.94); margin-top: 16px; }
+    .chart-head { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .chart-head p { margin: 0; font-size: 13px; }
+    .scroll { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 1260px; table-layout: fixed; }
+    th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 8px 6px; vertical-align: middle; }
+    th:last-child, td:last-child { border-right: 0; }
+    thead th { position: sticky; top: 0; z-index: 2; color: var(--ink); background: #202c3c; font-size: 12px; }
+    thead th.axis { text-align: center; width: 82px; }
+    thead th.task-col { width: 235px; text-align: left; }
+    thead th.status-col { width: 150px; text-align: left; }
+    tbody tr:hover { background: rgba(111,145,255,.06); }
+    td.task { color: var(--ink); font-weight: 700; text-align: left; }
+    td.status { color: var(--muted); font-size: 12px; text-align: left; }
+    tr.phase-row td { background: #0f1824; color: var(--copper); border-top: 2px solid var(--copper); font-weight: 800; letter-spacing: .08em; }
+    .score-cell { position: relative; text-align: center; }
+    .score-cell.needs-check { background: rgba(239,185,104,.10); }
+    .score-cell.needs-check::after { content: "!"; position: absolute; right: 3px; top: 1px; color: var(--warn); font-size: 10px; font-weight: 900; }
+    .blocked-row td { background: rgba(184,100,100,.16); }
+    .blocked-row td.needs-check { background: linear-gradient(135deg, rgba(184,100,100,.18), rgba(239,185,104,.15)); }
+    .stars { display: flex; justify-content: center; gap: 1px; min-width: 72px; }
+    .star {
+      width: 8px; height: 18px; padding: 0; border: 0; background: transparent; color: #445268;
+      cursor: pointer; font-size: 13px; line-height: 18px;
+    }
+    .star.filled { color: var(--blue); }
+    .score-cell.needs-check .star.filled { color: var(--warn); }
+    .star:hover, .star:focus-visible { color: var(--copper); outline: 1px solid var(--copper); outline-offset: 1px; }
+    .score-number { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
+    .detail { border-top: 1px solid var(--line); padding: 14px 16px; min-height: 60px; color: var(--muted); }
+    .detail strong { color: var(--ink); }
+    .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+    .notes section { border-left: 3px solid var(--copper); background: var(--panel); padding: 14px 16px; }
+    .notes ul { margin: 8px 0 0 18px; padding: 0; color: var(--muted); }
+    code { color: #c4d4ff; }
+    .foot { color: #8491a5; font-size: 12px; margin-top: 20px; }
+    @media (max-width: 760px) {
+      main { padding: 20px 14px 36px; }
+      .summary, .notes, .work-grid { grid-template-columns: 1fr; }
+      .chart-head { display: block; }
+      .chart-head p { margin-top: 5px; }
+    }
+    @media print {
+      body { background: white; color: #111; }
+      .toolbar, .detail { display: none; }
+      .chart, .card, .notes section { background: white; border-color: #777; }
+      .star { color: #aaa; }
+      .star.filled { color: #111; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div class="eyebrow">PJ-GENERAL / COMPLETION SCORECARD</div>
+    <h1>P0 / P1 完成度・星取表</h1>
+    <p>タスクごとの成熟度を10軸で確認するための実務用ボード。<b>!</b> は、実機・運用・ユーザー確認で埋めるべき場所です。</p>
+  </header>
+
+  <section class="summary" aria-label="概要">
+    <div class="card p0"><small>P0 契約・データ</small><strong id="p0-average">0.0 / 5</strong><span>契約・データは実証済み、フロント受入は別評価</span></div>
+    <div class="card p0-ui"><small>P0 フロント受入</small><strong id="p0-ui-average">0.0 / 5</strong><span>定常R06/R07の実機確認、RV01〜RV05完成度レビュー、U03実データ判断、U05最終受入が残る</span></div>
+    <div class="card p1"><small>P1 平均</small><strong id="p1-average">0.0 / 5</strong><span>フロント受入後に再開</span></div>
+    <div class="card next"><small>次の目標</small><strong>P0フロント受入: 実画面・実Vikunja・画面幅別証跡</strong><span>Hub操作・guide/empty/action・最新データ・3幅受入</span></div>
+  </section>
+
+  <section class="current-work" id="scorecard-current-work" aria-labelledby="current-work-title">
+    <div class="current-work-head">
+      <div><div class="eyebrow">LIVE WORK CONTEXT</div><h2 id="current-work-title">現在の作業</h2></div>
+      <p>更新: 2026-07-13 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
+    </div>
+    <div class="work-grid">
+      <section class="work-card">
+        <h3>着手中</h3>
+        <p><strong>Thread Line Workspace要件の固定とP0フロント受入</strong></p>
+        <p>R01・R02・R03・R04・R05・V01・U04・U06は配信・API・実データ保持の断面まで完了。R06/R07は、HubまたはTasksの配信資材を更新した回に必ず先頭で実施する定常ゲートとした。Tasks本文の青・淡青統一、TLマーク右だけのタイトル面、`マスタ管理`統合は実画面受入待ちである。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編し、AI相談と非活性の詳細管理を下部操作へ分離した。U02はAI要約/タグ生成改善、U03は判断ログを操作IDで照合する実データ受入、RV01〜RV05/U05は画面完成度・幅別の受入が残る。実装の都度広範囲を読み直さないための設計書化カバレッジ、役割別読込境界、3つのPJ skillは正本化・検証済みである。</p>
+        <span class="work-state">赤: 定常R06/R07（新Hub bundleのLinux反映） / 黄: R05、RV01〜RV05、U02/U03、U05の実画面改善・再受入。実データ操作は確認待ち</span>
+      </section>
+      <section class="work-card evidence">
+        <h3>確認済みの根拠</h3>
+        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>Hub Node 33件、再配信script Python 4件、dry-run成功</li><li>R05後のHub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4を確認</li><li>Kanban guideの表示名依存をviewKind判定へ修正し、Hub/Tasks左レールの旧断面を配信済み</li></ul>
+      </section>
+      <section class="work-card">
+        <h3>次の作業</h3>
+        <ul><li>定常R06/R07: 新しいHub bundleを一行scriptで再配信し、Hub /api/bootstrap=200、Tasks /api/v1/info=200を確認</li><li>Hub左レール: ダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理、下部のAI相談／詳細管理を実機確認</li><li>R05: Hub/Tasksを強制再読込し、Thread Line左レールとKanban guide非表示を受入</li><li>RV01〜RV05: 1438x715同一条件の証跡と、実装結果を上から再受入</li><li>U03: HubのGO・不要・アーカイブを、実データ変更前の確認と操作ID照合付きで受入</li><li>U05: 保存済み9画面JPEGを開き、幅別の見た目・操作感を最終判定</li></ul>
+        <span class="work-state">R06/R07は定常ゲートとして先頭固定 / RV01〜RV04は指摘反映後の再受入</span>
+      </section>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button class="tool" id="reset" type="button">クリック編集を初期値へ戻す</button>
+    <button class="tool" id="export" type="button">現在の評価をJSON保存</button>
+    <div class="legend" aria-label="凡例">
+      <span><i class="dot good"></i>確認済みの星</span>
+      <span><i class="dot warn"></i>要確認セル</span>
+      <span><i class="dot blocked"></i>ブロック中</span>
+      <span><i class="dot empty"></i>残りの星</span>
+    </div>
+  </div>
+
+  <section class="chart" aria-labelledby="chart-title">
+    <div class="chart-head">
+      <div><h2 id="chart-title">タスク × 10評価軸</h2><p>各列の見出しに評価軸名を直接表示します。評価値そのものを0〜5の五段階で記録します。未実証は0〜2/5、Linux/実機ブロック中は該当軸を満点にしません。</p></div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="task-col" scope="col">フェーズ / タスク</th><th class="axis" scope="col">R 要件</th><th class="axis" scope="col">I 実装</th><th class="axis" scope="col">E 実証</th><th class="axis" scope="col">O 運用</th><th class="axis" scope="col">F 復旧</th><th class="axis" scope="col">U UI/UX</th><th class="axis" scope="col">T 回帰</th><th class="axis" scope="col">D 文書</th><th class="axis" scope="col">X 連携</th><th class="axis" scope="col">S 安全</th><th class="status-col" scope="col">判定 / 次の確認</th></tr></thead>
+        <tbody id="score-body"></tbody>
+      </table>
+    </div>
+    <div class="detail" id="detail" aria-live="polite">星を選ぶと、タスク・評価軸・現在値がここに表示されます。</div>
+  </section>
+
+  <div class="notes">
+    <section><h2>P0の判断</h2><ul><li>契約・データ層は完了。Linux実DBの再起動・backup/restore・Hub→Vikunja連携を確認済み。</li><li>フロント受入、無効操作、編集責務の説明は追加P0として埋める。</li></ul></section>
+    <section><h2>P1の判断</h2><ul><li>P1の実機運用は、P0フロント受入を先に完了してから再開する。</li><li>custom image切替、timer、停止→reconcile、実運用1巡回は後続へ保留。</li></ul></section>
+  </div>
+  <p class="foot">根拠: <code>docs/imp/p0-completion-audit-2026-07-12.md</code> / <code>docs/imp/p0-frontend-completion-tasks-2026-07-12.md</code> / <a href="p0-frontend-acceptance-checklist-2026-07-12.html">P0受入チェックHTML</a> / <code>docs/imp/p1-verification-matrix-2026-07-12.md</code></p>
+</main>
+
+<script>
+  const axes = ['R','I','E','O','F','U','T','D','X','S'];
+  const axisNames = {R:'要件',I:'実装',E:'実証',O:'運用',F:'復旧',U:'UI/UX',T:'回帰',D:'文書',X:'連携',S:'安全'};
+  const tasks = [
+    {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'契約・SQLite回帰は完了。実入口の見た目・日常運用・安全な実機受入はP0追加で継続'},
+    {phase:'P0', name:'確認待ち・編集・判断ログ', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'U03の最新bundle実データ照合が未完了。HTTP応答・操作ID付き判断ログ・SQLite decisionsを同一IDで実機受入'},
+    {phase:'P0', name:'GO → Vikunja task → 状態mirror', scores:[5,5,4,3,4,3,5,5,4,4], pending:['E','O','U','X','S'], status:'契約と過去実機は確認済み。R04後に最新画面で状態mirrorと導線を再受入'},
+    {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,3,5,5,3,4], pending:['E','O','U','X','S'], status:'pending境界は実装済み。LLM縮退は仕様内だが、U02の要約/タグ品質改善と実画面受入が未完了'},
+    {phase:'P0', name:'Listening Lounge Hub UI', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Hub sourceと回帰は確認済み。U01/U05とR04後の実機受入を残す'},
+    {phase:'P0', name:'P0受入・運用文書', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'HTML星取表・受入チェック・runbookは整備済み。実機証跡と安全な再配信確認が残る'},
+    {phase:'P0追加', name:'Hub dashboard button / link操作監査', scores:[4,4,4,3,3,3,5,4,3,3], pending:['O','U','X'], status:'U01未達。初回ガントが崩れ、タブ切替で復帰する症状が再発。Tasks導線と読み取り専用責務は確認済み'},
+    {phase:'P0追加', name:'Hub管理画面の状態ラベル・操作列・2列配置', scores:[5,5,5,4,3,5,5,5,2,3], pending:['O','F','X','S'], status:'R03: Linux再build・`/api/bootstrap` 200・Chrome実画面・4K縦3分割相当の横崩れなしを確認'},
+    {phase:'P0追加', name:'Thread Line Hub / Tasks共通識別・左レール', scores:[5,5,4,3,3,2,5,5,3,3], pending:['E','O','F','U','X','S'], status:'R05でHub/Tasks API 200と実データ保持、薄橙Hub/薄青Tasks・Inboxアイコン・Kanban guideのviewKind抑止を配信済み。R06のTasks青/淡青統一・タイトル面調整とR07のProject／Label／Teamの`マスタ管理`統合は2026-07-13に再配信済み。強制再読込後の実機確認を待つ。原寸PNGは配信しない'},
+    {phase:'P0追加', name:'Hub候補・判断フローの実画面受入', scores:[4,5,3,2,2,2,5,4,3,3], pending:['E','O','F','U','X'], status:'U02/U03未達。AI要約・タグ生成の改善が必要。GO・編集・不要・アーカイブは操作ID付き判断ログを最新bundleで実データ照合'},
+    {phase:'P0追加', name:'Hub ↔ Vikunja UI責務・データ反映', scores:[4,4,4,2,2,3,4,4,2,3], pending:['O','F','U','X'], status:'U01未達。Hub/Tasksの編集責務とstate mirrorは確認済みだが、初回ガント崩れとVikunja全画面の再受入が残る'},
+    {phase:'P0追加', name:'複数Hub Project ↔ Vikunja Project連携基盤', scores:[4,1,0,1,1,1,1,4,1,2], pending:['R','I','E','O','F','U','T','D','X','S'], status:'方針確定 / 個人PJ既定表示、個別PJの冪等作成・候補所属・GO先解決を設計中。既存データ移行はユーザー確認待ち'},
+    {phase:'P0追加', name:'Hub準拠Vikunjaテーマの再配信', scores:[4,5,3,3,3,3,5,4,2,3], pending:['U','D'], status:'E902…544FをLinuxでrebuild済み。Chrome 1280px task detailの本文下操作面を確認。残る画面別UX/JPEGは別行で受入'},
+    {phase:'P0追加', name:'Vikunja主要画面の編集・次操作', scores:[5,5,3,2,2,3,5,5,2,3], pending:['E','O','F','U','X'], status:'U04は完了。RV01〜RV04のsource実装とfork回帰1090件は完了。Linux custom image配信後、1438x715/4K縦3分割相当でDashboard/Gantt/Kanban/task detailを再受入する'},
+    {phase:'P0追加', name:'UI受入（1280 / WQHD / 4K縦3分割）', scores:[4,4,3,1,2,2,4,4,2,3], pending:['O','F','U','X','S'], status:'U05未達。RV05の比較条件を1438x715へ統一し、全画面のbefore/afterを同一条件で再取得する'},
+    {phase:'P0追加', name:'完成度レビュー（黄色枠 RV01〜RV05）', scores:[4,5,2,1,2,2,5,5,3,2], pending:['E','O','F','U','X'], status:'RV01〜RV04はsource実装・fork回帰済み。RV05は1438x715・同一スクロール位置のbefore/after再撮影が未着手。全件ともLinux配信後の再受入が必要'},
+    {phase:'P0追加', name:'設計書化カバレッジ / 役割別読込境界', scores:[5,5,5,5,5,5,5,5,5,5], pending:[], status:'完了: 10機能の設計・実装境界・回帰・運用を別HTMLで5段階監査し、Hub UI / Tasks UI / 複数Projectの不足正本を責務別に補完。役割別最小読込ガイドと棚卸し／設計書化／継続同期の3 skillsを検証済み。P0実機受入の未達は別行で管理し、実データ変更・Linux配信は行っていない'},
+    {phase:'P1', name:'health / observability', scores:[4,4,3,1,2,2,4,4,2,2], pending:['O','F'], status:'実機の定期運用待ち'},
+    {phase:'P1', name:'backup / restore / 世代保持', scores:[4,4,3,1,3,1,4,4,2,3], pending:['O','X'], status:'mirror・timer待ち'},
+    {phase:'P1', name:'source sync / reconcile worker', scores:[4,4,1,1,1,1,4,3,2,2], pending:['E','O','F'], status:'Linux timer待ち'},
+    {phase:'P1', name:'Vikunja guide / empty state / UX', scores:[4,4,1,1,2,1,4,4,2,2], pending:['E','F'], status:'fork実機確認待ち'},
+    {phase:'P1', name:'custom image配信・stable rollback', scores:[4,4,1,1,1,1,4,3,2,1], pending:['E','O','F','S'], status:'build済み、切替待ち'},
+    {phase:'P1', name:'実運用metrics・候補ライフサイクル', scores:[3,3,1,1,1,1,3,3,1,1], pending:['E','O','F','X'], status:'1巡回待ち'},
+    {phase:'P1', name:'類似・部分自動確定・Calendar・Misskey PoC', scores:[3,3,1,1,1,1,3,3,1,1], pending:['E','O','X'], status:'最終判定待ち'},
+    {phase:'P1', name:'PostgreSQL / 認証の導入ゲート', scores:[3,2,1,1,1,1,3,4,1,1], pending:['E','O','F','X'], status:'設計・保留'}
+  ];
+  const key = 'pj-general-p0-p1-score-overrides-2026-07-12-v4';
+  let overrides = {};
+  try { overrides = JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) { overrides = {}; }
+  const designDocumentationCoverageRevision = '2026-07-13-v1';
+  const designDocumentationCoverageIndex = tasks.findIndex((task) => task.name === '設計書化カバレッジ / 役割別読込境界');
+  const designDocumentationCoverageRevisionKey = '__sourceRevision:design-documentation-coverage';
+  if (designDocumentationCoverageIndex >= 0 && overrides[designDocumentationCoverageRevisionKey] !== designDocumentationCoverageRevision) {
+    axes.forEach((_, axisIndex) => { delete overrides[designDocumentationCoverageIndex + ':' + axisIndex]; });
+    overrides[designDocumentationCoverageRevisionKey] = designDocumentationCoverageRevision;
+    try { localStorage.setItem(key, JSON.stringify(overrides)); } catch (_) {}
+  }
+  const body = document.getElementById('score-body');
+  const detail = document.getElementById('detail');
+
+  function scoreFor(taskIndex, axisIndex) {
+    return overrides[taskIndex + ':' + axisIndex] ?? tasks[taskIndex].scores[axisIndex];
+  }
+  function fivePointScore(score) { return score; }
+  function setDetail(task, axis, score, pending) {
+    detail.innerHTML = '<strong>' + task.phase + ' / ' + task.name + '</strong>　' + axis + '（' + axisNames[axis] + '）: <strong>' + fivePointScore(score) + '/5</strong>' + (pending ? '　<span style="color:var(--warn)">要確認</span>' : '') + (task.blocked ? '　<span style="color:#e49a9a">ブロック中</span>' : '');
+  }
+  function updateAverage(targetId, phase) {
+    const rows = tasks.filter(task => task.phase === phase);
+    const total = rows.reduce((sum, task) => sum + task.scores.reduce((axisSum, _, ai) => axisSum + scoreFor(tasks.indexOf(task), ai), 0), 0);
+    const average = rows.length ? total / (rows.length * axes.length) : 0;
+    document.getElementById(targetId).textContent = average.toFixed(1) + ' / 5';
+  }
+  function render() {
+    body.innerHTML = '';
+    let lastPhase = '';
+    tasks.forEach((task, ti) => {
+      if (task.phase !== lastPhase) {
+        const phaseRow = document.createElement('tr');
+        phaseRow.className = 'phase-row';
+        phaseRow.innerHTML = '<td colspan="12">' + task.phase + '</td>';
+        body.appendChild(phaseRow);
+        lastPhase = task.phase;
+      }
+      const row = document.createElement('tr');
+      if (task.blocked) row.className = 'blocked-row';
+      const name = document.createElement('td'); name.className = 'task'; name.textContent = task.name; row.appendChild(name);
+      axes.forEach((axis, ai) => {
+        const score = scoreFor(ti, ai); const cell = document.createElement('td'); cell.className = 'score-cell' + (task.pending.includes(axis) ? ' needs-check' : '');
+        cell.title = task.pending.includes(axis) ? 'ユーザーまたは実機で確認して埋める項目' : axisNames[axis] + 'の現在値';
+        const stars = document.createElement('div'); stars.className = 'stars';
+        const fivePoint = fivePointScore(score);
+        for (let n = 1; n <= 5; n += 1) {
+          const star = document.createElement('button'); star.className = 'star' + (n <= fivePoint ? ' filled' : ''); star.type = 'button'; star.textContent = '★'; star.setAttribute('aria-label', axisNames[axis] + 'を' + n + '点（5段階）にする');
+          star.addEventListener('click', () => { const nextScore = n; overrides[ti + ':' + ai] = nextScore; try { localStorage.setItem(key, JSON.stringify(overrides)); } catch (_) {} setDetail(task, axis, nextScore, task.pending.includes(axis)); render(); });
+          stars.appendChild(star);
+        }
+        const number = document.createElement('span'); number.className = 'score-number'; number.textContent = fivePoint + '/5';
+        cell.append(stars, number); cell.addEventListener('click', () => setDetail(task, axis, score, task.pending.includes(axis))); row.appendChild(cell);
+      });
+      const status = document.createElement('td'); status.className = 'status'; status.textContent = task.status; row.appendChild(status); body.appendChild(row);
+    });
+    updateAverage('p0-ui-average', 'P0追加');
+    updateAverage('p1-average', 'P1');
+  }
+  document.getElementById('reset').addEventListener('click', () => { overrides = {}; try { localStorage.removeItem(key); } catch (_) {} render(); detail.textContent = '初期評価へ戻しました。'; });
+  document.getElementById('export').addEventListener('click', () => { const blob = new Blob([JSON.stringify({date:'2026-07-12', tasks, overrides}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pj-general-p0-p1-scorecard.json'; a.click(); URL.revokeObjectURL(url); });
+  render();
+</script>
+</body>
+</html>
