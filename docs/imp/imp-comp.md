@@ -542,3 +542,9 @@
 - 当該sessionの圧縮直前は244,594 / 258,400 token（94.7%）だった。置換履歴の`input_image`は0件であり、画像残留だけでは今回の早い圧縮を説明できない。
 - 大きい初期入力と40KiB級以上のtool出力の反復を構造統計だけで確認し、`docs/guide/context-pressure-session-guideline.md`へ「画像がない圧迫」を追加した。本文、画像内容、Cookie、token、secret、envは表示・記録していない。
 - 圧縮後の再計測は40.7%だったが、圧縮1回済みのため判定は黄とした。設計書化と再調査の次回再開packetをdiaryへ残し、次の視覚レビュー・大規模調査・実装フェーズは新sessionで開始する。実データ変更、Linux配信、knowledge-vault転記は行っていない。
+
+# 2026-07-14 コンテキスト圧迫のセッション境界再監査
+
+- 現在更新中のsession JSONLを内容非表示で再集計した。session用ローカル`visualizations`配置先は0 file / 0 byteだが、会話履歴にはbrowser screenshot由来の`input_image`が2 blockある。ローカルファイルの配置自体は圧迫原因ではなく、画像を会話／tool結果へ埋め込むことだけが入力負荷になると確認した。
+- 最新実入力は163,347 / 258,400 token（63.2%）だった。圧縮置換履歴の画像は0 blockだが、同一root sessionで圧縮2回済みのため、guideの基準では赤判定とした。tool関連の構造と10KiB以上のrecordは引き続き抑制対象である。
+- 調査記録は`docs/imp/context-pressure-investigation-2026-07-13.md`、次回の最小再開packetは`docs/diary/2026-07-14-context-pressure-rotation-packet.md`を正本とする。運用ルールは既存guideで足りるため、同ガイドは更新していない。次のハーネス設計・調査は新sessionから開始する。
