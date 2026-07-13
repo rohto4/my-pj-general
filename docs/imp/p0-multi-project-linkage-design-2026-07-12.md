@@ -1,4 +1,6 @@
-# P0追加: Hub複数ProjectとVikunja Project連携 実装タスク
+# P1候補（旧P0追加）: Hub複数ProjectとVikunja Project連携 実装タスク
+
+> この文書は旧ファイル名と既存リンクを維持するが、未実装の複数Project連携はP1開始ゲートで扱う。P0のフロント受入完了条件には含めない。開始前に`docs/spec/p1-start-gate-acceptance-contract-2026-07.md`の所有者・初期Project・既存候補移行方針を満たす。
 
 ## 正本
 
@@ -19,7 +21,7 @@
 6. Project作成、重複送信、失敗再試行、未連携GO停止、Project誤作成防止を回帰へ追加する。
 7. Linux再配信後に、実Project作成を行う前に利用者確認を得て受入する。
 
-## P0受入
+## P1受入
 
 - [ ] Hubで個人Projectと個別Projectを区別して表示する。
 - [ ] Project作成後、Hub ID、Tasks Project ID、表示名、公開URLを一対一に照合する。

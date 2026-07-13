@@ -63,7 +63,9 @@
 - Home、Dashboard、Inbox、List、Table、Kanban、Gantt、task detailは、入力、画面で起きる変化、次の一手をguideとして示す。
 - task 0件、bucket 0件、日付なし、filter 0件などのempty状態は、意味、作成操作、代替ビューまたは戻り先を示す。
 
-## 5. Project連携要件
+## 5. P1開始後のProject連携要件
+
+この節の複数Project連携はP0のフロント受入完了条件には含めず、P1開始ゲートを満たしてから実装する。P0では単一の個人Projectを既定の運用対象とする。
 
 - Hubは複数Projectを扱い、個人Projectを既定表示できる。
 - Hubで個別Projectを作成した場合、対応するTasks Projectを冪等に作成・対応付ける。
