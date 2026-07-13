@@ -43,6 +43,7 @@
 - 複数Project連携アーキテクチャ: `docs/arch/hub-vikunja-multi-project-architecture.md`
 - 設計書化カバレッジ（HTML星取表）: `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`
 - 役割別の最小読込ガイド: `docs/guide/implementation-context-reading-guide.md`
+- コンテキスト圧迫・セッション切替ガイド: `docs/guide/context-pressure-session-guideline.md`
 - 現行ゴール・データ構造ブリーフ: `docs/imp/current-goal-and-data-structure-brief-2026-07-11.md`
 - P0・連結状態監査: `docs/imp/p0-status-audit-2026-07-11.md`
 - P0完了監査 2026-07-12: `docs/imp/p0-completion-audit-2026-07-12.md`

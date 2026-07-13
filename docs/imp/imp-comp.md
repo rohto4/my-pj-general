@@ -1,5 +1,13 @@
 # 完了記録
 
+## 2026-07-13 コンテキスト圧迫要因の実測と調査skill
+
+- 作業前の保全として`d9b56eafb5ae8da5638f40cebe27bc433c67cd88`を`rohto4/origin/main`へpush済みであることを確認してから調査した。session JSONLは本文・画像・認証情報を表示せず、構造・件数・サイズ・tokenメタデータだけをストリーミング集計した。
+- 初期読込751行・約44KB・約13,472 token（256Kの約5.3%）は主因ではなかった。一方で19回の圧縮直前は、観測可能な18回で実入力が各model windowの87.1〜94.0%に達していた。圧縮置換履歴には最終時点で`input_image`が30個、構造サイズ17.19MiBで残り、画像・添付・巨大tool出力が後続入力を早く再圧迫する実測を得た。
+- `docs/imp/context-pressure-investigation-2026-07-13.md`へ確認方法、数値、限界、結論を残し、`docs/guide/context-pressure-session-guideline.md`を採用済みの閾値・セッション切替手順の正本として追加した。通常初期読込へは追加せず、診断または切替時だけ参照する。
+- PJ skill `.agents/skills/audit-context-pressure/`を追加した。実装先行、設計書先行、混在、画像/ログ中心の4パターンを分け、セッションJSONLがある場合は内容非表示の構造集計、ない場合は推測と明示した作業packet監査へ分岐する。Node構文検査、実sessionのparse error 0・圧縮19回・最終画像30件の再集計、skill quick validatorを成功させた。
+- knowledge-vault反映要否を評価した。既存の`G:\knowledge-vault\knowledge\dev\codex-auto-compact-recovery-design.md`は圧縮後の復帰設計を正本としており、今回のPJ固有実測の全文複写は不要と判断した。横断利用はPJ skillと本ガイドの参照で提供し、外部vaultの既存正本を重複更新していない。
+
 ## 2026-07-13 設計書化カバレッジ・役割別読込境界
 
 - `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`を、P0/P1完成度星取表とは別の5段階・クリック編集可能な設計書カバレッジ正本として追加した。入口取込、Hub候補・判断、Hub UI、Hub↔Vikunja、Tasks UI、再配信、LLM、複数Project、P1認証/PostgreSQL、継続同期の10機能について、正本・証跡・最小実装読込境界を対応付けた。

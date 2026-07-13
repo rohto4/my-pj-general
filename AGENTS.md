@@ -38,6 +38,11 @@
 
 役割別読込ガイドで対象外の実装ツリーを先に広く読まない。設計書だけで状態・操作・境界を断定できない場合は、`docs/imp/design-documentation-coverage-assessment-2026-07-13.html`に示す対象実装だけを読む。不足事実は先に`docs/imp/imp-tasks.md`へ記録し、該当する設計正本へ補完する。
 
+## コンテキスト圧迫とセッション切替
+
+- 圧縮回数、実入力 token、画像・添付・巨大 tool 出力を診断する場合だけ、`docs/guide/context-pressure-session-guideline.md` と `.agents/skills/audit-context-pressure/` を使う。これは通常の初期読込セットには加えない。
+- 圧縮後は必須初期化と現行タスクを再読込し、圧縮が2回以上、または次の局面が画像・長大出力を伴う場合は、docs と Git の断面を閉じて新しいセッションへ移る。
+
 ## AGENTS.md 非対応環境
 
 - AGENTS.md を自動で読まない LLM / tool を使う場合は、作業開始時にこの `AGENTS.md` を明示的に読ませる。

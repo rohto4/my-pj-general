@@ -1,0 +1,4 @@
+interface:
+  display_name: "Context Pressure Audit"
+  short_description: "Measure context pressure and safe rotation points"
+  default_prompt: "Use $audit-context-pressure to measure this session and create a safe continuation plan."
