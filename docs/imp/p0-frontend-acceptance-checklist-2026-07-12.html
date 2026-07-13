@@ -25,7 +25,7 @@
   <h1>上から実行するP0受入チェック</h1>
   <p class="intro">赤は環境・配信のブロック、黄は画面で確認・操作感を判断する項目です。上から順に実施し、各行で「完了」または「未達」を一つ選び、未達なら右のコメントへ理由を書きます。入力内容はこのブラウザだけに保存されます。</p>
   <section class="legend"><span class="key"><i class="swatch green"></i>実証済み（自動・実機証跡）</span><span class="key"><i class="swatch red"></i>ブロック：Linux/配信の操作が必要</span><span class="key"><i class="swatch yellow"></i>要確認：画面の見た目・操作感または実データ操作</span></section>
-  <section class="evidence"><strong>現在の実機証跡</strong><br>Hub: SQLite integrity <code>ok</code>、候補19、decision 9、execution link 4。Vikunja: Listening Lounge <code>2.3.0-pj-general-listening-lounge</code>、API応答確認済み。R06/R07の前回bundleは2026-07-13に再配信済みで既存データを維持したが、Hub左レール再編を含む新しいHub bundleが作成されたため、Linux反映は未実施である。先頭の定常作業R06/R07を赤から実行する。DB/files/volumeは維持し、再インポートは不要です。</section>
+  <section class="evidence"><strong>現在の実機証跡</strong><br>Hub: SQLite integrity <code>ok</code>、候補19、decision 9、execution link 4。Vikunja: Listening Lounge <code>2.3.0-pj-general-listening-lounge</code>、API応答確認済み。2026-07-14に現行bundleをLinuxへ再配信し、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、既存データの維持を確認した。R06/R07は配信失敗ではなく、再配信後の最終見た目・操作感の受入待ちとして黄から開始する。将来のbundle更新でLinuxが最新版でない場合だけ、該当行を「未達」にして赤へ戻す。DB/files/volumeは維持し、再インポートは不要です。</section>
   <details class="evidence">
     <summary>再受入JPEG一覧（U04/U05の最終目視用）</summary>
     <p>各行のbefore → afterを開き、画面密度・導線・違和感を確認してください。確認結果はU04/U05のコメント欄へNo.とともに書きます。</p>
@@ -128,8 +128,8 @@ const defaultState = {
   V01:{result:'done',comment:'E902…544FをLinuxでrebuild済み。Hub healthとVikunja APIは正常で、Chrome 1280px task detailは右操作railが本文下の操作面へ移ることを確認。再インポートなし。'},
   R04:{result:'done',comment:'再配信済み。Hub /api/bootstrap=200、Tasks /api/v1/info=200、実データは候補19 / decision 9 / execution link 4を維持。Kanban guideの実機残存はR05で修正する。'},
   R05:{result:'done',comment:'完了。Linux再配信、Hub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4を維持。Thread Line左レールとKanban guide非表示を実機確認済み。後続の左レール再編は定常R06で再受入する。'},
-  R06:{result:'failed',comment:'Hub左レール再編を含む新しいHub bundleを作成したため、Linux反映は未実施。先頭の一行scriptでHub/Tasksを再配信後、Tasksを強制再読込し、主要ボタン・link・focus・選択行・左端線・card/task/dashboard rail・カレンダー上端にHub由来のオレンジが残らず、TLマーク右のタイトル面だけが薄青であることを確認する。'},
-  R07:{result:'failed',comment:'Hub左レール再編を含む新しいHub bundleを作成したため、Linux反映は未実施。先頭の一行scriptでHub/Tasksを再配信後、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを確認する。'},
+  R06:{result:'',comment:'2026-07-14に再配信とAPI確認は完了。Hub左レールとTasks本文テーマを強制再読込後に見て、主要ボタン・link・focus・選択行・左端線・card/task/dashboard rail・カレンダー上端にHub由来のオレンジが残らず、TLマーク右のタイトル面だけが薄青であることを最終判定する。'},
+  R07:{result:'',comment:'2026-07-14に再配信とAPI確認は完了。Tasksを強制再読込し、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを最終判定する。'},
   U01:{result:'failed',comment:'未達。初回遷移直後のHubガントが崩れ、タブ切替で復帰する症状が再発。R04反映後、初回遷移から再現しないことを確認する。'},
   U02:{result:'failed',comment:'未達。sourceは本文抜粋・本文由来要約・既存タグマスタ照合・TODO案優先へ改善済み。既存19件の再インポートはせず、新規AI相談候補を1件だけ作る実機確認は実行前の明示確認待ち。'},
   U03:{result:'failed',comment:'未達。GO / 編集 / 不要 / アーカイブの判断ログが表示されない、または順序不正。現行コードは各操作で操作IDを付けてdecisionsへ記録し、画面通知にHTTP状態と操作IDを出す。最新Hub bundle反映後にHTTP表示・bootstrap.log・DB decisions.noteを同一操作IDで照合する。実データ操作は実行前確認が必要。'},
@@ -137,9 +137,20 @@ const defaultState = {
   U05:{result:'failed',comment:'未達。ユーザーが追加の画面調整観点を提示予定。RV05の同一1438x715 before/after再取得後に幅別比較を更新する。'},
   U06:{result:'done',comment:'エラー・empty・再試行を確認。意図的な本番相当コンテナ停止は実施していない。'}
 };
+const staleR06R07Comments = new Set([
+  'Hub左レール再編を含む新しいHub bundleを作成したため、Linux反映は未実施。先頭の一行scriptでHub/Tasksを再配信後、Tasksを強制再読込し、主要ボタン・link・focus・選択行・左端線・card/task/dashboard rail・カレンダー上端にHub由来のオレンジが残らず、TLマーク右のタイトル面だけが薄青であることを確認する。',
+  'Hub左レール再編を含む新しいHub bundleを作成したため、Linux反映は未実施。先頭の一行scriptでHub/Tasksを再配信後、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを確認する。'
+]);
 let state = {}; try { state = {...defaultState, ...JSON.parse(localStorage.getItem(storageKey) || '{}')}; } catch (_) { state = {...defaultState}; }
 for (const id of ['R02','V01']) { state[id] = {...defaultState[id], ...(state[id] || {}), result:'done'}; }
-for (const id of ['R06','R07']) { state[id] = {...defaultState[id], ...(state[id] || {}), result:'failed'}; }
+let migratedStaleRedeployState = false;
+for (const id of ['R06','R07']) {
+  if (state[id]?.result === 'failed' && staleR06R07Comments.has(state[id]?.comment)) {
+    state[id] = {...defaultState[id]};
+    migratedStaleRedeployState = true;
+  }
+}
+if (migratedStaleRedeployState) localStorage.setItem(storageKey, JSON.stringify(state));
 const root = document.getElementById('tasks');
 function esc(v) { return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function save(){ localStorage.setItem(storageKey, JSON.stringify(state)); }

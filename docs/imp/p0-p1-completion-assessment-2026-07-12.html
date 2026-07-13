@@ -141,22 +141,22 @@
   <section class="current-work" id="scorecard-current-work" aria-labelledby="current-work-title">
     <div class="current-work-head">
       <div><div class="eyebrow">LIVE WORK CONTEXT</div><h2 id="current-work-title">現在の作業</h2></div>
-      <p>更新: 2026-07-13 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
+      <p>更新: 2026-07-14 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
     </div>
     <div class="work-grid">
       <section class="work-card">
         <h3>着手中</h3>
         <p><strong>Thread Line Workspace要件の固定とP0フロント受入</strong></p>
-        <p>R01・R02・R03・R04・R05・V01・U04・U06は配信・API・実データ保持の断面まで完了。R06/R07は、HubまたはTasksの配信資材を更新した回に必ず先頭で実施する定常ゲートとした。Tasks本文の青・淡青統一、TLマーク右だけのタイトル面、`マスタ管理`統合は実画面受入待ちである。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編し、AI相談と非活性の詳細管理を下部操作へ分離した。U02はAI要約/タグ生成改善、U03は判断ログを操作IDで照合する実データ受入、RV01〜RV05/U05は画面完成度・幅別の受入が残る。実装の都度広範囲を読み直さないための設計書化カバレッジ、役割別読込境界、3つのPJ skillは正本化・検証済みである。</p>
-        <span class="work-state">赤: 定常R06/R07（新Hub bundleのLinux反映） / 黄: R05、RV01〜RV05、U02/U03、U05の実画面改善・再受入。実データ操作は確認待ち</span>
+        <p>R01・R02・R03・R04・R05・V01・U04・U06は配信・API・実データ保持の断面まで完了。R06/R07は、HubまたはTasksの配信資材を更新した回に必ず先頭で実施する定常ゲートとした。2026-07-14の現行bundle再配信、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、候補19 / decision 9 / execution link 4、Hub/Tasks/管理画面のbrowser error 0を確認済みである。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編し、AI相談と非活性の詳細管理を下部操作へ分離した。Tasks本文の青・淡青統一、TLマーク右だけのタイトル面、`マスタ管理`統合とHub左レールは、最終の実画面受入待ちである。U02は新規AI相談候補1件の品質確認、U03は判断ログを操作IDで照合する実データ受入、RV01〜RV05/U05は画面完成度・幅別の受入が残る。実装の都度広範囲を読み直さないための設計書化カバレッジ、役割別読込境界、3つのPJ skillは正本化・検証済みである。</p>
+        <span class="work-state">黄: R05、R06/R07、RV01〜RV05、U02/U03、U05の最終実画面受入。実データ操作は確認待ち</span>
       </section>
       <section class="work-card evidence">
         <h3>確認済みの根拠</h3>
-        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>Hub Node 33件、再配信script Python 4件、dry-run成功</li><li>R05後のHub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4を確認</li><li>Kanban guideの表示名依存をviewKind判定へ修正し、Hub/Tasks左レールの旧断面を配信済み</li></ul>
+        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>Hub Node 34件、補助Python 8件、再配信script Python 4件、dry-run成功</li><li>2026-07-14再配信後のHub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4、browser error 0を確認</li><li>Kanban guideの表示名依存をviewKind判定へ修正し、Hub/Tasks左レールの現行断面を配信済み</li></ul>
       </section>
       <section class="work-card">
         <h3>次の作業</h3>
-        <ul><li>定常R06/R07: 新しいHub bundleを一行scriptで再配信し、Hub /api/bootstrap=200、Tasks /api/v1/info=200を確認</li><li>Hub左レール: ダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理、下部のAI相談／詳細管理を実機確認</li><li>R05: Hub/Tasksを強制再読込し、Thread Line左レールとKanban guide非表示を受入</li><li>RV01〜RV05: 1438x715同一条件の証跡と、実装結果を上から再受入</li><li>U03: HubのGO・不要・アーカイブを、実データ変更前の確認と操作ID照合付きで受入</li><li>U05: 保存済み9画面JPEGを開き、幅別の見た目・操作感を最終判定</li></ul>
+        <ul><li>定常R06/R07: 強制再読込後のHub左レール、Tasks本文テーマ、`マスタ管理`を実機受入する。現行bundleは配信済みのため再配信操作は不要</li><li>R05: Hub/Tasksを強制再読込し、Thread Line左レールとKanban guide非表示を受入</li><li>RV01〜RV05: 1438x715同一条件の証跡と、実装結果を上から再受入</li><li>U02: 新規AI相談候補を1件だけ作り、要約・タグ・TODO案の品質を確認する（実行前確認）</li><li>U03: HubのGO・不要・アーカイブを、実データ変更前の確認と操作ID照合付きで受入</li><li>U05: 保存済み9画面JPEGを開き、幅別の見た目・操作感を最終判定</li></ul>
         <span class="work-state">R06/R07は定常ゲートとして先頭固定 / RV01〜RV04は指摘反映後の再受入</span>
       </section>
     </div>
@@ -200,19 +200,19 @@
     {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'契約・SQLite回帰は完了。実入口の見た目・日常運用・安全な実機受入はP0追加で継続'},
     {phase:'P0', name:'確認待ち・編集・判断ログ', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'U03の最新bundle実データ照合が未完了。HTTP応答・操作ID付き判断ログ・SQLite decisionsを同一IDで実機受入'},
     {phase:'P0', name:'GO → Vikunja task → 状態mirror', scores:[5,5,4,3,4,3,5,5,4,4], pending:['E','O','U','X','S'], status:'契約と過去実機は確認済み。R04後に最新画面で状態mirrorと導線を再受入'},
-    {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,3,5,5,3,4], pending:['E','O','U','X','S'], status:'pending境界は実装済み。LLM縮退は仕様内だが、U02の要約/タグ品質改善と実画面受入が未完了'},
-    {phase:'P0', name:'Listening Lounge Hub UI', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Hub sourceと回帰は確認済み。U01/U05とR04後の実機受入を残す'},
-    {phase:'P0', name:'P0受入・運用文書', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'HTML星取表・受入チェック・runbookは整備済み。実機証跡と安全な再配信確認が残る'},
-    {phase:'P0追加', name:'Hub dashboard button / link操作監査', scores:[4,4,4,3,3,3,5,4,3,3], pending:['O','U','X'], status:'U01未達。初回ガントが崩れ、タブ切替で復帰する症状が再発。Tasks導線と読み取り専用責務は確認済み'},
+    {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,3,5,5,3,4], pending:['E','O','U','X','S'], status:'pending境界と要約/タグ/TODO案のsource改善は完了。U02の新規AI相談候補1件による実画面品質受入が未完了'},
+    {phase:'P0', name:'Listening Lounge Hub UI', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Hub source・回帰・2026-07-14再配信後の読取り確認は完了。R05/R06とU05の最終実機受入を残す'},
+    {phase:'P0', name:'P0受入・運用文書', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'HTML星取表・受入チェック・runbookと再配信証跡は整備済み。最終の利用者実機受入が残る'},
+    {phase:'P0追加', name:'Hub dashboard button / link操作監査', scores:[4,4,4,3,3,3,5,4,3,3], pending:['O','U','X'], status:'初回ガントのsource修正と回帰は完了。Tasks導線と読み取り専用責務は確認済みで、最終の利用者実機受入を残す'},
     {phase:'P0追加', name:'Hub管理画面の状態ラベル・操作列・2列配置', scores:[5,5,5,4,3,5,5,5,2,3], pending:['O','F','X','S'], status:'R03: Linux再build・`/api/bootstrap` 200・Chrome実画面・4K縦3分割相当の横崩れなしを確認'},
-    {phase:'P0追加', name:'Thread Line Hub / Tasks共通識別・左レール', scores:[5,5,4,3,3,2,5,5,3,3], pending:['E','O','F','U','X','S'], status:'R05でHub/Tasks API 200と実データ保持、薄橙Hub/薄青Tasks・Inboxアイコン・Kanban guideのviewKind抑止を配信済み。R06のTasks青/淡青統一・タイトル面調整とR07のProject／Label／Teamの`マスタ管理`統合は2026-07-13に再配信済み。強制再読込後の実機確認を待つ。原寸PNGは配信しない'},
-    {phase:'P0追加', name:'Hub候補・判断フローの実画面受入', scores:[4,5,3,2,2,2,5,4,3,3], pending:['E','O','F','U','X'], status:'U02/U03未達。AI要約・タグ生成の改善が必要。GO・編集・不要・アーカイブは操作ID付き判断ログを最新bundleで実データ照合'},
-    {phase:'P0追加', name:'Hub ↔ Vikunja UI責務・データ反映', scores:[4,4,4,2,2,3,4,4,2,3], pending:['O','F','U','X'], status:'U01未達。Hub/Tasksの編集責務とstate mirrorは確認済みだが、初回ガント崩れとVikunja全画面の再受入が残る'},
+    {phase:'P0追加', name:'Thread Line Hub / Tasks共通識別・左レール', scores:[5,5,4,3,3,2,5,5,3,3], pending:['E','O','F','U','X','S'], status:'R05/R06/R07の現行bundleは2026-07-14に再配信済みで、Hub/Tasks API 200と実データ保持、左レール・`マスタ管理`の読取り確認まで完了。強制再読込後の最終見た目・操作感受入を待つ。原寸PNGは配信しない'},
+    {phase:'P0追加', name:'Hub候補・判断フローの実画面受入', scores:[4,5,3,2,2,2,5,4,3,3], pending:['E','O','F','U','X'], status:'U02/U03未達。AI要約・タグ生成のsource改善は完了し、新規候補1件の品質確認と、GO・編集・不要・アーカイブの操作ID付き実データ照合を残す'},
+    {phase:'P0追加', name:'Hub ↔ Vikunja UI責務・データ反映', scores:[4,4,4,2,2,3,4,4,2,3], pending:['O','F','U','X'], status:'Hub/Tasksの編集責務とstate mirror、初回ガントのsource修正・回帰は確認済み。Vikunja全画面と幅別の最終受入が残る'},
     {phase:'P0追加', name:'複数Hub Project ↔ Vikunja Project連携基盤', scores:[4,1,0,1,1,1,1,4,1,2], pending:['R','I','E','O','F','U','T','D','X','S'], status:'方針確定 / 個人PJ既定表示、個別PJの冪等作成・候補所属・GO先解決を設計中。既存データ移行はユーザー確認待ち'},
     {phase:'P0追加', name:'Hub準拠Vikunjaテーマの再配信', scores:[4,5,3,3,3,3,5,4,2,3], pending:['U','D'], status:'E902…544FをLinuxでrebuild済み。Chrome 1280px task detailの本文下操作面を確認。残る画面別UX/JPEGは別行で受入'},
-    {phase:'P0追加', name:'Vikunja主要画面の編集・次操作', scores:[5,5,3,2,2,3,5,5,2,3], pending:['E','O','F','U','X'], status:'U04は完了。RV01〜RV04のsource実装とfork回帰1090件は完了。Linux custom image配信後、1438x715/4K縦3分割相当でDashboard/Gantt/Kanban/task detailを再受入する'},
-    {phase:'P0追加', name:'UI受入（1280 / WQHD / 4K縦3分割）', scores:[4,4,3,1,2,2,4,4,2,3], pending:['O','F','U','X','S'], status:'U05未達。RV05の比較条件を1438x715へ統一し、全画面のbefore/afterを同一条件で再取得する'},
-    {phase:'P0追加', name:'完成度レビュー（黄色枠 RV01〜RV05）', scores:[4,5,2,1,2,2,5,5,3,2], pending:['E','O','F','U','X'], status:'RV01〜RV04はsource実装・fork回帰済み。RV05は1438x715・同一スクロール位置のbefore/after再撮影が未着手。全件ともLinux配信後の再受入が必要'},
+    {phase:'P0追加', name:'Vikunja主要画面の編集・次操作', scores:[5,5,3,2,2,3,5,5,2,3], pending:['E','O','F','U','X'], status:'U04は完了。RV01〜RV04のsource実装とfork回帰は完了し、現行Linux配信後に1438x715/4K縦3分割相当でDashboard/Gantt/Kanban/task detailを再受入する'},
+    {phase:'P0追加', name:'UI受入（1280 / WQHD / 4K縦3分割）', scores:[4,4,3,1,2,2,4,4,2,3], pending:['O','F','U','X','S'], status:'U05未達。RV05の比較条件を1438x715へ統一し、全画面のbefore/afterを同一条件で再取得して最終判定する'},
+    {phase:'P0追加', name:'完成度レビュー（黄色枠 RV01〜RV05）', scores:[4,5,2,1,2,2,5,5,3,2], pending:['E','O','F','U','X'], status:'RV01〜RV04はsource実装・fork回帰・現行Linux配信まで完了。RV05は1438x715・同一スクロール位置のbefore/after再撮影が未着手で、全件の利用者再受入が必要'},
     {phase:'P0追加', name:'設計書化カバレッジ / 役割別読込境界', scores:[5,5,5,5,5,5,5,5,5,5], pending:[], status:'完了: 10機能の設計・実装境界・回帰・運用を別HTMLで5段階監査し、Hub UI / Tasks UI / 複数Projectの不足正本を責務別に補完。役割別最小読込ガイドと棚卸し／設計書化／継続同期の3 skillsを検証済み。P0実機受入の未達は別行で管理し、実データ変更・Linux配信は行っていない'},
     {phase:'P1', name:'health / observability', scores:[4,4,3,1,2,2,4,4,2,2], pending:['O','F'], status:'実機の定期運用待ち'},
     {phase:'P1', name:'backup / restore / 世代保持', scores:[4,4,3,1,3,1,4,4,2,3], pending:['O','X'], status:'mirror・timer待ち'},

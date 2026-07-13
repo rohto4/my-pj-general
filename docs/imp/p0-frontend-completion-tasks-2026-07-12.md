@@ -103,6 +103,7 @@ P0のバックエンド、SQLiteデータ構造、GO・Webhook・reconcileの連
 - R05のsourceではHub左レールを薄橙の`Thread Line Hub`、Tasks左レールを薄青の`Thread Line Tasks`へ揃え、旧副題を除去し、Inbox等のProject行にTasks青アイコンを追加した。Hub Node 31件、Tasksテーマ17件、型検査が成功している。2026-07-13に`infra/deploy/redeploy-p0-frontend.ps1`でLinux再配信を完了し、Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、候補19 / decision 9 / execution link 4の維持を確認した。残りは強制再読込後のR05実機見た目受入だけである。
 - R06として、実機で残ったHub由来のオレンジをTasks本文から除去し、primary/link/focus/選択行/left rail/button/card/task/dashboard/calendarをTasks青`#5176d8`／淡青`#89b8ff`へ統一した。さらに、薄青の識別面はHubと同じくTLマーク右のタイトル面だけを塗り、識別リンク全体は塗らない。テーマ回帰18件、stylelint、production buildは成功し、更新Tasks bundle SHA-256は`4EB8CF69FDF03FE7586CCD95E94E80B36293CD2B612AD7B14373D184097CECCA`。Linux再配信と実機受入はR06として残す。
 - R07として、Tasks左レールのProject／Label／Teamを`マスタ管理`へ統合した。`マスタ管理`は10文字以内の名称で、同一画面にプロジェクト・ラベル・チームの3セクションと各追加導線を置く。既存の個別URLと作成／編集フォームは直接リンク・後方互換のため残す。テーマ回帰19件、stylelint、production buildを成功させ、更新Tasks bundle SHA-256は`D166BBCBCC56414D00E4278C4710B91FC750054902CEAF9DA090D82DCF39B85D`。Linux再配信と実機受入はR06/R07として残す。
+- 2026-07-14にR06/R07を含む現行bundleをLinuxへ再配信し、Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、候補19 / decision 9 / execution link 4を確認した。Hub 1438×715の左レール・2列ダッシュボード、Tasksの左レール・主要tab・`マスタ管理`三セクションと追加導線はCodexが読み取り確認済みである。残りはユーザーが強制再読込後に行う見た目・操作感の最終受入だけとする。
 
 ## P0追加タスクの完了条件
 
