@@ -187,3 +187,9 @@ flowchart LR
 - project dashboard、今日から30日、未日付task、既存view導線を実データで確認した。
 - backend API、認証、権限、Webhook契約は変更していない。
 - Linux常設配信、stable rollback、upstream追随はP1の運用タスクとする。
+
+## 利用者導線・障害時の合流点
+
+利用者はHubで入口・候補・GO判断を扱い、GO成功後はTasksでtitle、期限、担当、進捗、完了を扱う。Hubに戻るのは、実行状態の確認、候補の出典・判断履歴、またはTasksへの再遷移が必要な場合だけである。この体験上の一続きは `docs/product/p0-overall-workflow-2026-07.md`、Hub側の操作状態は `docs/spec/hub-ui-interaction-contract-p0.md`、Tasks側の画面契約は `docs/spec/thread-line-tasks-ui-contract-p0.md` を正本とする。
+
+外部境界の障害は、候補・判断・taskの正本を混ぜて復旧しない。Vikunja API失敗ではHubのGO判断と試行履歴を保持し、Webhook欠落・外部削除ではreconcileでmirrorだけを更新する。frontend forkの配信不具合ではstable imageへ戻し、Hub SQLiteやVikunja DBを削除・再インポートしない。実際の復旧順は `docs/ops/p0-operations-runbook-2026-07.md`、Linuxへのsource-only配信は `docs/guide/linux-listening-lounge-deploy.md`、回帰/実機受入は `docs/spec/vikunja-integration-acceptance-tests-2026-07.md` と `docs/imp/p0-frontend-acceptance-checklist-2026-07-12.html` を参照する。

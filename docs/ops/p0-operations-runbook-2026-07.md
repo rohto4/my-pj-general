@@ -89,3 +89,16 @@ VikunjaはDBだけでなく、filesとconfig / secretの復元可能性を確認
 ## P0 rollback境界
 
 P0 rollbackはHub DBとVikunjaデータを独立して扱う。Hubのcandidate / decisionをVikunja task本文で再構築したり、Vikunja taskをHub候補から上書き再生成したりしない。
+
+## 機能別の復旧後照合
+
+障害復旧、設定変更、再配信の後は、成功応答だけで完了扱いにせず、対象機能の正本データと観測を照合する。実データを変更する確認操作はユーザー確認後だけに行う。
+
+| 機能 | 復旧後に確認する状態 | 合格条件 | 正本 / 自動根拠 |
+| --- | --- | --- | --- |
+| vault / Slack入口 | `/api/observability` の最新`sourceSyncRuns`、candidate件数 | sourceごとのstateと`scanned` / `created` / `skipped`が説明でき、同一入力の再実行で重複候補が増えない | `docs/spec/intake-source-adapters.md`、`apps/web/test/test_source_sync.py`、`apps/web/test/api.test.mjs` |
+| Hub候補・判断 | `/api/bootstrap` の候補、判断ログ、operation ID | 成功した操作だけがHTTP応答・画面ログ・`decisions.note`で一致し、失敗時に仮候補を作らない | `docs/spec/confirmation-queue-p0.md`、`apps/web/test/api.test.mjs` |
+| Vikunja連携 | `execution_links`、`execution_task_state`、`sync_attempts`、reconcile結果 | task正本を上書きせず、失敗は再試行可能、削除済みtaskは`detached`として履歴を残す | `docs/spec/vikunja-integration-contract-2026-07.md`、`docs/spec/vikunja-integration-acceptance-tests-2026-07.md` |
+| ローカルLLM相談 | `/api/health`、既存thread、候補一覧 | provider障害時もHub/Tasksと既存履歴を保ち、失敗送信が候補/GOを起こさない | `docs/spec/local-llm-chat-runtime-contract-p0.md`、`apps/web/test/api.test.mjs` |
+
+`/api/health` が`degraded`のときは、失敗した依存だけを復旧対象にする。Hub SQLiteが`ok`であれば、VikunjaまたはLLMの一時障害を理由にDB、候補、判断、Taskを削除・再取り込みしない。

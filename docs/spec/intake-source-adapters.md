@@ -10,24 +10,32 @@
 
 詳細な本認証、本 AI、外部 DB サーバはここでは確定しない。2026-07-10 時点の P0 本デモでは、SQLite と最小 API で入口データを確認待ちキューへ流す。
 
-## 共通責務
+## 実装済みP0の共通契約
 
-すべての adapter は、入口固有 payload をそのまま業務 object にしない。
-
-共通の流れは次とする。
+すべての adapter は入口固有 payload をそのまま実行 TODO にしない。**現行P0では独立した Raw入口イベント / 正規化イベントの永続storeは実装していない。** adapter は入口情報を検証・要約して、Hub SQLite の共通 `candidates` へ直接作成する。
 
 ```text
 source payload
 -> adapter
--> Raw入口イベント
--> 正規化イベント
--> AI整理結果
+-> candidates (status=pending, source / source_path / excerpt / summary)
 -> 確認待ちキュー
--> ユーザーGO
--> 業務object
+-> ユーザーの編集 / GO / 不要 / アーカイブ
+-> GO時だけVikunja task
 ```
 
-adapter が作るのは `Raw入口イベント` までとする。
+`knowledge_vault` と `slack` の取り込みは、候補とは別に `source_sync_runs` へ開始・成功・失敗・件数を残す。Web手入力とAI相談は個別の画面APIを使うが、最終的な候補は同じ `candidates` と確認待ちキューへ入る。
+
+`docs/spec/intake-unified-event-model.md` の Raw入口イベント / 正規化イベントは、P1以降に source lineage を独立保存するための候補モデルである。現行P0の実装事実を上書きしない。
+
+## 共通の失敗・再実行境界
+
+| 状況 | P0の扱い | 復旧・観測 |
+| --- | --- | --- |
+| 空本文、対象外行、同一入力済み | 候補を作らず `skipped` と数える | API応答と `/api/observability` の最新sync runで件数を確認する |
+| vault / Slack取り込み中の例外 | `source_sync_runs.state=failed` とerrorを記録し、合成候補を作らず呼出元へ失敗を返す | 入力・設定を直して同じpayloadを再実行する。決定的な候補IDにより既存候補は重複作成しない |
+| connectorや入力元が未接続 | 他の入口、既存候補、確認待ち、Tasksの実行を止めない | sourceごとの失敗を観測し、当該入口だけを再実行する |
+
+候補の途中作成を含む障害を無条件に削除・再取り込みしない。再実行時は既存IDをskipするため、利用者は実行前後の `scanned` / `created` / `skipped` / `failed` と候補一覧を照合する。
 
 ## adapter 別方針
 
@@ -48,15 +56,18 @@ adapter が作るのは `Raw入口イベント` までとする。
 - 任意タグ
 - 予定化したいかどうかの緩い指定
 
-### Raw入口イベント
+### P0候補への写像
 
 | Field | 値 |
 | --- | --- |
-| `source_type` | `web` |
-| `source_ref` | 画面生成 ID |
-| `payload` | 入力フォームの JSON |
-| `source_url` | 入力 URL がある場合 |
-| `occurred_at` | 入力時刻 |
+| `source` | `web` |
+| `source_path` | 入力URLがある場合だけ保持 |
+| `title` / `excerpt` / `summary` | 画面入力から作る候補本文 |
+| `occurred` | 入力時刻 |
+
+### 現行HTTP境界
+
+`POST /api/candidates` は妥当な入力を `pending` 候補として保存し、`201` で候補を返す。手入力の作成は判断ログに `created` を残す。画面が応答を受け取れない場合、クライアントは仮の候補を生成せず、失敗理由だけを表示する。
 
 ## Slack adapter
 
@@ -68,7 +79,7 @@ adapter が作るのは `Raw入口イベント` までとする。
 - 全ワークスペース、全チャンネル、全DMは対象外。
 - 抽出対象は、やりたいこと、困っていること、タスクっぽいこと。
 
-### Raw入口イベント
+### P1 source lineageモデル
 
 | Field | 値 |
 | --- | --- |
@@ -87,6 +98,12 @@ adapter が作るのは `Raw入口イベント` までとする。
 - thread / reaction の有無
 - AI 整理結果
 
+### 現行P0のAPI・候補写像
+
+`POST /api/import/slack` は connector または手動payloadの `messages` だけを受ける。各メッセージは `ts + text` のhashから `SL-*` 候補IDを決め、`source=slack`、`source_path=channelUrl`、`status=pending` として保存する。空本文、参加通知、既存IDは `skipped` とし、実行結果の `scanned` / `created` / `skipped` と `syncRun` を返す。
+
+P0は Slack API token、event subscription、全ワークスペース検索をHubのHTTP契約に含めない。connectorが返したpayloadを入力にし、失敗や再実行はsource run単位で扱う。
+
 ## Misskey adapter
 
 ### P0 暫定範囲
@@ -94,7 +111,7 @@ adapter が作るのは `Raw入口イベント` までとする。
 - note payload を Raw として保存できる形を想定する。
 - 実接続方式は後続で決める。
 
-### Raw入口イベント
+### P1 source lineageモデル
 
 | Field | 値 |
 | --- | --- |
@@ -134,7 +151,13 @@ G:\knowledge-vault\tasks\handoff\
 - 後で調べたいこと
 - 次アクションや handoff に相当すること
 
-### Raw入口イベント
+### 現行P0のAPI・候補写像
+
+`POST /api/import/knowledge-vault` は設定済みまたは明示指定した対象ディレクトリのMarkdownをscanする。各ファイルはpath hashから `KV-*` 候補IDを決め、`source=knowledge_vault`、`source_path`、ファイル更新日、本文由来の `excerpt` / `summary` / 既存タグを `candidates` へ保存する。既存ID、空ファイル、読込不能ファイルは `skipped` として数える。
+
+scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立Raw storeも全文検索indexも作らず、現在の候補を再現するために必要な出典情報をcandidate側へ保持する。
+
+### P1 source lineageモデル
 
 | Field | 値 |
 | --- | --- |
@@ -153,6 +176,16 @@ G:\knowledge-vault\tasks\handoff\
 - knowledge-vault はローカル scan を実装済み。検証時点で10件を `KV-*` 候補として取り込んだ。
 - すべての AI 整理結果は確認待ちキューに入り、自動 GO はしない。
 
+## 回帰・受入根拠
+
+| 確認対象 | 自動根拠 | 実機で確認すること |
+| --- | --- | --- |
+| vault scanの共通domain | `apps/web/test/test_source_sync.py` | 有効scopeの取込結果と対象外scopeが混ざらないこと |
+| Slackの成功・重複skip・観測 | `apps/web/test/api.test.mjs` の source同期・observabilityテスト | connector payloadを使った件数と、再実行時の`skipped`を確認すること |
+| 手入力の永続化・失敗時非合成 | `apps/web/test/api.test.mjs` の候補作成/SQLite応答テスト | 実データを変更する入力はユーザー確認後だけに行うこと |
+
+実装を読む必要があるのは、adapterの候補写像・同期run・再実行規則を変更するときだけである。その場合は `apps/web/source_sync.py`、`apps/web/db_tool.py`、HTTP境界の `apps/web/server.mjs` と上記testだけを読む。
+
 ## P0 では決めないこと
 
 - アプリ本体へ Slack API 認証を持たせる方式。
@@ -164,6 +197,9 @@ G:\knowledge-vault\tasks\handoff\
 ## 関連文書
 
 - `docs/spec/intake-unified-event-model.md`
+- `docs/data/p0-data-flow-2026-07.md`
+- `docs/spec/confirmation-queue-p0.md`
 - `docs/spec/ai-assisted-registration-flow.md`
+- `docs/ops/p0-operations-runbook-2026-07.md`
 - `docs/candi-ref/knowledge-vault-current-structure-for-intake.md`
 - `docs/candi-ref/ui-reference-sources-for-initial-prototype.md`

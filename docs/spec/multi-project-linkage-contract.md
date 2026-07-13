@@ -44,6 +44,8 @@ Hub Project作成、Tasks Project冪等作成、候補所属、GO先解決、失
 - API応答、Hub画面、DBの`hub_projects`、Tasks Project ID/URLを同一操作IDで照合する。
 - 実在Project作成、既存候補の所属変更、Inbox対応付けは実データ変更のため、操作前に利用者確認を得る。
 
+実装開始前のfake API検証、実データへ進むための開始ゲート、失敗時に自動削除しない境界は `docs/spec/p1-start-gate-acceptance-contract-2026-07.md` を正本とする。本契約はP0実装済みのAPIを意味しない。
+
 ## 関連正本
 
 - field・不変条件: `docs/data/hub-project-linkage-data-design.md`

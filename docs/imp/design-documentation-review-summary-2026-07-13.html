@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pj-general 設計書化レビュー結果表</title>
+  <style>
+    :root { --ink:#102028; --surface:#152833; --surface-2:#1d3541; --line:#4d6b76; --text:#edf4f2; --muted:#aec4c8; --good:#76d7bd; --review:#f0cb78; --link:#9ed6f4; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(135deg,#09151a,#142d37 55%,#0d2028); color:var(--text); font-family:Inter,"Noto Sans JP",system-ui,sans-serif; line-height:1.55; }
+    main { max-width:1920px; margin:auto; padding:28px clamp(14px,3vw,48px) 56px; }
+    h1 { margin:2px 0 6px; font-size:clamp(1.65rem,3.4vw,2.65rem); line-height:1.15; }
+    h2 { margin:0 0 8px; font-size:1.05rem; }
+    .eyebrow { margin:0; color:var(--good); font-size:.75rem; font-weight:800; letter-spacing:.16em; }
+    .lede { max-width:1080px; margin:0; color:var(--muted); }
+    .notice { margin:20px 0; padding:13px 16px; border-left:5px solid var(--review); background:rgba(240,203,120,.10); }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; margin:22px 0; }
+    .stat { min-height:92px; padding:13px; border-top:3px solid var(--good); background:rgba(19,39,48,.9); }
+    .stat:nth-child(2) { border-top-color:#9ed6f4; }.stat:nth-child(3),.stat:nth-child(4) { border-top-color:var(--review); }
+    .stat small { display:block; color:var(--muted); }.stat strong { display:block; margin-top:4px; font-size:1.55rem; }
+    .table-wrap { overflow:auto; border:1px solid var(--line); background:rgba(8,22,28,.86); }
+    table { width:100%; min-width:1600px; border-collapse:collapse; }
+    th,td { padding:11px; vertical-align:top; border-right:1px solid rgba(77,107,118,.72); border-bottom:1px solid rgba(77,107,118,.72); }
+    th { position:sticky; top:0; z-index:1; background:#24424e; font-size:.8rem; text-align:left; }
+    tbody tr:hover { background:rgba(118,215,189,.06); }
+    .feature { min-width:180px; font-weight:800; }.screen { min-width:170px; }.docs { min-width:280px; }.split { min-width:210px; }.focus { min-width:300px; }.review { min-width:190px; }.volume { min-width:132px; color:var(--muted); }
+    a { color:var(--link); text-decoration:none; } a:hover { text-decoration:underline; }
+    .docs a { display:inline-block; margin:0 4px 4px 0; padding:2px 5px; border:1px solid rgba(158,214,244,.38); font-size:.75rem; }
+    .pill { display:inline-block; padding:3px 7px; font-size:.75rem; font-weight:700; }.ok { background:rgba(118,215,189,.15); color:var(--good); }.user { background:rgba(240,203,120,.16); color:#f5d890; }
+    .foot { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; margin-top:20px; }.foot section { padding:16px; border:1px solid var(--line); background:rgba(19,39,48,.88); }.foot p,.foot li { color:var(--muted); }.foot ul { margin:8px 0; padding-left:20px; }
+    code { color:#d2e7de; } @media (max-width:900px) { main { padding:20px 12px 40px; }.stats,.foot { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">FUNCTIONAL DESIGN REVIEW / 2026-07-13</p>
+  <h1>設計書化レビュー結果表</h1>
+  <p class="lede">現行実装を機能面でAIが再現できることを基準に、画面・機能ごとの正本、分割責務、文書量、記載上の注意点をまとめたレビュー用の結果表。行数は2026-07-13時点の正本文書のみを数え、受入HTML・実装・testは別の証跡として扱う。</p>
+  <div class="notice"><strong>意図的な分離:</strong> ここで「機能設計 完了」とするのは、状態・操作・データ・外部境界・縮退・回帰が文書から再現できることです。Listening Loungeなどの色、質感、情報密度、実操作感は、下表の黄色ラベルどおりユーザーが実画面で承認する対象として残します。</div>
+  <section class="stats" aria-label="集計">
+    <div class="stat"><small>対象の機能行</small><strong>10</strong><span>実装済みP0と未実装P1設計</span></div>
+    <div class="stat"><small>機能設計の完了</small><strong>10 / 10</strong><span>正本・最小読込境界・検証を明示</span></div>
+    <div class="stat"><small>ユーザー視覚レビュー</small><strong>3領域</strong><span>Hub / Tasks / LLM画面の見た目・操作感</span></div>
+    <div class="stat"><small>新規の正本文書</small><strong>2</strong><span>LLM runtime、P1開始ゲート</span></div>
+  </section>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>機能</th><th>画面 / 操作範囲</th><th>正本設計</th><th>文書量</th><th>分割の仕方</th><th>再現のために記載したこと</th><th>レビュー状態</th></tr></thead>
+    <tbody>
+      <tr><td class="feature">入口取込・ソース同期</td><td class="screen">Web手入力<br>vault scan<br>Slack payload</td><td class="docs"><a href="../product/p0-overall-workflow-2026-07.md">体験</a><a href="../spec/intake-source-adapters.md">adapter契約</a><a href="../data/p0-data-flow-2026-07.md">データ</a><a href="../ops/p0-operations-runbook-2026-07.md">復旧</a></td><td class="volume">4 files<br>338 lines</td><td class="split">体験 → adapter/API → candidate正本 → source run/運用</td><td class="focus">現行P0はRaw event storeを使わずcandidateへ直接正規化する事実、決定的ID、skip、source単位の失敗・再実行、観測値を明文化。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
+      <tr><td class="feature">Hub候補・判断</td><td class="screen">確認待ち<br>編集 / GO / 不要 / アーカイブ</td><td class="docs"><a href="../product/p0-overall-workflow-2026-07.md">体験</a><a href="../spec/confirmation-queue-p0.md">queue</a><a href="../spec/hub-ui-interaction-contract-p0.md">UI操作</a><a href="../data/object-model-initial.md">object</a><a href="../ops/p0-operations-runbook-2026-07.md">復旧</a></td><td class="volume">5 files<br>454 lines</td><td class="split">利用者判断 → UI操作 → object/decision → 外部連携 → 復旧</td><td class="focus">操作IDの三者照合、仮候補を作らない失敗境界、GO失敗時の判断保持、reconcileとdetachedを分離。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
+      <tr><td class="feature">Hub画面・左レール</td><td class="screen">Dashboard / 簡易日程 / キュー / ワーク / 管理</td><td class="docs"><a href="../product/thread-line-workspace-requirements.md">画面要件</a><a href="../spec/screen-structure-p0.md">構造</a><a href="../spec/hub-ui-interaction-contract-p0.md">状態/操作</a><a href="../data/p0-data-flow-2026-07.md">集計正本</a><a href="../ops/p0-operations-runbook-2026-07.md">縮退</a></td><td class="volume">5 files<br>301 lines</td><td class="split">視覚要求はproduct、hash/状態はspec、表示値はdata、障害時はops</td><td class="focus">各面の正常・空・読込・失敗・次操作、Tasksが読取mirrorである責務、成功した判断表示の保持を記載。</td><td class="review"><span class="pill user">機能完了 / 視覚レビュー要</span></td></tr>
+      <tr><td class="feature">Hub ↔ Vikunja連携</td><td class="screen">GO登録 / Webhook / 再照合 / Tasks概要</td><td class="docs"><a href="../product/p0-overall-workflow-2026-07.md">体験</a><a href="../arch/vikunja-pj-general-integration-architecture-2026-07.md">責務境界</a><a href="../spec/vikunja-integration-contract-2026-07.md">API</a><a href="../data/vikunja-integration-data-design-2026-07.md">mirror</a><a href="../spec/vikunja-integration-acceptance-tests-2026-07.md">受入</a><a href="../ops/p0-operations-runbook-2026-07.md">復旧</a></td><td class="volume">6 files<br>639 lines</td><td class="split">体験 → arch一方向責務 → API → link/state → 受入/復旧</td><td class="focus">v2.3.0 API v1固定、GO冪等性、署名・payload hash、許可fieldだけのmirror、外部削除時の履歴保持を記載。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
+      <tr><td class="feature">Thread Line Tasks UI</td><td class="screen">Dashboard / Gantt / Kanban / Table / detail / rail</td><td class="docs"><a href="../product/thread-line-workspace-requirements.md">画面要件</a><a href="../spec/thread-line-tasks-ui-contract-p0.md">view契約</a><a href="../arch/vikunja-pj-general-integration-architecture-2026-07.md">Hub境界</a><a href="../ops/p0-operations-runbook-2026-07.md">rollback</a><a href="../guide/linux-listening-lounge-deploy.md">配信</a></td><td class="volume">5 files<br>564 lines</td><td class="split">体験/ブランド → viewごとの状態/操作 → fork責務 → 配信/rollback</td><td class="focus">view別guide・empty・action、Tasksだけが編集するfield、幅別受入、stable tag rollback、DBを消さない境界を記載。</td><td class="review"><span class="pill user">機能完了 / 視覚レビュー要</span></td></tr>
+      <tr><td class="feature">運用・安全再配信</td><td class="screen">runbook操作<br>source-only deploy<br>backup / restore</td><td class="docs"><a href="../guide/linux-listening-lounge-deploy.md">配信手順</a><a href="../ops/p0-operations-runbook-2026-07.md">運用</a><a href="../arch/vikunja-linux-deployment-and-operations-2026-07.md">Linux構成</a></td><td class="volume">3 files<br>361 lines</td><td class="split">手順はguide、保守・縮退はops、配置責務はarch</td><td class="focus">hash照合後だけ展開、依存別degraded、source/decision/link/LLMの復旧後照合、DB・files・volumeを削除しないことを記載。</td><td class="review"><span class="pill ok">機能設計 完了</span></td></tr>
+      <tr><td class="feature">ローカルLLM相談</td><td class="screen">/chat<br>サイド相談<br>候補として追加</td><td class="docs"><a href="../product/local-llm-chat-intake-2026-07.md">体験</a><a href="../spec/local-llm-chat-runtime-contract-p0.md">runtime</a><a href="../data/local-llm-chat-data-design-2026-07.md">保存</a><a href="../spec/hub-ui-interaction-contract-p0.md">Hub操作</a><a href="../ops/p0-operations-runbook-2026-07.md">縮退</a></td><td class="volume">5 files<br>317 lines</td><td class="split">体験 → HTTP/provider/tool → SQLite → Hub候補 → 運用</td><td class="focus">HTTP status、保存順、read-only tool scope、秘密非露出、provider障害で候補/GOを起こさないこと、再送手順を記載。</td><td class="review"><span class="pill user">機能完了 / 視覚レビュー要</span></td></tr>
+      <tr><td class="feature">複数Project連携</td><td class="screen">Project作成<br>候補所属<br>GO先解決</td><td class="docs"><a href="../product/multi-project-workspace-flow.md">体験</a><a href="../data/hub-project-linkage-data-design.md">field</a><a href="../spec/multi-project-linkage-contract.md">契約</a><a href="../arch/hub-vikunja-multi-project-architecture.md">構成</a><a href="../spec/p1-start-gate-acceptance-contract-2026-07.md">開始/受入</a></td><td class="volume">5 files<br>178 lines</td><td class="split">利用者導線 → link state/data → API冪等性 → adapter責務 → 開始ゲート</td><td class="focus">未連携GO停止、A/B誤登録禁止、外部作成後link失敗、同一key再試行、実Projectを自動削除・採用しない境界を記載。</td><td class="review"><span class="pill ok">設計完了 / 未実装</span></td></tr>
+      <tr><td class="feature">P1認証・PostgreSQL移行</td><td class="screen">role別API<br>migration dry-run<br>運用切替</td><td class="docs"><a href="../spec/auth-resource-action-matrix-p1.md">権限</a><a href="../spec/postgresql-migration-dry-run-contract-p1.md">migration</a><a href="../spec/p1-start-gate-acceptance-contract-2026-07.md">開始/受入</a><a href="../product/p1-phase-brief-2026-07.md">導入ゲート</a><a href="../arch/tech-stack-decision-matrix-2026-07.md">採用根拠</a><a href="../../tech-stack.md">stack</a></td><td class="volume">6 files<br>559 lines</td><td class="split">role/action → DB比較 → fake検証 → 観測ゲート → stack判断</td><td class="focus">UIだけに依存しないdeny、automationのGO拒否、SQLiteを残すdry-run、差分時の切替禁止、外部task非再作成を記載。</td><td class="review"><span class="pill ok">設計完了 / 未実装</span></td></tr>
+      <tr><td class="feature">設計書化・継続同期</td><td class="screen">正本マップ<br>読込境界<br>handoff / review</td><td class="docs"><a href="../guide/docs-management-rules.md">更新規則</a><a href="../guide/implementation-context-reading-guide.md">読込境界</a><a href="design-documentation-coverage-assessment-2026-07-13.html">coverage</a><a href="design-documentation-review-summary-2026-07-13.html">結果表</a><a href="../../.agents/skills/audit-design-documentation-coverage/SKILL.md">audit skill</a></td><td class="volume">5 files<br>276+ lines</td><td class="split">管理規則 → 役割別読込 → coverage → review artifact → skill手順</td><td class="focus">実装を広く読む前の六証拠種別、最小実装境界、task/完了記録、見た目受入の別管理、静的リンク検証を記載。</td><td class="review"><span class="pill ok">運用設計 完了</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="foot">
+    <section><h2>レビュー時に見る順番</h2><ol><li>関心のある行の「正本設計」を開き、体験・状態/API・データ・外部境界・復旧・証跡が分離されているかを見る。</li><li>「再現のために記載したこと」が、実装を読まずに変更・再実装の判断をできる十分な粒度か確認する。</li><li>見た目・操作感が気になる行だけ、実機受入HTMLと公開画面を見て判断する。</li></ol></section>
+    <section><h2>この表が扱わないもの</h2><ul><li>P0の実データ操作や幅別画面受入の完了判定。これは<a href="p0-p1-completion-assessment-2026-07-12.html">P0/P1完成度星取表</a>の責務。</li><li>色、質感、余白、ロゴ、情報密度の最終承認。これはユーザーの実画面レビューの責務。</li><li>P1の実装進捗。未実装行は設計を再現できるだけで、実装済みを意味しない。</li></ul></section>
+  </div>
+</main>
+</body>
+</html>

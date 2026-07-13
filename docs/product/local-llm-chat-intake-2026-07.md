@@ -105,6 +105,7 @@ END_THREADLINE_TASK_PROPOSALS
 ## 関連正本
 
 - データ設計: `docs/data/local-llm-chat-data-design-2026-07.md`
+- ランタイムHTTP・provider縮退・回帰: `docs/spec/local-llm-chat-runtime-contract-p0.md`
 - 実装タスク: `docs/imp/local-llm-chat-intake-tasks.md`
 - Hub / Tasks境界: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`
 - 現行データ構造ブリーフ: `docs/imp/current-goal-and-data-structure-brief-2026-07-11.md`

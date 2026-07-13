@@ -64,6 +64,36 @@
 - API payload、Webhook dedupe、再照合、または表示mirrorの実装根拠が契約にない。
 - この場合だけ `apps/web/vikunja_adapter.py`、`apps/web/server.mjs`、対応する `apps/web/test/test_vikunja_adapter.py` を読む。
 
+## P0入口・候補・AI相談
+
+最小読込セット:
+
+1. `docs/spec/intake-source-adapters.md`（Web / vault / Slackの現行P0入口）
+2. `docs/spec/confirmation-queue-p0.md`（候補の判断、operation ID、GO失敗）
+3. AI相談を触る場合だけ `docs/spec/local-llm-chat-runtime-contract-p0.md`、`docs/product/local-llm-chat-intake-2026-07.md`、`docs/data/local-llm-chat-data-design-2026-07.md`
+4. 障害・復旧を扱う場合だけ `docs/ops/p0-operations-runbook-2026-07.md`
+5. カバレッジHTMLの「入口取込・ソース同期」「Hub候補・判断」「ローカルLLM相談」の対象行だけ
+
+実装を読む条件:
+
+- candidateへの写像、source run、操作ID、provider HTTP status、tool scopeのいずれかが正本にない。
+- この場合だけ `apps/web/source_sync.py`、`apps/web/server.mjs`、`apps/web/db_tool.py` と対応する `apps/web/test/test_source_sync.py` / `apps/web/test/api.test.mjs` を読む。
+
+## P1開始設計
+
+最小読込セット:
+
+1. `docs/spec/p1-start-gate-acceptance-contract-2026-07.md`
+2. 複数Projectなら `docs/product/multi-project-workspace-flow.md`、`docs/data/hub-project-linkage-data-design.md`、`docs/spec/multi-project-linkage-contract.md`、`docs/arch/hub-vikunja-multi-project-architecture.md`
+3. 認証なら `docs/spec/auth-resource-action-matrix-p1.md`、PostgreSQLなら `docs/spec/postgresql-migration-dry-run-contract-p1.md`
+4. `docs/product/p1-phase-brief-2026-07.md` の導入ゲート
+5. カバレッジHTMLの「複数Project連携」または「P1認証・PostgreSQL移行」の対象行だけ
+
+実装を読む条件:
+
+- P1開始ゲートを満たし、fake APIまたは一時DBの最小実装に入る。
+- P0 source、実在Project、既存candidate、既存Vikunja taskを先に広く読んだり変更したりしない。
+
 ## Linux配信・復旧
 
 最小読込セット:
@@ -86,7 +116,8 @@
 1. `docs/guide/docs-management-rules.md`
 2. `docs/guide/implementation-context-reading-guide.md`（この文書）
 3. `docs/imp/design-documentation-coverage-assessment-2026-07-13.html`
-4. 対象行にリンクされた既存正本だけ
+4. ユーザーへの機能設計レビューを準備する場合だけ `docs/imp/design-documentation-review-summary-2026-07-13.html`
+5. 対象行にリンクされた既存正本だけ
 
 実装を読む条件:
 

@@ -88,3 +88,5 @@ Linux上のHubからWindowsのLLMを使う場合は、`127.0.0.1`ではなくLAN
 - API tokenやWebhook secretをsystem prompt、chat message、metadataへ入れない。
 - LLMのraw responseは構造化候補ブロックを除き、表示用assistant messageとして保存する。
 - provider errorは履歴へ秘密を含めず、UIへ一般化した接続エラーとして返す。
+
+HTTP status、provider障害時の保存順、toolの読取範囲、回帰根拠は `docs/spec/local-llm-chat-runtime-contract-p0.md` を正本とする。
