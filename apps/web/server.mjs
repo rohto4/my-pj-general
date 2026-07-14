@@ -552,6 +552,34 @@ async function reconcileVikunjaExecutions() {
   }
 }
 
+async function rebuildKnowledgeVaultCandidates(payload) {
+  const config = vikunjaConfig();
+  if (!config.baseUrl || !config.projectId || !config.apiToken) {
+    throw new Error("Vikunja connection is not configured");
+  }
+  const listResponse = await fetch(
+    `${config.baseUrl}${config.apiBasePath}/projects/${encodeURIComponent(config.projectId)}/tasks`,
+    { headers: { authorization: `Bearer ${config.apiToken}` }, signal: AbortSignal.timeout(10000) },
+  );
+  const listBody = await listResponse.text();
+  if (!listResponse.ok) throw new Error(`Vikunja API ${listResponse.status}: ${listBody.slice(0, 500)}`);
+  const parsedTasks = JSON.parse(listBody || "[]");
+  const tasks = Array.isArray(parsedTasks) ? parsedTasks : parsedTasks.tasks || [];
+  for (const task of tasks) {
+    const deleteResponse = await fetch(
+      `${config.baseUrl}${config.apiBasePath}/tasks/${encodeURIComponent(task.id)}`,
+      { method: "DELETE", headers: { authorization: `Bearer ${config.apiToken}` }, signal: AbortSignal.timeout(10000) },
+    );
+    if (!deleteResponse.ok) {
+      const detail = await deleteResponse.text();
+      throw new Error(`Vikunja task ${task.id} delete failed: ${deleteResponse.status} ${detail.slice(0, 500)}`);
+    }
+  }
+  const reset = runDb("reset-operational-data");
+  const imported = runDb("import-knowledge-vault", payload);
+  return { deletedTasks: tasks.length, reset, import: imported };
+}
+
 async function handleApi(request, response, url) {
   try {
     if (request.method === "GET" && url.pathname === "/api/health") {
@@ -656,6 +684,11 @@ async function handleApi(request, response, url) {
     if (request.method === "POST" && url.pathname === "/api/import/knowledge-vault") {
       const body = await readBody(request);
       sendJson(response, 200, runDb("import-knowledge-vault", JSON.parse(body || "{}")));
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/admin/rebuild-knowledge-vault-candidates") {
+      const body = await readBody(request);
+      sendJson(response, 200, await rebuildKnowledgeVaultCandidates(JSON.parse(body || "{}")));
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/import/slack") {

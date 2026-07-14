@@ -568,6 +568,16 @@ def seed(conn):
         ("go-promotion", "GO後作成", "decision", "GOした候補をタスク、予定候補、判断記録へ展開する。", 1),
     ]
     conn.executemany("insert or ignore into prompt_templates(id, name, target, body, enabled) values (?, ?, ?, ?, ?)", templates)
+    candidate_prompt_marker = conn.execute("select 1 from settings where key = ?", ("migration.candidate-triage.v2",)).fetchone()
+    if candidate_prompt_marker is None:
+        conn.execute(
+            "update prompt_templates set body = ? where id = ?",
+            (
+                "knowledge-vaultから未完了の次アクションだけを候補化する。README、完了記録、単なる見出しは除外する。原文の行動を保ち、対象・成果・次アクションが分かる一文にする。固有名詞や英語識別子は無理に翻訳せず、定型の『〜を確認する』を付与しない。候補は確認待ちとし、自動GOしない。",
+                "candidate-triage",
+            ),
+        )
+        ensure_setting(conn, "migration.candidate-triage.v2", {"appliedAt": now()})
     marker = conn.execute("select 1 from settings where key = ?", ("migration.remove-initial-candidates.v1",)).fetchone()
     if marker is None:
         conn.execute("delete from decisions where candidate_id in ('AI-001', 'AI-002', 'AI-003', 'AI-004', 'AI-005', 'AI-006')")
@@ -1181,6 +1191,37 @@ def delete_candidate(conn, candidate_id):
     return {"id": candidate_id, "deleted": True}
 
 
+def reset_operational_data(conn):
+    """Clear the derived queue and every audit row that refers to it.
+
+    Configuration, tags, prompt templates, and chat history are intentionally
+    retained: they are not execution history for the rebuilt vault queue.
+    """
+    tables = [
+        "candidate_tags",
+        "decisions",
+        "execution_task_state",
+        "execution_links",
+        "sync_attempts",
+        "sync_events",
+        "source_sync_runs",
+        "candidates",
+    ]
+    counts = {table: conn.execute(f"select count(*) from {table}").fetchone()[0] for table in tables}
+    for table in tables:
+        conn.execute(f"delete from {table}")
+    conn.execute("update sources set last_imported_at = null")
+    return {
+        "candidates": counts["candidates"],
+        "decisions": counts["decisions"],
+        "execution_links": counts["execution_links"],
+        "execution_task_state": counts["execution_task_state"],
+        "sync_attempts": counts["sync_attempts"],
+        "sync_events": counts["sync_events"],
+        "source_sync_runs": counts["source_sync_runs"],
+    }
+
+
 def classify_text(text):
     lowered = text.lower()
     if "todo" in lowered or "task" in lowered or "やる" in text or "対応" in text:
@@ -1211,8 +1252,16 @@ def update_source(conn, source_id, payload):
 
 
 def update_prompt_template(conn, template_id, payload):
-    enabled = 1 if payload.get("enabled") else 0
-    conn.execute("update prompt_templates set enabled = ? where id = ?", (enabled, template_id))
+    existing = conn.execute("select * from prompt_templates where id = ?", (template_id,)).fetchone()
+    if existing is None:
+        raise ValueError(f"prompt template not found: {template_id}")
+    enabled = 1 if payload.get("enabled", bool(existing["enabled"])) else 0
+    body = payload.get("body", existing["body"])
+    if not isinstance(body, str) or not body.strip():
+        raise ValueError("prompt template body is required")
+    if len(body) > 4000:
+        raise ValueError("prompt template body must be 4000 characters or fewer")
+    conn.execute("update prompt_templates set enabled = ?, body = ? where id = ?", (enabled, body.strip(), template_id))
     return dict(conn.execute("select * from prompt_templates where id = ?", (template_id,)).fetchone())
 
 
@@ -1299,6 +1348,8 @@ def main():
             output = update_candidate(conn, payload["id"], payload)
         elif command == "delete-candidate":
             output = delete_candidate(conn, payload["id"])
+        elif command == "reset-operational-data":
+            output = reset_operational_data(conn)
         elif command == "import-knowledge-vault":
             output = import_knowledge_vault(conn, payload)
         elif command == "import-slack":

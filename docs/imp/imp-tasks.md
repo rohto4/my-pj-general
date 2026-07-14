@@ -1,5 +1,11 @@
 # 実装待ち
 
+## 2026-07-15 knowledge-vault候補・Tasks洗い替え
+
+- [x] 現行実データを監査し、19候補がすべて`knowledge_vault`由来、4件がVikunja taskと連携済みであることを確認した。
+- [x] テスト先行で、README・完了記録・記憶見出しを除外し、`Next Actions` / `次にやるべきこと` の未完了アクションだけを原文ベースの候補にする規則と、一括洗い替えAPIを追加した。
+- [ ] LinuxへHub更新を再配信し、Vikunja task・Hub候補・判断/連携/source同期監査を空にした後、knowledge-vaultを新規候補として再取込する。再取込後の同期runだけを新しい履歴の開始点として残す。
+
 ## 最優先: P0フロント受入（2026-07-12再評価）
 
 P0のバックエンド・連携契約は完了しているが、Hub / Vikunjaの画面操作、無効ボタン、読み取り専用責務、最新データ構造のフロント反映が未受入である。次の目標は `docs/imp/next-goal-p0-frontend-completion-2026-07-12.md`、詳細タスクは `docs/imp/p0-frontend-completion-tasks-2026-07-12.md` を正本とする。

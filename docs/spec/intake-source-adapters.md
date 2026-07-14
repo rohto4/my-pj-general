@@ -138,7 +138,7 @@ G:\knowledge-vault\tasks\handoff\
 
 詳細は `docs/candi-ref/knowledge-vault-current-structure-for-intake.md` を参照する。
 
-対象範囲内は、P0 では日付やファイル名で細かく絞らず、いったん全件を対象にする。
+対象範囲内は日付やファイル名で細かく絞らず全件をscanする。ただし、候補は未完了の次アクションだけに限定する。
 
 ### 抽出対象
 
@@ -153,7 +153,7 @@ G:\knowledge-vault\tasks\handoff\
 
 ### 現行P0のAPI・候補写像
 
-`POST /api/import/knowledge-vault` は設定済みまたは明示指定した対象ディレクトリのMarkdownをscanする。各ファイルはpath hashから `KV-*` 候補IDを決め、`source=knowledge_vault`、`source_path`、ファイル更新日、本文由来の `excerpt` / `summary` / 既存タグを `candidates` へ保存する。既存ID、空ファイル、読込不能ファイルは `skipped` として数える。
+`POST /api/import/knowledge-vault` は設定済みまたは明示指定した対象ディレクトリのMarkdownをscanする。候補化するのは、完了済みfrontmatter、`README.md`、単なる記憶見出しを除いた、`Next Actions` / `次にやるべきこと` 等の未完了アクションである。各アクションは `path + action index` のhashから `KV-*` 候補IDを決め、`source=knowledge_vault`、`source_path`、ファイル更新日、原文の行動を保った `title` / `todo` / `excerpt`、既存タグを `candidates` へ保存する。英語の固有名詞・識別子は無理に翻訳せず、定型の「〜を確認する」を付与しない。既存ID、空ファイル、候補化対象外、読込不能ファイルは `skipped` として数える。
 
 scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立Raw storeも全文検索indexも作らず、現在の候補を再現するために必要な出典情報をcandidate側へ保持する。
 
@@ -173,7 +173,7 @@ scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立
 - Web manual は画面から実入力し、SQLite に永続化する。
 - Slack は `memo-ideas` connector の読み取りを確認済み。現時点で対象投稿はないため、P0では import payload 経路を用意する。
 - Misskey sourceは無効設定として保持し、P1 PoCまで実データ・mock候補のどちらも本流へ入れない。
-- knowledge-vault はローカル scan を実装済み。検証時点で10件を `KV-*` 候補として取り込んだ。
+- knowledge-vault はローカル scan を実装済み。候補化規則は、未完了の次アクションを1項目ずつ確認待ちへ出す。本文全体・見出し・完了記録をそのままTODO化しない。
 - すべての AI 整理結果は確認待ちキューに入り、自動 GO はしない。
 
 ## 回帰・受入根拠

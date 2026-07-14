@@ -6,6 +6,7 @@ the worker can call the same domain without going through an HTTP handler.
 """
 
 import hashlib
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -20,6 +21,49 @@ TAG_HINTS = {
     "review": ("review", "レビュー", "確認", "受入"),
     "research": ("research", "調査", "検証"),
 }
+
+
+VAULT_TASK_CANDIDATE_PROMPT = """knowledge-vaultから未完了の次アクションだけを候補化する。
+見出しやREADME、完了済み記録をタスク化しない。各候補は原文の行動を保ち、
+対象・成果・次アクションが分かる一文にする。識別子や英語固有名詞は無理に翻訳しない。"""
+
+ACTION_HEADINGS = {"next actions", "next action", "next steps", "next step", "次にやるべきこと", "次のアクション", "次アクション", "todo"}
+
+
+def frontmatter(text):
+    if not text.startswith("---"):
+        return {}
+    closing = text.find("\n---", 3)
+    if closing < 0:
+        return {}
+    fields = {}
+    for line in text[3:closing].splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        fields[key.strip().lower()] = value.strip().strip('"\'').lower()
+    return fields
+
+
+def next_actions(text):
+    """Return unfinished list items from explicit next-action sections."""
+    lines = text.splitlines()
+    collecting = False
+    actions = []
+    for raw in lines:
+        stripped = raw.strip()
+        if stripped.startswith("#"):
+            heading = stripped.lstrip("#").strip().lower()
+            collecting = heading in ACTION_HEADINGS
+            continue
+        if not collecting or not stripped:
+            continue
+        if re.match(r"^[-*+]\s*\[[xX]\]", stripped):
+            continue
+        action = re.sub(r"^(?:[-*+]\s+|\d+[.)]\s*)", "", stripped).strip()
+        if action:
+            actions.append(action.rstrip("。."))
+    return actions
 
 
 def meaningful_lines(text):
@@ -84,38 +128,49 @@ def import_knowledge_vault(conn, payload):
             if not text:
                 skipped += 1
                 continue
-            digest = hashlib.sha1(str(path).encode("utf-8")).hexdigest()[:10]
-            candidate_id = f"KV-{digest}"
-            if conn.execute("select 1 from candidates where id = ?", (candidate_id,)).fetchone():
+            metadata = frontmatter(text)
+            if path.name.lower() == "readme.md" or metadata.get("status") in {"completed", "done", "archived"}:
                 skipped += 1
                 continue
             lines = [line.strip() for line in text.splitlines() if line.strip()]
             heading = next((line.lstrip("# ").strip() for line in lines if line.startswith("#")), "")
             title = heading or path.stem
             body_lines = meaningful_lines(text)
-            excerpt = candidate_excerpt(body_lines)
             relative = path.relative_to(root).as_posix() if root in path.parents else path.name
             top = relative.split("/")[0]
-            item = {
-                "id": candidate_id,
-                "status": "pending",
-                "title": title[:120],
-                "kind": db_tool.classify_text(text),
-                "source": "knowledge_vault",
-                "sourceLabel": top,
-                "sourcePath": str(path).replace("\\", "/"),
-                "tags": candidate_tags(conn, ["knowledge-vault", top, "imported"], text),
-                "confidence": "medium",
-                "missing": ["owner confirm"],
-                "occurred": datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d"),
-                "excerpt": excerpt,
-                "summary": candidate_summary("knowledge-vault", relative, body_lines, title),
-                "todo": title[:80],
-                "schedule": "候補なし",
-                "preview": f"VaultCandidate: {title[:80]}",
-            }
-            db_tool.insert_candidate(conn, item)
-            imported += 1
+            actions = next_actions(text)
+            if not actions and top == "inbox":
+                actions = [title]
+            if not actions:
+                skipped += 1
+                continue
+            for index, action in enumerate(actions, start=1):
+                digest = hashlib.sha1(f"{path}:{index}".encode("utf-8")).hexdigest()[:10]
+                candidate_id = f"KV-{digest}"
+                if conn.execute("select 1 from candidates where id = ?", (candidate_id,)).fetchone():
+                    skipped += 1
+                    continue
+                excerpt = candidate_excerpt([action])
+                item = {
+                    "id": candidate_id,
+                    "status": "pending",
+                    "title": action[:120],
+                    "kind": "todo",
+                    "source": "knowledge_vault",
+                    "sourceLabel": top,
+                    "sourcePath": str(path).replace("\\", "/"),
+                    "tags": candidate_tags(conn, ["knowledge-vault", top, "imported"], text),
+                    "confidence": "medium",
+                    "missing": ["owner confirm"],
+                    "occurred": datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d"),
+                    "excerpt": excerpt,
+                    "summary": candidate_summary("knowledge-vault", relative, [action], title),
+                    "todo": action[:80],
+                    "schedule": "候補なし",
+                    "preview": f"VaultCandidate: {action[:80]}",
+                }
+                db_tool.insert_candidate(conn, item)
+                imported += 1
         conn.execute(
             "update sources set last_imported_at = ? where id = ?",
             (db_tool.now(), "knowledge_vault"),
