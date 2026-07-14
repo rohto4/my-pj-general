@@ -2,6 +2,7 @@
 param(
   [string]$Server = '192.168.0.200',
   [string]$User = 'unibell4',
+  [string]$IdentityFile = (Join-Path $env:USERPROFILE '.ssh\pj-general-ed25519'),
   [switch]$DryRun
 )
 
@@ -16,6 +17,7 @@ $tasksSource = Join-Path $repoRoot 'tmp\vikunja-listening-lounge'
 $startScript = Join-Path $PSScriptRoot 'start-pj-general.sh'
 $remoteHelper = Join-Path $PSScriptRoot 'redeploy-p0-frontend-remote.sh'
 $remote = "$User@$Server"
+$sshOptions = @('-i', $IdentityFile, '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes')
 
 function Require-File([string]$Path) {
   if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "missing required file: $Path" }
@@ -69,18 +71,20 @@ if ($DryRun) {
   exit 0
 }
 
+Require-File $IdentityFile
+
 @(
   "HUB_EXPECTED=$ExpectedHubHash"
   "TASKS_EXPECTED=$ExpectedTasksHash"
 ) | Set-Content -LiteralPath $hashManifest -Encoding ascii
 
 try {
-  Invoke-External 'upload current bundles and deploy script (SSH password may be requested)' {
-    scp -- $hubBundle $tasksBundle $startScript $remoteHelper $hashManifest "${remote}:/tmp/"
+  Invoke-External 'upload current bundles and deploy script using the dedicated SSH key' {
+    scp @sshOptions -- $hubBundle $tasksBundle $startScript $remoteHelper $hashManifest "${remote}:/tmp/"
   }
 
-  Write-Host '> run safe Linux redeploy (sudo password may be requested)' -ForegroundColor Cyan
-  ssh -tt $remote 'bash /tmp/redeploy-p0-frontend-remote.sh'
+  Write-Host '> run safe Linux redeploy without sudo' -ForegroundColor Cyan
+  ssh @sshOptions $remote 'bash /tmp/redeploy-p0-frontend-remote.sh'
   if ($LASTEXITCODE -ne 0) { throw "Linux redeploy failed with exit code $LASTEXITCODE" }
 } finally {
   Remove-Item -LiteralPath $hashManifest -Force -ErrorAction SilentlyContinue

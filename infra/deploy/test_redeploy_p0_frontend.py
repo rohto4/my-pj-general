@@ -12,11 +12,13 @@ class RedeployP0FrontendTests(unittest.TestCase):
         self.assertIn("Get-FileHash", script)
         self.assertIn("scp", script)
         self.assertIn("ssh", script)
-        self.assertIn("-tt", script)
+        self.assertIn("BatchMode=yes", script)
+        self.assertIn("IdentitiesOnly=yes", script)
         self.assertIn("--rebuild-vikunja", script)
         helper = (ROOT / "redeploy-p0-frontend-remote.sh").read_text(encoding="utf-8")
         self.assertIn("/api/bootstrap", helper)
         self.assertIn("/api/v1/info", helper)
+        self.assertNotIn("sudo ", helper)
         self.assertNotIn("-Password", script)
         self.assertNotIn("P0_DB_PATH", script)
         self.assertNotIn("docker volume", script.lower())
@@ -31,7 +33,7 @@ class RedeployP0FrontendTests(unittest.TestCase):
         self.assertIn("ExpectedTasksHash", script)
         self.assertIn('redeploy-p0-frontend-remote.sh', script)
         self.assertIn('pj-general-p0-redeploy-hashes.txt', script)
-        self.assertIn('ssh -tt $remote', script)
+        self.assertIn('ssh @sshOptions $remote', script)
         self.assertIn('pj-general-p0-redeploy-hashes.txt', helper)
         self.assertIn('HUB_EXPECTED=', helper)
         self.assertIn('TASKS_EXPECTED=', helper)
@@ -40,6 +42,16 @@ class RedeployP0FrontendTests(unittest.TestCase):
         self.assertIn('actual hub SHA-256:', helper)
         self.assertIn("tr '[:upper:]' '[:lower:]'", helper)
         self.assertIn("tr -d '\\r\\n'", helper)
+
+    def test_deploy_path_uses_user_owned_files_and_docker_group_not_sudo(self):
+        script = (ROOT / "redeploy-p0-frontend.ps1").read_text(encoding="utf-8")
+        helper = (ROOT / "redeploy-p0-frontend-remote.sh").read_text(encoding="utf-8")
+        start_script = (ROOT / "start-pj-general.sh").read_text(encoding="utf-8")
+
+        self.assertIn("pj-general-ed25519", script)
+        self.assertIn("BatchMode=yes", script)
+        self.assertNotIn("sudo ", helper)
+        self.assertNotIn("sudo ", start_script)
 
     def test_script_repackages_current_hub_and_tasks_sources_before_hashing(self):
         script = (ROOT / "redeploy-p0-frontend.ps1").read_text(encoding="utf-8")

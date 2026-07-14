@@ -53,37 +53,37 @@ require_env() {
 }
 
 ensure_fork_image() {
-	if [ "$REBUILD_VIKUNJA" -ne 1 ] && sudo docker image inspect "$DEFAULT_IMAGE" >/dev/null 2>&1; then
+	if [ "$REBUILD_VIKUNJA" -ne 1 ] && docker image inspect "$DEFAULT_IMAGE" >/dev/null 2>&1; then
     return
   fi
   if [ ! -f "$FORK_DIR/Dockerfile" ]; then
     [ -f "$FORK_BUNDLE" ] || fail "missing fork source and bundle: $FORK_BUNDLE"
-    run sudo install -d -m 0755 "$FORK_DIR"
-    run sudo tar -xzf "$FORK_BUNDLE" -C "$FORK_DIR"
+    run install -d -m 0755 "$FORK_DIR"
+    run tar -xzf "$FORK_BUNDLE" -C "$FORK_DIR"
   fi
-  run sudo docker build --build-arg RELEASE_VERSION=2.3.0-pj-general-listening-lounge -t "$DEFAULT_IMAGE" "$FORK_DIR"
+  run docker build --build-arg RELEASE_VERSION=2.3.0-pj-general-listening-lounge -t "$DEFAULT_IMAGE" "$FORK_DIR"
 }
 
 adopt_or_refuse_existing() {
   local container project
   for container in pj-general vikunja; do
-    if ! sudo docker container inspect "$container" >/dev/null 2>&1; then
+    if ! docker container inspect "$container" >/dev/null 2>&1; then
       continue
     fi
-    project="$(sudo docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$container")"
+    project="$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$container")"
     if [ "$project" = "$COMPOSE_PROJECT" ]; then
       continue
     fi
     if [ "$ADOPT_EXISTING" -ne 1 ]; then
       fail "$container is owned by the former Compose project '$project'. Review with --dry-run, then rerun with --adopt-existing to replace containers without deleting data."
     fi
-    run sudo docker rm -f "$container"
+    run docker rm -f "$container"
   done
 }
 
 status() {
   require_env
-  sudo docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
   curl -fsS "http://$SERVER_LAN_IP:4173/api/health"
   curl -fsS "http://$SERVER_LAN_IP:3456/api/v1/info"
 }
@@ -105,7 +105,7 @@ start() {
   require_env
   ensure_fork_image
   adopt_or_refuse_existing
-  run sudo docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build --force-recreate
+  run docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build --force-recreate
   if [ "$DRY_RUN" -eq 0 ]; then
     wait_for_services
     status

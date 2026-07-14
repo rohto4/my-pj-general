@@ -29,10 +29,10 @@ if [ "$tasks_actual" != "$tasks_expected" ]; then
 fi
 
 cd ~/pj-general-deploy
-sudo tar -xzf /tmp/pj-general-web-working-tree.tgz -C ~/pj-general-deploy
-sudo install -d -m 0755 ~/pj-general-deploy/build/vikunja-listening-lounge
-sudo tar -xzf /tmp/vikunja-listening-lounge-working-tree.tgz -C ~/pj-general-deploy/build/vikunja-listening-lounge
-sudo install -m 0755 /tmp/start-pj-general.sh ~/pj-general-deploy/infra/deploy/start-pj-general.sh
+tar -xzf /tmp/pj-general-web-working-tree.tgz -C ~/pj-general-deploy
+install -d -m 0755 ~/pj-general-deploy/build/vikunja-listening-lounge
+tar -xzf /tmp/vikunja-listening-lounge-working-tree.tgz -C ~/pj-general-deploy/build/vikunja-listening-lounge
+install -m 0755 /tmp/start-pj-general.sh ~/pj-general-deploy/infra/deploy/start-pj-general.sh
 
 cd ~/pj-general-deploy/infra/deploy
 grep -q -- '--rebuild-vikunja' start-pj-general.sh
