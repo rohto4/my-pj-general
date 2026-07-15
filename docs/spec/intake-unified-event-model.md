@@ -1,6 +1,6 @@
 # P0 統一入口イベントモデル
 
-> 状態: P1以降のRaw event store候補。現行P0はadapterから `candidates` へ直接正規化しており、このモデルを完全実装していない。現行正本は `docs/data/p0-data-flow-2026-07.md`。
+> 状態: 全入口共通モデルはP1候補。現行P0はWeb / Slack / chatをcandidateへ直接正規化し、knowledge-vaultだけ限定lineageを実装した。このモデル全体を完全実装したとは扱わない。現行正本は`docs/data/p0-data-flow-2026-07.md`。
 
 作成日: 2026-07-02
 

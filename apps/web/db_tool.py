@@ -203,6 +203,73 @@ def execute_schema(conn):
           failed integer not null default 0,
           error text
         );
+        create table if not exists intake_batches (
+          batch_id text primary key,
+          schema_version text not null,
+          source_type text not null,
+          source_root_label text not null,
+          created_at text not null,
+          imported_at text not null,
+          manifest_sha256 text,
+          prompt_version text not null,
+          model_json text not null,
+          state text not null,
+          stats_json text not null
+        );
+        create table if not exists source_documents (
+          document_id text primary key,
+          source_type text not null,
+          source_ref text not null,
+          scope text not null,
+          content_hash text not null,
+          modified_at text,
+          collected_at text not null,
+          summary text not null,
+          metadata_json text not null,
+          unique(source_type, source_ref, content_hash)
+        );
+        create table if not exists source_fragments (
+          fragment_id text primary key,
+          document_id text not null,
+          heading text not null,
+          line_start integer,
+          line_end integer,
+          excerpt text not null,
+          content_hash text not null,
+          extraction_method text not null
+        );
+        create table if not exists ai_runs (
+          run_id text primary key,
+          batch_id text not null,
+          document_id text not null,
+          provider text not null,
+          model text not null,
+          prompt_version text not null,
+          input_hash text not null,
+          output_hash text not null,
+          status text not null,
+          error text,
+          created_at text not null
+        );
+        create table if not exists candidate_proposals (
+          proposal_id text primary key,
+          batch_id text not null,
+          document_id text not null,
+          status text not null,
+          title text not null,
+          summary text not null,
+          todo text not null,
+          kind text not null,
+          schedule text not null,
+          confidence text not null,
+          missing_json text not null,
+          tags_json text not null,
+          evidence_json text not null,
+          validation_json text not null,
+          candidate_id text,
+          created_at text not null,
+          updated_at text not null
+        );
         create table if not exists chat_threads (
           id text primary key,
           title text not null,
@@ -272,6 +339,11 @@ HEALTH_COUNT_TABLES = (
     "sync_events",
     "sync_attempts",
     "source_sync_runs",
+    "intake_batches",
+    "source_documents",
+    "source_fragments",
+    "ai_runs",
+    "candidate_proposals",
     "chat_threads",
     "chat_messages",
     "chat_task_suggestions",
@@ -554,6 +626,15 @@ def seed(conn):
     conn.execute(
         "update sources set label = ?, path = ?, source_kind = ? where id = ?",
         ("Misskey (未接続)", "misskey://not-connected", "connector", "misskey"),
+    )
+    conn.execute(
+        "update sources set label = ?, path = ?, source_kind = ? where id = ?",
+        (
+            "knowledge-vault AI batch",
+            "infra/intake/import-knowledge-vault.ps1",
+            "windows_ssh_batch",
+            "knowledge_vault",
+        ),
     )
     static_gantt_marker = conn.execute("select 1 from settings where key = ?", ("migration.remove-static-gantt.v1",)).fetchone()
     if static_gantt_marker is None:
@@ -1198,6 +1279,11 @@ def reset_operational_data(conn):
     retained: they are not execution history for the rebuilt vault queue.
     """
     tables = [
+        "candidate_proposals",
+        "ai_runs",
+        "source_fragments",
+        "source_documents",
+        "intake_batches",
         "candidate_tags",
         "decisions",
         "execution_task_state",
@@ -1219,6 +1305,11 @@ def reset_operational_data(conn):
         "sync_attempts": counts["sync_attempts"],
         "sync_events": counts["sync_events"],
         "source_sync_runs": counts["source_sync_runs"],
+        "intake_batches": counts["intake_batches"],
+        "source_documents": counts["source_documents"],
+        "source_fragments": counts["source_fragments"],
+        "ai_runs": counts["ai_runs"],
+        "candidate_proposals": counts["candidate_proposals"],
     }
 
 
@@ -1237,6 +1328,13 @@ def import_knowledge_vault(conn, payload):
     from source_sync import import_knowledge_vault as import_domain
 
     return import_domain(conn, payload)
+
+
+def import_vault_batch(conn, payload):
+    from vault_intake import import_batch
+
+    manifest_sha256 = payload.pop("_manifest_sha256", None) if isinstance(payload, dict) else None
+    return import_batch(conn, payload, manifest_sha256=manifest_sha256)
 
 
 def import_slack(conn, payload):
@@ -1352,6 +1450,8 @@ def main():
             output = reset_operational_data(conn)
         elif command == "import-knowledge-vault":
             output = import_knowledge_vault(conn, payload)
+        elif command == "import-vault-batch":
+            output = import_vault_batch(conn, payload)
         elif command == "import-slack":
             output = import_slack(conn, payload)
         elif command == "update-source":

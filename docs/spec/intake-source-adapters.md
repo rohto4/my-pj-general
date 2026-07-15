@@ -1,18 +1,18 @@
 # P0 入口別 adapter 仕様
 
-> 状態: Web / Slack payload / knowledge-vaultはP0実装済み。AI相談は追加済み。Misskey節はP1 PoC候補であり、P0実装済みではない。
+> 状態: Web / Slack payload / Windows knowledge-vault AI batchはP0実装済み。AI相談は追加済み。Linuxローカルvault scanは互換経路、Misskey節はP1 PoC候補である。
 
 作成日: 2026-07-09
 
 ## 目的
 
-この文書は入口別adapterの責務を定義する。現行P0は共通 `candidates` へ正規化し、P1でRaw event storeへの分離を再評価する。
+この文書は入口別adapterの責務を定義する。Web / Slack / chatは共通`candidates`へ直接正規化する。Windows knowledge-vaultは、許可断片・AI run・提案をSQLiteへ由来保存してから、検証済み提案だけを`candidates`へ写像する。
 
 詳細な本認証、本 AI、外部 DB サーバはここでは確定しない。2026-07-10 時点の P0 本デモでは、SQLite と最小 API で入口データを確認待ちキューへ流す。
 
 ## 実装済みP0の共通契約
 
-すべての adapter は入口固有 payload をそのまま実行 TODO にしない。**現行P0では独立した Raw入口イベント / 正規化イベントの永続storeは実装していない。** adapter は入口情報を検証・要約して、Hub SQLite の共通 `candidates` へ直接作成する。
+すべてのadapterは入口固有payloadをそのまま実行TODOにしない。Web / Slack / chatはP0の直接正規化を維持する。knowledge-vault AI batchだけは、WindowsとLinuxの境界を安全に越え、AI提案の根拠を監査できるよう、`intake_batches` / `source_documents` / `source_fragments` / `ai_runs` / `candidate_proposals`を先行保存する。
 
 ```text
 source payload
@@ -23,9 +23,9 @@ source payload
 -> GO時だけVikunja task
 ```
 
-`knowledge_vault` と `slack` の取り込みは、候補とは別に `source_sync_runs` へ開始・成功・失敗・件数を残す。Web手入力とAI相談は個別の画面APIを使うが、最終的な候補は同じ `candidates` と確認待ちキューへ入る。
+`knowledge_vault` と `slack` の取り込みは、候補とは別に `source_sync_runs` へ開始・成功・失敗・件数を残す。batch経路のsource名は`knowledge_vault_batch`とする。Web手入力とAI相談は個別の画面APIを使うが、最終的な候補は同じ`candidates`と確認待ちキューへ入る。
 
-`docs/spec/intake-unified-event-model.md` の Raw入口イベント / 正規化イベントは、P1以降に source lineage を独立保存するための候補モデルである。現行P0の実装事実を上書きしない。
+`docs/spec/intake-unified-event-model.md`の汎用Raw入口イベントは引き続きP1候補である。P0で実装したknowledge-vaultの限定lineageは、全入口の汎用event store完成を意味しない。
 
 ## 共通の失敗・再実行境界
 
@@ -44,7 +44,7 @@ source payload
 | Web manual | drawer から `/api/candidates` へ登録し、SQLite に保存する | 最初の本線入口として維持する |
 | Slack | connector / 手動 import payload を `/api/import/slack` へ渡す。対象は `memo-ideas` チャンネルに限定 | Slack API / event / polling のどれで取るかを後続確定する |
 | Misskey | P0未接続 | P1 PoCでREST差分取得 / Streaming / experimental Webhookを比較する |
-| knowledge-vault | `/api/import/knowledge-vault` で `inbox`、`records`、`tasks`、`memory` の Markdown を `KV-*` 候補として取り込む | 対象範囲内はいったん全件対象にし、差分検知、更新時刻、content hash を使って取り込む |
+| knowledge-vault | Windows collectorが`records` / `inbox` / `tasks` / `memory`を読み、ローカルLLM提案または限定fallbackをSSH batchでLinux importerへ渡す | content hash、根拠断片、prompt/model版、検証理由を保存し、acceptedだけを`KVAI-*` pending候補へ写像する |
 
 ## Web manual adapter
 
@@ -151,19 +151,23 @@ G:\knowledge-vault\tasks\handoff\
 - 後で調べたいこと
 - 次アクションや handoff に相当すること
 
-### 現行P0のAPI・候補写像
+### 現行P0のbatch・候補写像
 
-`POST /api/import/knowledge-vault` は設定済みまたは明示指定した対象ディレクトリのMarkdownをscanする。候補化するのは、完了済みfrontmatter、`README.md`、単なる記憶見出しを除いた、`Next Actions` / `次にやるべきこと` 等の未完了アクションである。各アクションは `path + action index` のhashから `KV-*` 候補IDを決め、`source=knowledge_vault`、`source_path`、ファイル更新日、原文の行動を保った `title` / `todo` / `excerpt`、既存タグを `candidates` へ保存する。英語の固有名詞・識別子は無理に翻訳せず、定型の「〜を確認する」を付与しない。既存ID、空ファイル、候補化対象外、読込不能ファイルは `skipped` として数える。
+Windowsの`apps/web/vault_intake.py collect-vault-batch`は、README、完了済みfrontmatter、空文書を除外し、秘密らしい代入行を`[REDACTED_SECRET_LINE]`へ置換してからローカルLLMへ渡す。LLMは版管理promptに従い、文書要約、具体的なtask proposal、完全一致の根拠引用をJSONで返す。
 
-scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立Raw storeも全文検索indexも作らず、現在の候補を再現するために必要な出典情報をcandidate側へ保持する。
+validatorはschema、enum、長さ、可視タグmaster、根拠引用、日付、曖昧titleを決定論的に検査する。LLMなし、timeout、不正JSONでは、`Next Actions`等の明示sectionにある未完了項目だけをfallback提案にする。inbox見出しだけをタスク化しない。
 
-### P1 source lineageモデル
+PowerShell wrapperはbatchとmanifestだけを専用SSH鍵で転送する。Linux remote helperがSHA-256を照合し、Hub containerの`db_tool.py import-vault-batch`へstdinで渡す。accepted提案は`KVAI-*`、`source=knowledge_vault`、Vault相対path、根拠excerpt、`status=pending`として保存する。held提案はlineageへ残すが確認待ちには出さない。SQLiteファイルは転送しない。
+
+`POST /api/import/knowledge-vault`の規則ベースLinuxローカルscanは回帰互換のため残すが、管理画面からは起動せず、Windows Vaultの本線には使わない。
+
+### P0 source lineageモデル
 
 | Field | 値 |
 | --- | --- |
 | `source_type` | `knowledge_vault` |
 | `source_ref` | vault relative path + heading / block id 相当 |
-| `payload` | file path、mtime、heading、excerpt、周辺文脈 |
+| `payload` | 相対path、mtime、許可excerpt、文書要約、AI構造化提案 |
 | `source_url` | ローカル path または Obsidian link 相当 |
 | `occurred_at` | file mtime または文中日付 |
 | `content_hash` | excerpt または block の hash |
@@ -173,7 +177,7 @@ scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立
 - Web manual は画面から実入力し、SQLite に永続化する。
 - Slack は `memo-ideas` connector の読み取りを確認済み。現時点で対象投稿はないため、P0では import payload 経路を用意する。
 - Misskey sourceは無効設定として保持し、P1 PoCまで実データ・mock候補のどちらも本流へ入れない。
-- knowledge-vault はローカル scan を実装済み。候補化規則は、未完了の次アクションを1項目ずつ確認待ちへ出す。本文全体・見出し・完了記録をそのままTODO化しない。
+- knowledge-vaultはWindows AI batchを本線とし、許可断片とAI処理履歴をLinux SQLiteへ保存する。本文全体・見出し・完了記録をそのままTODO化しない。
 - すべての AI 整理結果は確認待ちキューに入り、自動 GO はしない。
 
 ## 回帰・受入根拠
@@ -181,22 +185,28 @@ scanの開始・成功・失敗は `source_sync_runs` に残る。P0では独立
 | 確認対象 | 自動根拠 | 実機で確認すること |
 | --- | --- | --- |
 | vault scanの共通domain | `apps/web/test/test_source_sync.py` | 有効scopeの取込結果と対象外scopeが混ざらないこと |
+| Windows AI batchのprompt・根拠検証・縮退・lineage・冪等性 | `apps/web/test/test_vault_intake.py` | ローカルLLMの正解セット評価後、pending候補の原文忠実度を確認すること |
+| SSH batchのhash・単独SQLite writer | `infra/intake/test_import_knowledge_vault.py` | dry-run後に専用鍵で1batchを送り、`knowledge_vault_batch` runを確認すること |
 | Slackの成功・重複skip・観測 | `apps/web/test/api.test.mjs` の source同期・observabilityテスト | connector payloadを使った件数と、再実行時の`skipped`を確認すること |
 | 手入力の永続化・失敗時非合成 | `apps/web/test/api.test.mjs` の候補作成/SQLite応答テスト | 実データを変更する入力はユーザー確認後だけに行うこと |
 
-実装を読む必要があるのは、adapterの候補写像・同期run・再実行規則を変更するときだけである。その場合は `apps/web/source_sync.py`、`apps/web/db_tool.py`、HTTP境界の `apps/web/server.mjs` と上記testだけを読む。
+実装を読む必要があるのは、adapterの候補写像・同期run・再実行規則を変更するときだけである。legacy scanは`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`、SQLite境界は`apps/web/db_tool.py`と対応testだけを読む。
 
 ## P0 では決めないこと
 
 - アプリ本体へ Slack API 認証を持たせる方式。
 - Misskey の受信方式。
-- knowledge-vault の差分検知実装の詳細。
+- source_refを跨ぐ意味的な類似束ね。
 - 自動 dedupe の厳密条件。
 - 部分自動確定の条件。
 
 ## 関連文書
 
 - `docs/spec/intake-unified-event-model.md`
+- `docs/spec/knowledge-vault-ai-intake-contract-p0.md`
+- `docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`
+- `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`
+- `docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`
 - `docs/data/p0-data-flow-2026-07.md`
 - `docs/spec/confirmation-queue-p0.md`
 - `docs/spec/ai-assisted-registration-flow.md`

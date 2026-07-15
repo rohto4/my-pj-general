@@ -557,3 +557,12 @@
 - 現在更新中のsession JSONLを内容非表示で再集計した。session用ローカル`visualizations`配置先は0 file / 0 byteだが、会話履歴にはbrowser screenshot由来の`input_image`が2 blockある。ローカルファイルの配置自体は圧迫原因ではなく、画像を会話／tool結果へ埋め込むことだけが入力負荷になると確認した。
 - 最新実入力は163,347 / 258,400 token（63.2%）だった。圧縮置換履歴の画像は0 blockだが、同一root sessionで圧縮2回済みのため、guideの基準では赤判定とした。tool関連の構造と10KiB以上のrecordは引き続き抑制対象である。
 - 調査記録は`docs/imp/context-pressure-investigation-2026-07-13.md`、次回の最小再開packetは`docs/diary/2026-07-14-context-pressure-rotation-packet.md`を正本とする。運用ルールは既存guideで足りるため、同ガイドは更新していない。次のハーネス設計・調査は新sessionから開始する。
+
+# 2026-07-15 Windows knowledge-vault AI取込パイプライン
+
+- WindowsだけがVaultを読み、版管理した`knowledge-vault-task-proposal-v1`で文書要約・根拠付きタスク提案を作るcollectorを実装した。秘密らしい代入行はLLM送信・batch保存前に行単位で伏せる。
+- validatorはJSON schema相当のfield/enum、完全一致引用、可視タグmaster、具体的title/todo、有効日付、完了actionを決定論的に検査し、不合格をheldにする。LLMなし/timeout/不正JSONでは明示Next Actionsの未完了項目だけへ縮退する。
+- Linux Hub SQLiteに`intake_batches`、`source_documents`、`source_fragments`、`ai_runs`、`candidate_proposals`を追加し、accepted提案だけを`KVAI-*` pending候補へ冪等写像する。Windows絶対root、hidden reasoning、SQLite本体は転送しない。
+- 専用SSH鍵、BatchMode、manifest SHA-256、Hub containerの`db_tool.py import-vault-batch`を使うPowerShell/remote helperを追加した。管理画面のLinuxローカルscanボタンは外し、Windows batch source表示へ変更した。
+- 自動回帰は新規12件、Hub Node 36件、Hub Python 19件、設計書カバレッジ10件、worker/deploy/backup/Vikunja補助21件が成功した。coverage packageはbundled Pythonにないため、分岐・失敗・統合境界を個別testで固定した。
+- 実機`gemma4:latest`は合成Markdownで、完了済み項目を除外し固有名詞・SHA-256を保持した1提案を生成した。実Vault最新3文書dry-runは3 accepted / 2 held / 1文書fallbackで、held 2件は根拠完全一致違反を遮断した。Linux転送・実SQLite変更・GOは行っていない。

@@ -47,9 +47,14 @@
 - 現行ゴール・データ構造ブリーフ: `docs/imp/current-goal-and-data-structure-brief-2026-07-11.md`
 - P0・連結状態監査: `docs/imp/p0-status-audit-2026-07-11.md`
 - P0完了監査 2026-07-12: `docs/imp/p0-completion-audit-2026-07-12.md`
+- P0ブロッカー再監査 2026-07-15: `docs/imp/p0-blocker-audit-2026-07-15.md`
 - P0運用・backup・rollback: `docs/ops/p0-operations-runbook-2026-07.md`
 - Linux Listening Lounge配信手順: `docs/guide/linux-listening-lounge-deploy.md`
 - Linux定期入口同期アーキテクチャ: `docs/arch/linux-periodic-intake-architecture.md`
+- Windows Vault AI取込アーキテクチャ: `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`
+- Windows Vault AI取込契約: `docs/spec/knowledge-vault-ai-intake-contract-p0.md`
+- Windows Vault AI取込データ設計: `docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`
+- Windows Vault AI取込runbook: `docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`
 - P1フェーズブリーフ: `docs/product/p1-phase-brief-2026-07.md`
 - P1候補評価: `docs/candi-ref/p1-candidate-evaluation-2026-07.md`
 - P1実装タスク: `docs/imp/p1-implementation-tasks-2026-07.md`

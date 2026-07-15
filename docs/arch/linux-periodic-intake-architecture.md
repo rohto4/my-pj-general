@@ -4,26 +4,26 @@
 
 ## 目的
 
-Linux 常設サーバーで、各入口からタスク候補を6時間ごとに回収し、確認待ちキューへ安全に反映する。
+WindowsとLinuxの各入口workerから、タスク候補を確認待ちキューへ安全に反映する。Linuxから見えないWindows knowledge-vaultはWindows collectorが担当する。
 
 既存の `devwork -> knowledge-vault` 定期収集とは責務を分ける。ここでは `knowledge-vault -> pj-general` を含む、pj-general 側の候補化を扱う。
 
 ## 採用方針
 
 - Web サーバーの常駐状態に依存して同期を実行しない。
-- `systemd timer` が6時間ごとに単発の同期 worker を起動する。
+- Linuxから到達できる入口は`systemd timer`、Windows Vaultは初期手動確認後にWindows Task Schedulerが単発workerを起動する。
 - Web の手動取り込みと定期 worker は、同じ domain / adapter の同期関数を呼ぶ。
 - 初期は単一サーバーの SQLite 運用を維持する。複数writer、認証、規模、lock競合のいずれかが観測された時に PostgreSQL へ移行する。
 - 将来は `workers/sync` の常駐 worker と Redis / BullMQ の定期 job へ移せる責務分割にする。
 
 ```text
-Slack / Misskey / knowledge-vault / Web手入力
+Slack / Misskey / Web手入力        Windows knowledge-vault
                  |
                  v
-        source adapter (差分取得・正規化)
+        Linux source adapter          Windows collector + optional LLM
                  |
                  v
-   candidate pipeline (分類・重複排除・記録)
+   candidate pipeline             SSH batch + Linux validator/importer
                  |
                  v
      PostgreSQL または P0 SQLite / 確認待ちキュー
@@ -50,7 +50,7 @@ systemd timer -> pj-general-sync.service -> workers/sync
 - systemd timer: `infra/systemd/pj-general-sync.timer`
 - secret / connector payloadの雛形: `infra/systemd/sync.env.example`
 
-workerはknowledge-vaultを必ず実行し、Slack payloadは`SLACK_PAYLOAD_FILE`が設定された場合だけ同じ同期契約で実行する。各adapterは個別に`source_sync_runs`を作成するため、一方の失敗が他方の候補化を止めない。lock fileが存在する場合は終了コード2で実行を譲る。
+既存`workers/sync/run.py`のLinuxローカルvault scanは、Linux側にsnapshotを配置した環境の互換経路として残す。Windows本体のVaultは`infra/intake/import-knowledge-vault.ps1`でcollector・LLM・SSH batchを実行し、Linux側では`knowledge_vault_batch`として観測する。SlackとVaultの失敗は互いを止めない。
 
 Linuxへの初回登録例:
 
@@ -78,4 +78,4 @@ systemd登録後も、まず`systemctl start`でoneshotを1回実行し、Hubの
 
 ## P0 からの移行
 
-P0 は SQLite と管理画面の手動 `取り込み` を保持する。P1では先に worker を切り出し、systemd timerで起動する。PostgreSQLとRedis / BullMQは、`docs/product/p1-phase-brief-2026-07.md` の導入ゲートを満たした場合だけ追加する。Vikunja TODO一方向連携はP0で実装済み。
+P0はSQLiteとWindows手動batch取込を使う。管理画面からLinuxローカルscanは起動しない。手動で3回以上、誤候補率・修正率・重複0件を確認してからWindows Task Schedulerへ定期化する。PostgreSQLとRedis / BullMQは導入ゲートを満たした場合だけ追加する。

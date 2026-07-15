@@ -1077,7 +1077,7 @@ function applyBootstrap(bootstrap) {
       enabled: Boolean(source.enabled),
       detail: source.path,
       meta: `${source.source_kind}${source.last_imported_at ? ` / last: ${source.last_imported_at}` : ""}`,
-      action: source.id === "knowledge_vault" ? "importKnowledgeVault" : "",
+      action: "",
       locked: source.id === "misskey",
     }));
   }

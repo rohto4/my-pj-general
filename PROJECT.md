@@ -94,6 +94,7 @@ G:\devwork\pj-general
 - Vikunja は GO 後の実行 TODO の正本とし、Hub から一方向に登録して、実行状態だけを Hub へミラーする。
 - P0 の Hub は単一利用者向けの Node.js 標準 HTTP server + Python SQLite helper で成立させ、将来スタックへの移行判断は実運用データを得てから行う。
 - Hub と Vikunja の恒久テーマは、夜色・藍・銅・ウールグレーを使う `Listening Lounge` とする。
+- Windowsのknowledge-vaultはWindows collectorだけが読み、任意のローカルLLM提案を決定的に検証してSSH batchでLinuxへ渡す。Linux HubだけをSQLite writerとし、検証済み提案もpending候補までで自動GOしない。
 - Codex 専用運用土台の参照元は `aaif-goose/goose` を第一候補とする。
 - MCP 実装や CLI 操作の参照元は `PrefectHQ/fastmcp` を第一候補とする。
 - MCP 参照サーバの把握には `modelcontextprotocol/servers` を使う。
