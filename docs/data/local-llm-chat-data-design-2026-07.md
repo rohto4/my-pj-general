@@ -60,8 +60,8 @@ suggestion: proposed -> dismissed
 
 | API | 用途 |
 | --- | --- |
-| `GET /api/chat/bootstrap` | 現在thread、履歴、候補、LLM接続状態、現在contextの要約を返す |
-| `POST /api/chat/messages` | ユーザー発言を保存して相談回答を生成し、別呼出で直近user messageだけを共通v2へ渡して候補提案を返す。agentが要求した読み取り専用context toolは相談回答側だけでbackendが仲介する |
+| `GET /api/chat/bootstrap` | 現在thread、履歴、候補、LLM接続状態（`config.availability`）、現在contextの要約を返す |
+| `POST /api/chat/messages` | availabilityが`ok`のときだけユーザー発言を保存して相談回答を生成し、別呼出で直近user messageだけを共通v2へ渡して候補提案を返す。停止中は保存せず`503`を返す。agentが要求した読み取り専用context toolは相談回答側だけでbackendが仲介する |
 | `POST /api/chat/suggestions/:id/accept` | 候補提案を既存 `candidates` へpendingで作成する |
 
 ## provider境界

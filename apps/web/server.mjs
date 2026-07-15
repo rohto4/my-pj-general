@@ -97,11 +97,12 @@ function localLlmConfig() {
 
 async function publicLocalLlmConfig() {
   const config = localLlmConfig();
+  const health = await checkLocalLlmHealth();
   const configuredContextLength = Number.parseInt(process.env.LOCAL_LLM_CONTEXT_LENGTH || "", 10);
   let contextLength = Number.isFinite(configuredContextLength) && configuredContextLength > 0
     ? configuredContextLength
     : null;
-  if (!contextLength && config.enabled && config.provider === "ollama") {
+  if (!contextLength && health.status === "ok" && config.provider === "ollama") {
     try {
       const ollamaRoot = config.baseUrl.replace(/\/v1$/, "");
       const modelResponse = await fetch(`${ollamaRoot}/api/show`, {
@@ -123,6 +124,7 @@ async function publicLocalLlmConfig() {
   }
   return {
     enabled: config.enabled,
+    availability: health.status,
     baseUrl: config.baseUrl,
     provider: config.provider,
     model: config.model,
@@ -706,6 +708,10 @@ async function handleApi(request, response, url) {
         sendJson(response, 400, { error: "相談内容を入力してください" });
         return true;
       }
+      if ((await checkLocalLlmHealth()).status !== "ok") {
+        sendJson(response, 503, { error: "AI相談は現在停止中です。ローカルLLMを起動してから再度開いてください。" });
+        return true;
+      }
       const threadId = body.threadId || "chat-default";
       const userMessage = runDb("chat-save-message", { thread_id: threadId, role: "user", content });
       try {
@@ -740,7 +746,7 @@ async function handleApi(request, response, url) {
         const suggestions = proposed.length
           ? runDb("chat-create-suggestions", { thread_id: threadId, message_id: assistantMessage.id, suggestions: proposed })
           : [];
-        sendJson(response, 200, { userMessage, assistantMessage, suggestions, context, config: publicLocalLlmConfig() });
+        sendJson(response, 200, { userMessage, assistantMessage, suggestions, context, config: await publicLocalLlmConfig() });
       } catch (error) {
         error.statusCode = 502;
         sendJson(response, 502, { error: error.message, userMessage });

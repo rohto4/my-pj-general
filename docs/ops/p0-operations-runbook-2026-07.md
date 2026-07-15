@@ -99,6 +99,6 @@ P0 rollbackはHub DBとVikunjaデータを独立して扱う。Hubのcandidate /
 | vault / Slack / Misskey入口 | `/api/observability` の最新`sourceSyncRuns`、candidate件数、Vaultのlineage table件数 | sourceごとのstateとaction / aspiration件数が説明でき、同一source refまたはbatch再送で重複候補が増えない | `docs/spec/ai-candidate-proposal-contract-p0.md`、`docs/spec/intake-source-adapters.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`、`apps/web/test/test_candidate_proposal.py`、`apps/web/test/test_source_sync.py`、`workers/sync/test_external_intake.py`、`workers/sync/test_run.py` |
 | Hub候補・判断 | `/api/bootstrap` の候補、判断ログ、operation ID | 成功した操作だけがHTTP応答・画面ログ・`decisions.note`で一致し、失敗時に仮候補を作らない | `docs/spec/confirmation-queue-p0.md`、`apps/web/test/api.test.mjs` |
 | Vikunja連携 | `execution_links`、`execution_task_state`、`sync_attempts`、reconcile結果 | task正本を上書きせず、失敗は再試行可能、削除済みtaskは`detached`として履歴を残す | `docs/spec/vikunja-integration-contract-2026-07.md`、`docs/spec/vikunja-integration-acceptance-tests-2026-07.md` |
-| ローカルLLM相談 | `/api/health`、既存thread、候補一覧 | provider障害時もHub/Tasksと既存履歴を保ち、失敗送信が候補/GOを起こさない | `docs/spec/local-llm-chat-runtime-contract-p0.md`、`apps/web/test/api.test.mjs` |
+| ローカルLLM相談 | `/api/health`、`/api/chat/bootstrap`の`config.availability`、既存thread、候補一覧 | provider停止時は入力・送信・サイド窓口を閉じ、保存前503で失敗送信・候補/GOを起こさない。復旧後にbootstrapが`ok`へ戻ることを確認する | `docs/spec/local-llm-chat-runtime-contract-p0.md`、`apps/web/test/api.test.mjs` |
 
 `/api/health` が`degraded`のときは、失敗した依存だけを復旧対象にする。Hub SQLiteが`ok`であれば、VikunjaまたはLLMの一時障害を理由にDB、候補、判断、Taskを削除・再取り込みしない。

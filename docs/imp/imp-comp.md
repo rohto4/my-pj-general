@@ -1,5 +1,11 @@
 # 完了記録
 
+## 2026-07-15 ローカルLLM停止時のAI相談クローズ
+
+- Windowsの常駐`ollama.exe`を停止し、待受port 11434が残っていないことを確認した。CodexのNode processは停止していない。
+- AI相談は`/api/chat/bootstrap`の`config.availability`を使い、provider停止時に入力・送信・サイド窓口を閉じる。`POST /api/chat/messages`はユーザー発言を保存する前に一般化した`503`で拒否するため、停止中の会話・候補・GOを増やさない。
+- Node API回帰に停止状態のUIと保存前503を追加し、fake providerが利用可能な既存相談・tool context回帰も維持した。Linux配信、実データ変更、secret操作は行っていない。
+
 ## 2026-07-15 Slack / Misskey共通v2定期workerのfake実装完了
 
 - `workers/sync/http_client.py`、`slack_collector.py`、`misskey_collector.py`、`llm_client.py`、`proposal_pipeline.py`を追加し、`run.py --sources slack,misskey`をdry-run既定、`--commit`明示のCLIへ更新した。workerは`candidate_proposal.py`の版管理v2 prompt / 決定的validatorと`source_sync.py`のpending写像だけを再利用し、独自prompt、legacy direct fallback、自動GOを持たない。
@@ -600,3 +606,9 @@
 - `gemma4:latest`の合成dry-runはaction 1 / aspiration 1をaccepted、完了checkbox 1件を除外し、held 0 / fallback 0だった。Linux転送、SQLite取込、Slack / Misskey実接続、自動GO、Vikunja登録は行っていない。
 - Hub Python 27件、Node API / 設計書 / 受入HTML 50件、intake / deploy / worker補助11件の計88件と`git diff --check`が成功した。`335725c`を`rohto4/my-pj-general`の`main`へPushした。
 - 安全再配信scriptでHub bundle `C29F8E51012C6B4AC2034099F5E76B555924F673889FC622004ED295C0FBBB74`、Tasks bundle `91403035BC759845854CFD768903851C275E374FC454CD357630EFAABB5F39E4`をLinuxへ反映した。Hub / Tasks API 200、SQLite integrity `ok`、候補・判断・execution link 0件、管理表示のv2反映、Misskey既定無効を確認した。実取込、自動GO、Vikunja task作成は行っていない。Hub healthの`degraded`は既知のlocal LLM unavailableによる。
+
+## 2026-07-15 knowledge-vault 転記（AI候補取込・4入口提案）
+
+- 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
+- 日時: 2026-07-15 13:33:11 +09:00
+- 対象: Windows読込からLinux候補取込までのsecret・absolute root・hidden reasoning遮断、accepted-onlyのlineage付き冪等化、proposal validatorとheld/fallback境界、および4入口共通のaction / aspiration分離・根拠汚染防止・候補抽出失敗時の合成禁止。PJ固有のhash・接続状態・実取込は対象外。

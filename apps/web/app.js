@@ -132,6 +132,10 @@ function chatSuggestionsForMessage(messageId) {
   return state.chat.suggestions.filter((suggestion) => String(suggestion.message_id) === String(messageId));
 }
 
+function chatIsAvailable() {
+  return state.chat.config?.availability === "ok";
+}
+
 function renderChatSuggestion(suggestion) {
   const accepted = suggestion.status === "candidate_pending" || suggestion.status === "accepted";
   return `
@@ -203,11 +207,14 @@ function renderChatState() {
   renderChatMessages("chatDrawerMessages");
   renderChatContext();
   const config = state.chat.config;
+  const available = chatIsAvailable();
   const status = state.chat.loading
     ? "回答生成中"
-    : config?.enabled
+    : available
       ? "ローカル接続済み"
-      : "LLM無効";
+      : config?.availability === "unavailable"
+        ? "AI相談は停止中"
+        : "LLM無効";
   ["chatProviderStatus", "chatPageStatus", "chatDrawerStatus"].forEach((id) => {
     const element = byId(id);
     if (element) element.textContent = status;
@@ -228,6 +235,20 @@ function renderChatState() {
       : "コンテキスト長 未取得";
     contextMeta.textContent = `${contextLengthLabel} · Hub候補とTasks概要を参照`;
   }
+  ["chatPageInput", "chatDrawerInput"].forEach((id) => {
+    const input = byId(id);
+    if (input) {
+      input.disabled = !available;
+      input.placeholder = available ? input.dataset.chatPlaceholder || input.placeholder : "ローカルLLMは停止中です";
+    }
+  });
+  document.querySelectorAll("#chatPageForm button[type=submit], #chatDrawerForm button[type=submit], [data-chat-prompt], [data-open-chat]").forEach((button) => {
+    button.disabled = !available;
+    button.setAttribute("aria-disabled", String(!available));
+  });
+  if (!available) {
+    closeChatDrawer();
+  }
 }
 
 async function refreshChatBootstrap() {
@@ -243,7 +264,7 @@ async function refreshChatBootstrap() {
     state.chat.initialized = true;
   } catch (error) {
     console.warn(error);
-    state.chat.config = { enabled: false, model: "接続エラー" };
+    state.chat.config = { enabled: false, availability: "unavailable", model: "接続エラー" };
   } finally {
     state.chat.loading = false;
     renderChatState();
@@ -255,7 +276,7 @@ async function sendChatMessage(event) {
   const form = event.currentTarget;
   const input = form.querySelector("textarea[name=content]");
   const content = input?.value.trim() || "";
-  if (!content || state.chat.loading) return;
+  if (!content || state.chat.loading || !chatIsAvailable()) return;
   state.chat.loading = true;
   renderChatState();
   try {
@@ -298,6 +319,10 @@ async function acceptChatSuggestion(id) {
 }
 
 function openChatDrawer() {
+  if (!chatIsAvailable()) {
+    closeChatDrawer();
+    return;
+  }
   const drawer = byId("chatDrawer");
   const backdrop = byId("chatDrawerBackdrop");
   drawer.classList.add("open");

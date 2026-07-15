@@ -1,5 +1,9 @@
 # 実装待ち
 
+## 2026-07-15 AI相談の停止時クローズ
+
+- [x] Windows Ollamaを停止し、AI相談がprovider unavailable時に入力・送信・サイド窓口を閉じ、会話を保存せず再起動案内だけを表示するようテスト先行で修正した。
+
 ## 2026-07-15 次セッション実装候補: Slack / Misskey共通v2定期worker
 
 - [x] `docs/arch/linux-periodic-intake-architecture.md`へ、source別collector、公式API、本人filter、pagination/cursor、429/5xx、共通v2、partial時cursor据置、secret非出力、dry-run既定、ファイル責務、fake回帰、手動受入順を固定した。方式比較は完了し、次回はこの契約からテスト先行で実装する。

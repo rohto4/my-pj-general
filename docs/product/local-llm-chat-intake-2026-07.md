@@ -66,6 +66,7 @@ P0の既存方針に合わせ、LLMが直接Vikunja taskを作成したり、ユ
 - `LOCAL_LLM_PROVIDER=openai-compatible` を指定した接続にはOllama固有の拡張フィールドを送らない。
 - 認証が必要な場合だけ `LOCAL_LLM_API_KEY` を使い、レスポンス・ログ・ブラウザーへ出さない。
 - サーバーから到達できない場合は、会話履歴を保持したまま接続エラーを表示する。
+- providerが停止・無効・到達不能の場合は、相談の入力欄・送信・サイドウィンドウ起動を閉じ、「ローカルLLMは停止中」と再起動案内を表示する。この状態ではユーザー発言を保存・候補化しない。
 - モデルがtool callingに対応する場合は、`get_threadline_context` toolを提示する。非対応モデルではbackendが先に取得したcontextを使うフォールバックにする。
 - `get_threadline_context` は読み取り専用で、`all` / `tasks` / `candidates` の範囲を指定できる。タスク登録・GO・編集はLLMへ許可せず、画面上のユーザー操作だけで実行する。
 

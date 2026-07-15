@@ -9,6 +9,7 @@
 - `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`は責務表を2本のMermaidシーケンス図へ変更し、明示light theme・boxなし・下側actorなしで再描画済みである。`docs/spec/ai-candidate-proposal-contract-p0.md`には共通v2 promptのPython/Node組込・実行位置図がある。
 - Slack / Misskeyは、payload以降に加え外部API差分取得・共通v2 LLM・cursor・retry・dry-run既定のworker実装とfake回帰を完了した。実token・実API・Linux実SQLite書込み・配信・systemd登録・timer有効化は未実施である。
 - Linux Hub / Tasksは最新配信済み。Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、SQLite integrity `ok`、候補・判断・execution link 0件を確認済み。Linux local LLM unavailableはB02の既知判断待ちである。
+- WindowsのOllamaは、普段のブラウザ利用を優先して利用者依頼により停止中である。AI相談は`config.availability=unavailable`で入力・送信・サイド窓口を閉じ、保存前503で拒否する。ユーザーが明示的に再開するまで起動・配信しない。
 - P0の優先順位は変わらない。`docs/imp/p0-frontend-acceptance-checklist-2026-07-12.html`のB02、B03、B04、B05とRV/U項目がユーザー受入として残る。
 - 通常のHub / Tasks source-only再配信は、登録済み専用鍵を使ってCodexが直接実行する。ユーザーにPowerShell一行を依頼せず、sudo、secret/env、実データ変更だけをユーザー境界へ戻す。
 
