@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 import db_tool
+import candidate_proposal
 
 
 TAG_HINTS = {
@@ -28,6 +29,96 @@ VAULT_TASK_CANDIDATE_PROMPT = """knowledge-vaultから未完了の次アクシ�
 対象・成果・次アクションが分かる一文にする。識別子や英語固有名詞は無理に翻訳しない。"""
 
 ACTION_HEADINGS = {"next actions", "next action", "next steps", "next step", "次にやるべきこと", "次のアクション", "次アクション", "todo"}
+
+
+def import_source_proposals(conn, payload):
+    """Persist accepted proposals from a source collector as pending only."""
+    source = str(payload.get("source") or "").strip()
+    if source not in candidate_proposal.ALLOWED_SOURCE_KINDS - {"knowledge_vault", "chat"}:
+        raise ValueError(f"unsupported AI source import: {source}")
+    items = payload.get("items") or []
+    allowed_tags = payload.get("allowedTags") or []
+    source_label = payload.get("sourceLabel") or source
+    run = db_tool.start_source_sync(conn, {"source": source, "cursor_before": payload.get("cursor")})
+    imported = 0
+    skipped = 0
+    held = 0
+    candidate_ids = []
+    normalized_items = []
+    try:
+        for item in items:
+            source_ref = str(item.get("sourceRef") or "").strip()
+            source_body = str(item.get("sourceBody") or "").strip()
+            if not source_ref or not source_body:
+                skipped += 1
+                continue
+            normalized = candidate_proposal.normalize_output(
+                item.get("output") or {},
+                source_body,
+                allowed_tags=allowed_tags,
+                source_kind=source,
+                source_ref=source_ref,
+            )
+            normalized_items.append({"sourceRef": source_ref, **normalized})
+            for proposal in normalized["proposals"]:
+                if proposal["validation"]["status"] != "accepted":
+                    held += 1
+                    continue
+                digest = hashlib.sha1(
+                    f"{source}:{source_ref}:{proposal['proposal_id']}".encode("utf-8")
+                ).hexdigest()[:12]
+                prefix = "SL" if source == "slack" else "MK"
+                candidate_id = f"{prefix}AI-{digest}"
+                if conn.execute("select 1 from candidates where id = ?", (candidate_id,)).fetchone():
+                    skipped += 1
+                    continue
+                evidence = proposal.get("evidence_quotes") or []
+                db_tool.insert_candidate(conn, {
+                    "id": candidate_id,
+                    "status": "pending",
+                    "title": proposal["title"],
+                    "kind": proposal["kind"],
+                    "source": source,
+                    "sourceLabel": source_label,
+                    "sourcePath": source_ref,
+                    "tags": candidate_tags(conn, [source, "ai-proposed"], source_body),
+                    "confidence": proposal["confidence"],
+                    "missing": proposal["missing"],
+                    "occurred": item.get("occurred") or datetime.now().strftime("%Y-%m-%d"),
+                    "excerpt": evidence[0] if evidence else proposal["todo"],
+                    "summary": proposal["summary"],
+                    "todo": proposal["todo"],
+                    "schedule": proposal["schedule"],
+                    "preview": f"AIProposal/{proposal['proposal_type']}: {proposal['title'][:80]}",
+                })
+                imported += 1
+                candidate_ids.append(candidate_id)
+        conn.execute("update sources set last_imported_at = ? where id = ?", (db_tool.now(), source))
+        sync_run = db_tool.finish_source_sync(conn, {
+            "run_id": run["run_id"],
+            "state": "succeeded",
+            "cursor_after": payload.get("cursor_after"),
+            "scanned": len(items),
+            "created": imported,
+            "skipped": skipped,
+        })
+        return {
+            "imported": imported,
+            "skipped": skipped,
+            "held": held,
+            "scanned": len(items),
+            "ids": candidate_ids,
+            "items": normalized_items,
+            "syncRun": sync_run,
+        }
+    except Exception as error:
+        db_tool.finish_source_sync(conn, {
+            "run_id": run["run_id"],
+            "state": "failed",
+            "failed": 1,
+            "error": type(error).__name__,
+        })
+        raise
 
 
 def frontmatter(text):

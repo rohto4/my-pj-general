@@ -20,9 +20,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import candidate_proposal
+
 
 SCHEMA_VERSION = "threadline.knowledge-vault.batch.v1"
-PROMPT_VERSION = "knowledge-vault-task-proposal-v1"
+PROMPT_VERSION = candidate_proposal.PROMPT_VERSION
 COLLECTOR_VERSION = "1"
 DEFAULT_TARGETS = ("records", "inbox", "tasks", "memory")
 ACTION_HEADINGS = {
@@ -61,8 +63,7 @@ def canonical_json(value):
 
 
 def load_prompt():
-    path = Path(__file__).resolve().parent / "prompts" / f"{PROMPT_VERSION}.txt"
-    return path.read_text(encoding="utf-8")
+    return candidate_proposal.load_prompt()
 
 
 def parse_frontmatter(text):
@@ -147,19 +148,14 @@ def parse_llm_json(content):
 
 
 def build_llm_request(relative_path, source_body, allowed_tags):
-    body = source_body[:12000]
-    return {
-        "system_prompt": load_prompt(),
-        "user_prompt": (
-            f"RELATIVE_PATH: {relative_path}\n"
-            f"ALLOWED_TAGS: {json.dumps(sorted(set(allowed_tags)), ensure_ascii=False)}\n"
-            "SOURCE_BODY:\n"
-            f"{body}"
-        ),
-        "source_body": body,
-        "relative_path": relative_path,
-        "allowed_tags": sorted(set(allowed_tags)),
-    }
+    request = candidate_proposal.build_request(
+        source_kind="knowledge_vault",
+        source_ref=relative_path,
+        source_body=source_body,
+        allowed_tags=allowed_tags,
+    )
+    request["relative_path"] = relative_path
+    return request
 
 
 def openai_compatible_client(base_url, model, timeout=60, api_key=""):
@@ -225,78 +221,14 @@ def source_line(text, line_number):
 
 
 def normalize_llm_output(output, source_text, allowed_tags, document_id):
-    if not isinstance(output, dict):
-        raise ValueError("LLM output must be a JSON object")
-    summary = str(output.get("document_summary") or "").strip()[:600]
-    raw_proposals = output.get("task_proposals") or []
-    if not isinstance(raw_proposals, list):
-        raise ValueError("task_proposals must be an array")
-    allowed = set(allowed_tags)
-    proposals = []
-    seen = set()
-    for raw in raw_proposals[:20]:
-        if not isinstance(raw, dict):
-            continue
-        title = str(raw.get("title") or "").strip()[:120]
-        todo = str(raw.get("todo") or "").strip()[:240]
-        proposal_summary = str(raw.get("summary") or "").strip()[:600]
-        kind = str(raw.get("kind") or "todo").strip()
-        schedule = str(raw.get("schedule") or "候補なし").strip()
-        confidence = str(raw.get("confidence") or "low").strip()
-        missing = [str(item).strip()[:120] for item in (raw.get("missing") or []) if str(item).strip()][:10]
-        tags = [str(item).strip() for item in (raw.get("tags") or []) if str(item).strip()][:12]
-        evidence = [str(item).strip() for item in (raw.get("evidence_quotes") or []) if str(item).strip()][:3]
-        reasons = []
-        if not title or len(title) < 4 or title.rstrip("。. ") in GENERIC_ACTIONS:
-            reasons.append("title is missing or too generic")
-        if not todo or len(todo) < 4 or todo.rstrip("。. ") in GENERIC_ACTIONS:
-            reasons.append("todo is missing or too generic")
-        if not proposal_summary:
-            reasons.append("summary is required")
-        if kind not in ALLOWED_KINDS:
-            reasons.append("kind is not allowed")
-        if confidence not in ALLOWED_CONFIDENCE:
-            reasons.append("confidence is not allowed")
-        if confidence == "low":
-            reasons.append("low confidence proposals stay held")
-        if schedule != "候補なし":
-            try:
-                datetime.strptime(schedule, "%Y-%m-%d")
-            except ValueError:
-                reasons.append("schedule is not a valid YYYY-MM-DD")
-            if schedule not in source_text:
-                reasons.append("schedule is not grounded in source")
-        unknown_tags = sorted(set(tags) - allowed)
-        if unknown_tags:
-            reasons.append("tag is not in allowed master")
-        if not evidence:
-            reasons.append("evidence is required")
-        for quote in evidence:
-            line = line_for_quote(source_text, quote)
-            if line is None:
-                reasons.append("evidence is not an exact source quote")
-                continue
-            raw_line = source_line(source_text, line)
-            if re.match(r"^[-*+]\s*\[[xX]\]", raw_line):
-                reasons.append("evidence points to a completed action")
-        identity = sha256_text(canonical_json({"document": document_id, "title": title, "todo": todo, "evidence": evidence}))[:20]
-        if identity in seen:
-            continue
-        seen.add(identity)
-        proposals.append({
-            "proposal_id": f"KVP-{identity}",
-            "title": title,
-            "summary": proposal_summary,
-            "todo": todo,
-            "kind": kind if kind in ALLOWED_KINDS else "todo",
-            "schedule": schedule,
-            "confidence": confidence if confidence in ALLOWED_CONFIDENCE else "low",
-            "missing": missing,
-            "tags": sorted(set(tags) & allowed),
-            "evidence_quotes": evidence,
-            "validation": {"status": "accepted" if not reasons else "held", "reasons": sorted(set(reasons))},
-        })
-    return {"summary": summary, "proposals": proposals}
+    return candidate_proposal.normalize_output(
+        output,
+        source_text,
+        allowed_tags=allowed_tags,
+        source_kind="knowledge_vault",
+        source_ref=document_id,
+        proposal_id_prefix="KVP",
+    )
 
 
 def fallback_output(source_text, document_id, fallback_title):
@@ -310,6 +242,7 @@ def fallback_output(source_text, document_id, fallback_title):
         }))[:20]
         proposals.append({
             "proposal_id": f"KVP-{identity}",
+            "proposal_type": "action",
             "title": action["todo"][:120],
             "summary": action["todo"][:600],
             "todo": action["todo"][:240],

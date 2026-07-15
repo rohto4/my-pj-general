@@ -1,29 +1,30 @@
 # P0 入口別 adapter 仕様
 
-> 状態: Web / Slack payload / Windows knowledge-vault AI batchはP0実装済み。AI相談は追加済み。Linuxローカルvault scanは互換経路、Misskey節はP1 PoC候補である。
+> 状態: Web / Slack payload / Windows knowledge-vault AI batch / AI相談はP0実装済み。Misskeyは正規化済みpayload以降の共通AI候補化だけ実装済みで、外部取得・認証は未実装である。Linuxローカルvault scanとSlack `legacy_direct`は互換経路である。
 
 作成日: 2026-07-09
 
 ## 目的
 
-この文書は入口別adapterの責務を定義する。Web / Slack / chatは共通`candidates`へ直接正規化する。Windows knowledge-vaultは、許可断片・AI run・提案をSQLiteへ由来保存してから、検証済み提案だけを`candidates`へ写像する。
+この文書は入口別adapterの取得・正規化責務を定義する。knowledge-vault / Slack / Misskey / chatのAI候補判定は`docs/spec/ai-candidate-proposal-contract-p0.md`を共通正本とする。Windows knowledge-vaultだけは、許可断片・AI run・提案をSQLiteへ由来保存してから、検証済み提案を`candidates`へ写像する。
 
 詳細な本認証、本 AI、外部 DB サーバはここでは確定しない。2026-07-10 時点の P0 本デモでは、SQLite と最小 API で入口データを確認待ちキューへ流す。
 
 ## 実装済みP0の共通契約
 
-すべてのadapterは入口固有payloadをそのまま実行TODOにしない。Web / Slack / chatはP0の直接正規化を維持する。knowledge-vault AI batchだけは、WindowsとLinuxの境界を安全に越え、AI提案の根拠を監査できるよう、`intake_batches` / `source_documents` / `source_fragments` / `ai_runs` / `candidate_proposals`を先行保存する。
+すべてのadapterは入口固有payloadをそのまま実行TODOにしない。Web manual以外は、source固有collectorが本人の対象本文とsource referenceを作り、共通v2 promptとvalidatorが`action(kind=todo)`または`aspiration(kind=idea)`を提案する。knowledge-vault AI batchだけは、WindowsとLinuxの境界を安全に越え、AI提案の根拠を監査できるよう、`intake_batches` / `source_documents` / `source_fragments` / `ai_runs` / `candidate_proposals`を先行保存する。
 
 ```text
 source payload
 -> adapter
+-> 共通AI候補提案 / 決定的validator
 -> candidates (status=pending, source / source_path / excerpt / summary)
 -> 確認待ちキュー
 -> ユーザーの編集 / GO / 不要 / アーカイブ
 -> GO時だけVikunja task
 ```
 
-`knowledge_vault` と `slack` の取り込みは、候補とは別に `source_sync_runs` へ開始・成功・失敗・件数を残す。batch経路のsource名は`knowledge_vault_batch`とする。Web手入力とAI相談は個別の画面APIを使うが、最終的な候補は同じ`candidates`と確認待ちキューへ入る。
+`knowledge_vault`、`slack`、`misskey`の取り込みは、候補とは別に `source_sync_runs` へ開始・成功・失敗・件数を残す。batch経路のsource名は`knowledge_vault_batch`とする。Web手入力とAI相談は個別の画面APIを使う。AI相談は提案カードの受理前にcandidateを作らないが、最終的には同じ`candidates`と確認待ちキューへ入る。
 
 `docs/spec/intake-unified-event-model.md`の汎用Raw入口イベントは引き続きP1候補である。P0で実装したknowledge-vaultの限定lineageは、全入口の汎用event store完成を意味しない。
 
@@ -32,7 +33,8 @@ source payload
 | 状況 | P0の扱い | 復旧・観測 |
 | --- | --- | --- |
 | 空本文、対象外行、同一入力済み | 候補を作らず `skipped` と数える | API応答と `/api/observability` の最新sync runで件数を確認する |
-| vault / Slack取り込み中の例外 | `source_sync_runs.state=failed` とerrorを記録し、合成候補を作らず呼出元へ失敗を返す | 入力・設定を直して同じpayloadを再実行する。決定的な候補IDにより既存候補は重複作成しない |
+| vault / Slack / Misskey取り込み中の例外 | `source_sync_runs.state=failed` と一般化errorを記録し、合成候補を作らず呼出元へ失敗を返す | 入力・設定を直して同じpayloadを再実行する。決定的な候補IDにより既存候補は重複作成しない |
+| AI出力が不正、根拠不一致、aspirationを具体作業化 | proposalをheldにし、candidateを作らない | prompt/modelを直して同じsource refを再評価する。手動でvalidatorを迂回しない |
 | connectorや入力元が未接続 | 他の入口、既存候補、確認待ち、Tasksの実行を止めない | sourceごとの失敗を観測し、当該入口だけを再実行する |
 
 候補の途中作成を含む障害を無条件に削除・再取り込みしない。再実行時は既存IDをskipするため、利用者は実行前後の `scanned` / `created` / `skipped` / `failed` と候補一覧を照合する。
@@ -42,8 +44,8 @@ source payload
 | Adapter | P0 薄く実装 1 版 | P0 完了時点の方向 |
 | --- | --- | --- |
 | Web manual | drawer から `/api/candidates` へ登録し、SQLite に保存する | 最初の本線入口として維持する |
-| Slack | connector / 手動 import payload を `/api/import/slack` へ渡す。対象は `memo-ideas` チャンネルに限定 | Slack API / event / polling のどれで取るかを後続確定する |
-| Misskey | P0未接続 | P1 PoCでREST差分取得 / Streaming / experimental Webhookを比較する |
+| Slack | connector / 手動 import payload を `/api/import/slack` へ渡し、共通v2で候補判定する。対象は `memo-ideas` チャンネルに限定 | Slack API / event / polling のどれで取るかを後続確定する |
+| Misskey | source有効化後にnote payloadを`/api/import/misskey`へ渡し、共通v2で候補判定する | 外部取得・認証は未実装。P1 PoCでREST差分取得 / Streaming / experimental Webhookを比較する |
 | knowledge-vault | Windows collectorが`records` / `inbox` / `tasks` / `memory`を読み、ローカルLLM提案または限定fallbackをSSH batchでLinux importerへ渡す | content hash、根拠断片、prompt/model版、検証理由を保存し、acceptedだけを`KVAI-*` pending候補へ写像する |
 
 ## Web manual adapter
@@ -100,7 +102,9 @@ source payload
 
 ### 現行P0のAPI・候補写像
 
-`POST /api/import/slack` は connector または手動payloadの `messages` だけを受ける。各メッセージは `ts + text` のhashから `SL-*` 候補IDを決め、`source=slack`、`source_path=channelUrl`、`status=pending` として保存する。空本文、参加通知、既存IDは `skipped` とし、実行結果の `scanned` / `created` / `skipped` と `syncRun` を返す。
+`POST /api/import/slack` は connector または手動payloadの `messages` を受ける。各メッセージの本文、permalinkまたは`channelUrl + ts`を共通v2へ渡し、acceptedだけを`SLAI-*`、`source=slack`、`status=pending`として保存する。actionは`todo`、aspirationは`idea`となる。空本文、held、既存IDはcandidateを作らず、実行結果の `scanned` / `created` / `skipped` / `held` と `syncRun` を返す。
+
+`mode=legacy_direct`は旧回帰・観測用にだけ残す。AI判定を通らず本文を直接候補化するため、新しいデータ品質受入や通常運用には使わない。
 
 P0は Slack API token、event subscription、全ワークスペース検索をHubのHTTP契約に含めない。connectorが返したpayloadを入力にし、失敗や再実行はsource run単位で扱う。
 
@@ -121,6 +125,10 @@ P0は Slack API token、event subscription、全ワークスペース検索をHu
 | `source_url` | note URL が作れる場合 |
 | `occurred_at` | note createdAt |
 
+### 実装済みpayload境界
+
+Misskey sourceは既定で無効である。有効化後の`POST /api/import/misskey`は`notes[]`の`id` / `text` / `url` / `createdAt`を受け、本人のnote本文だけを共通v2へ渡す。acceptedは`MKAI-*`、`source=misskey`、`status=pending`へ写像する。外部Misskeyからnoteを取得する認証・差分cursor・購読処理は実装していない。
+
 ## knowledge-vault adapter
 
 ### P0 暫定範囲
@@ -138,7 +146,7 @@ G:\knowledge-vault\tasks\handoff\
 
 詳細は `docs/candi-ref/knowledge-vault-current-structure-for-intake.md` を参照する。
 
-対象範囲内は日付やファイル名で細かく絞らず全件をscanする。ただし、候補は未完了の次アクションだけに限定する。
+対象範囲内は日付やファイル名で細かく絞らず全件をscanする。候補は明示された未完了actionに加え、本人が表明した未確定のaspirationも対象にする。aspirationは`idea`として原文の曖昧さを保ち、架空の実装作業へ変換しない。
 
 ### 抽出対象
 
@@ -153,7 +161,7 @@ G:\knowledge-vault\tasks\handoff\
 
 ### 現行P0のbatch・候補写像
 
-Windowsの`apps/web/vault_intake.py collect-vault-batch`は、README、完了済みfrontmatter、空文書を除外し、秘密らしい代入行を`[REDACTED_SECRET_LINE]`へ置換してからローカルLLMへ渡す。LLMは版管理promptに従い、文書要約、具体的なtask proposal、完全一致の根拠引用をJSONで返す。
+Windowsの`apps/web/vault_intake.py collect-vault-batch`は、README、完了済みfrontmatter、空文書を除外し、秘密らしい代入行を`[REDACTED_SECRET_LINE]`へ置換してからローカルLLMへ渡す。LLMは共通v2に従い、文書要約、action / aspiration、完全一致の根拠引用をJSONで返す。
 
 validatorはschema、enum、長さ、可視タグmaster、根拠引用、日付、曖昧titleを決定論的に検査する。LLMなし、timeout、不正JSONでは、`Next Actions`等の明示sectionにある未完了項目だけをfallback提案にする。inbox見出しだけをタスク化しない。
 
@@ -176,7 +184,7 @@ PowerShell wrapperはbatchとmanifestだけを専用SSH鍵で転送する。Linu
 
 - Web manual は画面から実入力し、SQLite に永続化する。
 - Slack は `memo-ideas` connector の読み取りを確認済み。現時点で対象投稿はないため、P0では import payload 経路を用意する。
-- Misskey sourceは無効設定として保持し、P1 PoCまで実データ・mock候補のどちらも本流へ入れない。
+- Misskey sourceは無効設定として保持する。payload以降の共通AI候補化は実装済みだが、外部取得・認証と実データ投入はP1 PoCまで行わない。
 - knowledge-vaultはWindows AI batchを本線とし、許可断片とAI処理履歴をLinux SQLiteへ保存する。本文全体・見出し・完了記録をそのままTODO化しない。
 - すべての AI 整理結果は確認待ちキューに入り、自動 GO はしない。
 
@@ -186,8 +194,9 @@ PowerShell wrapperはbatchとmanifestだけを専用SSH鍵で転送する。Linu
 | --- | --- | --- |
 | vault scanの共通domain | `apps/web/test/test_source_sync.py` | 有効scopeの取込結果と対象外scopeが混ざらないこと |
 | Windows AI batchのprompt・根拠検証・縮退・lineage・冪等性 | `apps/web/test/test_vault_intake.py` | ローカルLLMの正解セット評価後、pending候補の原文忠実度を確認すること |
+| 共通v2のaction / aspiration、非具体化、重複優先 | `apps/web/test/test_candidate_proposal.py` | source別の実データ品質は各connector接続後に確認すること |
 | SSH batchのhash・単独SQLite writer | `infra/intake/test_import_knowledge_vault.py` | dry-run後に専用鍵で1batchを送り、`knowledge_vault_batch` runを確認すること |
-| Slackの成功・重複skip・観測 | `apps/web/test/api.test.mjs` の source同期・observabilityテスト | connector payloadを使った件数と、再実行時の`skipped`を確認すること |
+| Slack / Misskeyの共通v2、pending、重複skip・観測 | `apps/web/test/test_source_sync.py`、`apps/web/test/api.test.mjs` | connector payloadを使った件数と、再実行時の`skipped`を確認すること |
 | 手入力の永続化・失敗時非合成 | `apps/web/test/api.test.mjs` の候補作成/SQLite応答テスト | 実データを変更する入力はユーザー確認後だけに行うこと |
 
 実装を読む必要があるのは、adapterの候補写像・同期run・再実行規則を変更するときだけである。legacy scanは`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`、SQLite境界は`apps/web/db_tool.py`と対応testだけを読む。
@@ -203,6 +212,7 @@ PowerShell wrapperはbatchとmanifestだけを専用SSH鍵で転送する。Linu
 ## 関連文書
 
 - `docs/spec/intake-unified-event-model.md`
+- `docs/spec/ai-candidate-proposal-contract-p0.md`
 - `docs/spec/knowledge-vault-ai-intake-contract-p0.md`
 - `docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`
 - `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`

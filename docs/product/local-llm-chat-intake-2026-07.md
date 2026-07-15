@@ -4,7 +4,7 @@
 
 ## 目的
 
-通常のWeb / Slack / knowledge-vault入口とは別に、ユーザーがローカルLLMへ相談し、その会話からタスク候補をHubへ取り込める窓口を作る。
+通常のWeb / Slack / knowledge-vault入口とは別に、ユーザーがローカルLLMへ相談し、その直近の発言から具体的な作業と未確定の「やりたいこと」をHub候補として取り込める窓口を作る。
 
 相談窓口は「LLMの回答画面」だけではなく、現在のHub候補とTasks側の実行状況を踏まえて相談できる作業入口とする。
 
@@ -46,7 +46,8 @@ LLMにはAPI token、Webhook secret、SQLiteの秘密値を渡さない。外部
 ```text
 ユーザーが相談
   -> ローカルLLMが現在のHub / Tasks概要を参照して回答
-  -> タスクらしさがあれば、LLMが「タスク候補にしますか」と確認
+  -> 回答とは別に、直近user messageだけを共通v2 promptへ渡す
+  -> action / aspirationを根拠付きでvalidatorが判定
   -> 画面に候補カードを表示
   -> ユーザーが「候補として追加」
   -> Hub SQLiteの candidates に pending で保存
@@ -68,17 +69,11 @@ P0の既存方針に合わせ、LLMが直接Vikunja taskを作成したり、ユ
 - モデルがtool callingに対応する場合は、`get_threadline_context` toolを提示する。非対応モデルではbackendが先に取得したcontextを使うフォールバックにする。
 - `get_threadline_context` は読み取り専用で、`all` / `tasks` / `candidates` の範囲を指定できる。タスク登録・GO・編集はLLMへ許可せず、画面上のユーザー操作だけで実行する。
 
-## タスク候補の検出
+## 候補の検出
 
-モデルの回答本文とは別に、次の構造化ブロックを返させる。壊れたJSONや未確認の候補は画面へ候補カードとして出さず、回答本文だけ表示する。
+相談回答のsystem promptへ候補JSONを混在させない。回答生成後、`apps/web/prompts/threadline-candidate-proposal-v2.txt`を使う独立したLLM呼出へ、直近のuser messageだけを`SOURCE_BODY`として渡す。Hub / Tasks context、assistant回答、過去会話は相談回答には使えても、候補の根拠には使わない。
 
-```text
-THREADLINE_TASK_PROPOSALS
-```json
-[{"title":"...","summary":"...","todo":"...","kind":"todo","schedule":"候補なし","confidence":"medium","missing":[]}]
-```
-END_THREADLINE_TASK_PROPOSALS
-```
+共通validatorを通過した`action(kind=todo)`と`aspiration(kind=idea)`だけを候補カードとして表示する。aspirationは「やりたい」という原文を保持し、架空の実装作業へ変換しない。壊れたJSON、根拠不一致、候補抽出だけの失敗はカードを出さず、相談回答本文は表示・保存する。
 
 候補カードのボタンは最低限 `候補として追加` とし、追加後は既存確認待ちキューへのリンクを表示する。
 
@@ -106,6 +101,7 @@ END_THREADLINE_TASK_PROPOSALS
 
 - データ設計: `docs/data/local-llm-chat-data-design-2026-07.md`
 - ランタイムHTTP・provider縮退・回帰: `docs/spec/local-llm-chat-runtime-contract-p0.md`
+- 共通AI候補提案: `docs/spec/ai-candidate-proposal-contract-p0.md`
 - 実装タスク: `docs/imp/local-llm-chat-intake-tasks.md`
 - Hub / Tasks境界: `docs/arch/vikunja-pj-general-integration-architecture-2026-07.md`
 - 現行データ構造ブリーフ: `docs/imp/current-goal-and-data-structure-brief-2026-07-11.md`

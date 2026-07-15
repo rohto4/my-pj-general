@@ -25,7 +25,7 @@ Tasks本文にHub由来のオレンジが残る実機差分を確認した。R06
 
 設計・実装・自動回帰、`gemma4:latest`への合成入力、実Vault最新3文書のdry-runは完了した。dry-runは提案5件中3件をaccepted、根拠完全一致でない2件をheldにし、Linux転送・SQLite変更・候補登録・GOは行っていない。
 
-最新HubはLinuxへ再配信済みで、新lineage table 5件はいずれも0行、既存候補・判断・link・Taskも0件のままである。次の実Vault batchを1回取り込む操作はpending候補とlineageを実データへ追加する。Codexは実行直前に確認を取り、実行後は候補の原文忠実度、固有名詞・path、TODO具体性、不要候補率を一覧で示す。ユーザーが見るのはHubの候補本文だけで、GOは別確認とする。
+最新HubはLinuxへ再配信済みで、新lineage table 5件はいずれも0行、既存候補・判断・link・Taskも0件のままである。次の実Vault batchを1回取り込む操作はpending候補とlineageを実データへ追加する。Codexは実行直前に確認を取り、実行後は候補の原文忠実度、固有名詞・path、actionの具体性、aspirationの希望表現保持、不要候補率を一覧で示す。ユーザーが見るのはHubの候補本文だけで、GOは別確認とする。
 
 ### 完成度レビュー（黄色枠・実データ変更なし）
 

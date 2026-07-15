@@ -50,6 +50,105 @@ class SourceSyncDomainTests(unittest.TestCase):
             1,
         )
 
+    def test_common_ai_intake_creates_action_and_aspiration_as_pending_candidates(self):
+        payload = {
+            "source": "slack",
+            "sourceLabel": "memo-ideas",
+            "allowedTags": [],
+            "items": [
+                {
+                    "sourceRef": "slack://memo-ideas/1",
+                    "sourceBody": "監査APIの同期結果を確認し、失敗runを再実行する。",
+                    "output": {
+                        "document_summary": "監査APIの再実行が必要。",
+                        "candidate_proposals": [{
+                            "proposal_type": "action",
+                            "title": "監査APIの失敗runを再実行する",
+                            "summary": "同期結果を確認して失敗runを再実行する。",
+                            "todo": "監査APIの同期結果を確認し、失敗runを再実行する",
+                            "kind": "todo",
+                            "schedule": "候補なし",
+                            "confidence": "high",
+                            "missing": [],
+                            "tags": [],
+                            "evidence_quotes": ["監査APIの同期結果を確認し、失敗runを再実行する。"],
+                        }],
+                    },
+                },
+                {
+                    "sourceRef": "slack://memo-ideas/2",
+                    "sourceBody": "なんとなく、いつか自宅の本を横断検索できるようにしたい。",
+                    "output": {
+                        "document_summary": "自宅の本を横断検索したいという希望。",
+                        "candidate_proposals": [{
+                            "proposal_type": "aspiration",
+                            "title": "自宅の本を横断検索したい",
+                            "summary": "自宅の本を横断検索できるようにしたい。",
+                            "todo": "なんとなく、いつか自宅の本を横断検索できるようにしたい。",
+                            "kind": "idea",
+                            "schedule": "候補なし",
+                            "confidence": "medium",
+                            "missing": [],
+                            "tags": [],
+                            "evidence_quotes": ["なんとなく、いつか自宅の本を横断検索できるようにしたい。"],
+                        }],
+                    },
+                },
+            ],
+        }
+
+        result = source_sync.import_source_proposals(self.connection, payload)
+        candidates = db_tool.rows_to_candidates(self.connection)
+
+        self.assertEqual(result["imported"], 2)
+        self.assertEqual(result["held"], 0)
+        self.assertEqual(result["syncRun"]["source"], "slack")
+        self.assertEqual({item["kind"] for item in candidates}, {"todo", "idea"})
+        self.assertTrue(all(item["status"] == "pending" for item in candidates))
+        self.assertEqual(self.connection.execute("select count(*) from execution_links").fetchone()[0], 0)
+
+    def test_common_ai_intake_holds_invented_misskey_aspiration_and_is_idempotent(self):
+        wish = "ローカルLLMで写真を整理できたらいいな。"
+        payload = {
+            "source": "misskey",
+            "sourceLabel": "Misskey",
+            "allowedTags": [],
+            "items": [{
+                "sourceRef": "misskey://note/1",
+                "sourceBody": wish,
+                "output": {
+                    "document_summary": "写真整理への希望。",
+                    "candidate_proposals": [{
+                        "proposal_type": "aspiration",
+                        "title": "写真整理を自動化したい",
+                        "summary": "ローカルLLMで写真を整理したい。",
+                        "todo": "今週中にPythonで写真分類workerを実装する",
+                        "kind": "idea",
+                        "schedule": "候補なし",
+                        "confidence": "high",
+                        "missing": [],
+                        "tags": [],
+                        "evidence_quotes": [wish],
+                    }],
+                },
+            }],
+        }
+
+        first = source_sync.import_source_proposals(self.connection, payload)
+        self.assertEqual(first["imported"], 0)
+        self.assertEqual(first["held"], 1)
+        self.assertEqual(self.connection.execute("select count(*) from candidates").fetchone()[0], 0)
+
+        payload["items"][0]["output"]["candidate_proposals"][0]["todo"] = wish
+        second = source_sync.import_source_proposals(self.connection, payload)
+        third = source_sync.import_source_proposals(self.connection, payload)
+        self.assertEqual(second["imported"], 1)
+        self.assertEqual(third["imported"], 0)
+        self.assertEqual(third["skipped"], 1)
+        candidate = db_tool.rows_to_candidates(self.connection)[0]
+        self.assertEqual(candidate["source"], "misskey")
+        self.assertEqual(candidate["kind"], "idea")
+
     def test_knowledge_vault_candidate_uses_meaningful_excerpt_summary_and_existing_tags(self):
         for tag in ("knowledge-vault", "inbox", "imported", "gantt", "tasks", "ui"):
             db_tool.create_tag(self.connection, {"name": tag})

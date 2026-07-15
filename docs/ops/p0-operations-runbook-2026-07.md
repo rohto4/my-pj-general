@@ -83,7 +83,7 @@ VikunjaはDBだけでなく、filesとconfig / secretの復元可能性を確認
 | Ollama停止 | Hub、候補、確認待ち、Vikunja | chatだけ接続エラー表示 |
 | Vikunja停止 | intake、候補編集、管理 | GOを再試行可能にし、判断を保持 |
 | Webhook欠落 | Hub / Tasksの正本分離 | reconcileでmirrorを修復 |
-| Slack connector停止 | Web / vault / chat入口 | source単位で失敗を記録 |
+| Slack / Misskey connector停止 | Web / vault / chat入口 | source単位で失敗を記録。Misskeyは既定無効のため、外部取得未実装をHub全体の障害にしない |
 | Hub停止 | Vikunjaでのtask実行 | Hub復旧後にreconcile |
 
 ## P0 rollback境界
@@ -96,7 +96,7 @@ P0 rollbackはHub DBとVikunjaデータを独立して扱う。Hubのcandidate /
 
 | 機能 | 復旧後に確認する状態 | 合格条件 | 正本 / 自動根拠 |
 | --- | --- | --- | --- |
-| vault / Slack入口 | `/api/observability` の最新`sourceSyncRuns`、candidate件数、Vaultのlineage table件数 | `knowledge_vault_batch` / Slackごとのstateと件数が説明でき、同一batch再送で重複候補が増えない | `docs/spec/intake-source-adapters.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`、`apps/web/test/test_vault_intake.py`、`apps/web/test/api.test.mjs` |
+| vault / Slack / Misskey入口 | `/api/observability` の最新`sourceSyncRuns`、candidate件数、Vaultのlineage table件数 | sourceごとのstateとaction / aspiration件数が説明でき、同一source refまたはbatch再送で重複候補が増えない | `docs/spec/ai-candidate-proposal-contract-p0.md`、`docs/spec/intake-source-adapters.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`、`apps/web/test/test_candidate_proposal.py`、`apps/web/test/test_source_sync.py`、`apps/web/test/api.test.mjs` |
 | Hub候補・判断 | `/api/bootstrap` の候補、判断ログ、operation ID | 成功した操作だけがHTTP応答・画面ログ・`decisions.note`で一致し、失敗時に仮候補を作らない | `docs/spec/confirmation-queue-p0.md`、`apps/web/test/api.test.mjs` |
 | Vikunja連携 | `execution_links`、`execution_task_state`、`sync_attempts`、reconcile結果 | task正本を上書きせず、失敗は再試行可能、削除済みtaskは`detached`として履歴を残す | `docs/spec/vikunja-integration-contract-2026-07.md`、`docs/spec/vikunja-integration-acceptance-tests-2026-07.md` |
 | ローカルLLM相談 | `/api/health`、既存thread、候補一覧 | provider障害時もHub/Tasksと既存履歴を保ち、失敗送信が候補/GOを起こさない | `docs/spec/local-llm-chat-runtime-contract-p0.md`、`apps/web/test/api.test.mjs` |

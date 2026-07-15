@@ -18,7 +18,7 @@ class VaultIntakePromptTests(unittest.TestCase):
     def test_prompt_is_versioned_and_forbids_common_quality_failures(self):
         prompt = vault_intake.load_prompt()
 
-        self.assertEqual(vault_intake.PROMPT_VERSION, "knowledge-vault-task-proposal-v1")
+        self.assertEqual(vault_intake.PROMPT_VERSION, "threadline-candidate-proposal-v2")
         for required in (
             "SOURCE_BODYだけを事実根拠",
             "完了事項を再タスク化",
@@ -26,6 +26,7 @@ class VaultIntakePromptTests(unittest.TestCase):
             "evidence_quotes",
             "ALLOWED_TAGS",
             "candidateの確定、GO、Vikunja登録はできません",
+            "aspiration",
         ):
             self.assertIn(required, prompt)
 
@@ -243,6 +244,7 @@ class VaultIntakeImportTests(unittest.TestCase):
             [sys.executable, str(WEB_ROOT / "db_tool.py"), "import-vault-batch"],
             input=json.dumps(batch, ensure_ascii=False),
             text=True,
+            encoding="utf-8",
             capture_output=True,
             env={**os.environ, "P0_DB_PATH": str(database), "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
         )

@@ -34,7 +34,7 @@ flowchart LR
 | 境界 | 責務 | 禁止 |
 | --- | --- | --- |
 | Windows collector | allowlist scan、UTF-8読込、断片化、content hash、LLM呼出、batch生成 | SQLite書込、GO、秘密のbatch格納 |
-| ローカルLLM | 文書要約と根拠付きタスク提案JSON | candidate/Tasks直接更新、根拠外の期限・担当・Project補完 |
+| ローカルLLM | 共通v2による文書要約と根拠付きaction / aspiration提案JSON | candidate/Tasks直接更新、aspirationの架空具体化、根拠外の期限・担当・Project補完 |
 | validator | schema、完全一致引用、長さ、enum、許可タグ、曖昧title、完了事項を検査 | LLM自己申告confidenceだけで採否決定 |
 | SSH transport | batchとmanifestを専用鍵で転送しSHA-256照合 | SQLiteファイル転送、新しいLAN書込API公開 |
 | Linux importer | batchをtransactionで冪等保存し、accepted提案だけを`pending`候補へ写像 | Vaultへの逆書込、自動GO、Vikunja直接更新 |
@@ -51,7 +51,9 @@ flowchart LR
 ## 実装境界
 
 - collector / validator / importer: `apps/web/vault_intake.py`
-- prompt正本: `apps/web/prompts/knowledge-vault-task-proposal-v1.txt`
+- 共通候補契約: `docs/spec/ai-candidate-proposal-contract-p0.md`
+- prompt正本: `apps/web/prompts/threadline-candidate-proposal-v2.txt`
+- 決定的validator: `apps/web/candidate_proposal.py`
 - SQLite: `apps/web/db_tool.py`
 - Windows→Linux運用: `infra/intake/import-knowledge-vault.ps1`、`infra/intake/import-knowledge-vault-remote.sh`
 - 回帰: `apps/web/test/test_vault_intake.py`、`infra/intake/test_import_knowledge_vault.py`

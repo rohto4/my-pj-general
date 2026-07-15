@@ -1,5 +1,11 @@
 # 実装待ち
 
+## 2026-07-15 共通AI候補抽出（action / aspiration）
+
+- [x] knowledge-vaultの精度優先promptを、具体的な未完了作業`action`だけでなく、本人が「いつかやりたい・試したい・関心がある」と表明した`aspiration`も原文根拠付きで抽出する版へ更新した。曖昧さを架空の具体作業・期限・担当へ変換しない。
+- [x] 同じ候補提案promptと決定的validatorをknowledge-vault / Slack / Misskey / AI相談の正規化済み入力へ適用し、source固有collectorと候補判定を分離した。Misskeyはpayload以降だけで既定無効、外部サービスへの実接続・実データ取込・自動GOはこの断面に含めない。
+- [x] `action` / `aspiration`の区別、本人性、根拠引用、重複抑止、source lineage、pending止まりをテスト先行で固定し、設計正本・カバレッジ・完了記録を同期した。`gemma4:latest`の合成dry-runはaction 1 / aspiration 1をaccepted、完了済み項目を除外し、fallback 0だった。
+
 ## 2026-07-15 Windows knowledge-vault AI取込パイプライン
 
 - [x] Windowsだけが`G:\knowledge-vault`を読むcollector、任意のローカルLLM要約・タスク提案、決定的validator、SSH batch、Linux単独SQLite writerの責務境界を正本設計へ記録した。
@@ -76,8 +82,8 @@ P1開始のユーザー確認後、次の順で進める。
 1. 常設運用・観測・backup / restoreを整える。
 2. Vikunja Listening Lounge forkを別tagで配信し、stable rollbackを検証する。
 3. knowledge-vaultから定期入口workerを切り出す。
-4. Slack payloadを同じworker契約へ載せる。
-5. 実運用データを蓄積してから、Misskey・重複束ね・部分自動確定・CalendarをPoCする。
+4. Slack / Misskeyの定期workerを共通v2 prompt / validatorへ載せる。現行`workers/sync --slack-payload`のlegacy direct importは通常運用へ使わない。
+5. 実運用データを蓄積してから、Misskey外部取得・重複束ね・部分自動確定・CalendarをPoCする。
 6. PostgreSQL・認証・queueは導入ゲートを満たした場合だけ実装へ進める。
 
 ## 2026-07-12 Linux配信（配信完了・実機受入中）

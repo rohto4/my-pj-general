@@ -52,6 +52,7 @@
 - Linux Listening Lounge配信手順: `docs/guide/linux-listening-lounge-deploy.md`
 - Linux定期入口同期アーキテクチャ: `docs/arch/linux-periodic-intake-architecture.md`
 - Windows Vault AI取込アーキテクチャ: `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`
+- 4入口共通AI候補提案契約: `docs/spec/ai-candidate-proposal-contract-p0.md`
 - Windows Vault AI取込契約: `docs/spec/knowledge-vault-ai-intake-contract-p0.md`
 - Windows Vault AI取込データ設計: `docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`
 - Windows Vault AI取込runbook: `docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`

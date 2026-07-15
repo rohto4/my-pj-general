@@ -69,16 +69,17 @@
 最小読込セット:
 
 1. `docs/spec/intake-source-adapters.md`（Web / vault / Slackの現行P0入口）
-2. `docs/spec/confirmation-queue-p0.md`（候補の判断、operation ID、GO失敗）
-3. AI相談を触る場合だけ `docs/spec/local-llm-chat-runtime-contract-p0.md`、`docs/product/local-llm-chat-intake-2026-07.md`、`docs/data/local-llm-chat-data-design-2026-07.md`
-4. Windows Vault AI batchを触る場合だけ `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`、`docs/spec/knowledge-vault-ai-intake-contract-p0.md`、`docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`
-5. 障害・復旧を扱う場合だけ `docs/ops/p0-operations-runbook-2026-07.md`
-6. カバレッジHTMLの「入口取込・ソース同期」「Windows Vault AI batch」「Hub候補・判断」「ローカルLLM相談」の対象行だけ
+2. AI候補判定を触る場合だけ `docs/spec/ai-candidate-proposal-contract-p0.md`
+3. `docs/spec/confirmation-queue-p0.md`（候補の判断、operation ID、GO失敗）
+4. AI相談を触る場合だけ `docs/spec/local-llm-chat-runtime-contract-p0.md`、`docs/product/local-llm-chat-intake-2026-07.md`、`docs/data/local-llm-chat-data-design-2026-07.md`
+5. Windows Vault AI batchを触る場合だけ `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`、`docs/spec/knowledge-vault-ai-intake-contract-p0.md`、`docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md`
+6. 障害・復旧を扱う場合だけ `docs/ops/p0-operations-runbook-2026-07.md`
+7. カバレッジHTMLの「入口取込・ソース同期」「Windows Vault AI batch」「Hub候補・判断」「ローカルLLM相談」の対象行だけ
 
 実装を読む条件:
 
 - candidateへの写像、source run、操作ID、provider HTTP status、tool scopeのいずれかが正本にない。
-- legacy scanは`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`と`infra/intake/*`、SQLite/HTTPは`apps/web/db_tool.py` / `apps/web/server.mjs`を読み、対応する`test_source_sync.py` / `test_vault_intake.py` / `api.test.mjs`だけを追加する。
+- 共通AI判定は`apps/web/candidate_proposal.py`と`apps/web/prompts/threadline-candidate-proposal-v2.txt`、legacy scanとSlack/Misskey写像は`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`と`infra/intake/*`、SQLite/HTTPは`apps/web/db_tool.py` / `apps/web/server.mjs`を読む。testは`test_candidate_proposal.py` / `test_source_sync.py` / `test_vault_intake.py` / `api.test.mjs`の対象だけを追加する。
 
 ## P1開始設計
 

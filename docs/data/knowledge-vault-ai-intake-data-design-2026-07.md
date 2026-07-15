@@ -11,7 +11,7 @@ Vault原文はWindowsの`G:\knowledge-vault`が正本である。Linux Hub SQLit
 - batch: `schema_version`、`batch_id`、`created_at`、`source_root_label`、`prompt_version`、`model`、`stats`
 - document: `document_id`、`relative_path`、`scope`、`content_hash`、`modified_at`、`summary`、`fragments`、`ai_run`
 - fragment: `fragment_id`、`heading`、`line_start`、`line_end`、`excerpt`、`content_hash`、`extraction_method`
-- proposal: `proposal_id`、`title`、`summary`、`todo`、`kind`、`schedule`、`confidence`、`missing`、`tags`、`evidence_quotes`、`validation`
+- proposal: `proposal_id`、`proposal_type`、`title`、`summary`、`todo`、`kind`、`schedule`、`confidence`、`missing`、`tags`、`evidence_quotes`、`validation`
 
 batch IDは、schema version、prompt version、model、document IDsをcanonical JSONにしてSHA-256から生成する。manifestはbatchファイル全体のSHA-256を別ファイルに持つ。
 
@@ -32,6 +32,8 @@ batch IDは、schema version、prompt version、model、document IDsをcanonical
 - fragment excerptはLLMへ渡した許可範囲だけとし、全文を無条件保存しない。
 - evidence quoteは同じdocumentの保存fragmentに完全一致する。
 - accepted proposalだけが1件のcandidateへ写像され、`candidate_proposals.candidate_id`で逆引きできる。
+- `proposal_type=action`は`kind=todo`、`proposal_type=aspiration`は`kind=idea`へ写像する。SQLiteでは`kind`を正規化済みの種別正本とし、同義columnを追加しない。
+- aspirationの`todo`は希望を表す根拠引用と同一であり、原文にない実行手段・期限・担当を持たない。
 - batch再送は行数を増やさない。別batchでも同じproposal IDならcandidateを増やさない。
 - `ai_runs`にはhidden reasoningを保存しない。入力/出力hash、構造化結果、一般化errorだけを持つ。
 - candidateを不要/アーカイブしてもlineageを削除しない。

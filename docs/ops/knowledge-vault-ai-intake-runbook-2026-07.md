@@ -1,5 +1,7 @@
 # knowledge-vault AI取込runbook 2026-07
 
+候補提案は`apps/web/prompts/threadline-candidate-proposal-v2.txt`を使う。旧v1 promptは過去batchの監査用であり、新規取込へ指定しない。action / aspirationの判定とheld条件は`docs/spec/ai-candidate-proposal-contract-p0.md`を正本とする。
+
 ## 安全境界
 
 - Windows collectorはVaultをread-onlyで扱う。

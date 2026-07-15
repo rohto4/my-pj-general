@@ -4,7 +4,7 @@
 
 ## 所有権
 
-チャットthreadと会話履歴はHub SQLiteの正本とする。LLM provider側へ履歴を永続保存する前提にはしない。タスク候補として確定したデータは既存 `candidates` と `decisions` を正本とする。
+チャットthreadと会話履歴はHub SQLiteの正本とする。LLM provider側へ履歴を永続保存する前提にはしない。候補として受理したデータは既存 `candidates` と `decisions` を正本とする。共通提案の`action / aspiration`は、重複fieldを増やさず`chat_task_suggestions.kind`と`candidates.kind`の`todo / idea`で保持する。
 
 ## 追加テーブル
 
@@ -61,7 +61,7 @@ suggestion: proposed -> dismissed
 | API | 用途 |
 | --- | --- |
 | `GET /api/chat/bootstrap` | 現在thread、履歴、候補、LLM接続状態、現在contextの要約を返す |
-| `POST /api/chat/messages` | ユーザー発言を保存し、LLM回答と候補提案を返す。agentが要求した読み取り専用context toolもbackendで仲介する |
+| `POST /api/chat/messages` | ユーザー発言を保存して相談回答を生成し、別呼出で直近user messageだけを共通v2へ渡して候補提案を返す。agentが要求した読み取り専用context toolは相談回答側だけでbackendが仲介する |
 | `POST /api/chat/suggestions/:id/accept` | 候補提案を既存 `candidates` へpendingで作成する |
 
 ## provider境界
@@ -83,10 +83,11 @@ Linux上のHubからWindowsのLLMを使う場合は、`127.0.0.1`ではなくLAN
 
 ## データ保持と安全性
 
-- LLMへ送るcontextは候補・実行状態の要約だけに制限する。
+- 相談回答LLMへ送るcontextは候補・実行状態の要約だけに制限する。候補抽出LLMへは直近user message、source ref、許可タグだけを送り、contextとassistant回答を送らない。
 - `get_threadline_context` は `all` / `tasks` / `candidates` のscopeを受け、backendが許可した要約だけを返す。書き込みtoolはP0では提供しない。
 - API tokenやWebhook secretをsystem prompt、chat message、metadataへ入れない。
-- LLMのraw responseは構造化候補ブロックを除き、表示用assistant messageとして保存する。
+- 相談回答LLMの本文は表示用assistant messageとして保存する。候補抽出LLMのraw JSONはchat履歴へ保存せず、validator通過fieldだけを`chat_task_suggestions`へ保存する。
 - provider errorは履歴へ秘密を含めず、UIへ一般化した接続エラーとして返す。
 
 HTTP status、provider障害時の保存順、toolの読取範囲、回帰根拠は `docs/spec/local-llm-chat-runtime-contract-p0.md` を正本とする。
+候補分類、根拠、非具体化、source別入力は `docs/spec/ai-candidate-proposal-contract-p0.md` を正本とする。

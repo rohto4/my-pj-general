@@ -50,7 +50,9 @@ systemd timer -> pj-general-sync.service -> workers/sync
 - systemd timer: `infra/systemd/pj-general-sync.timer`
 - secret / connector payloadの雛形: `infra/systemd/sync.env.example`
 
-既存`workers/sync/run.py`のLinuxローカルvault scanは、Linux側にsnapshotを配置した環境の互換経路として残す。Windows本体のVaultは`infra/intake/import-knowledge-vault.ps1`でcollector・LLM・SSH batchを実行し、Linux側では`knowledge_vault_batch`として観測する。SlackとVaultの失敗は互いを止めない。
+既存`workers/sync/run.py`のLinuxローカルvault scanと`--slack-payload`は、Linux側snapshotと旧direct importの回帰互換経路として残す。Windows本体のVaultは`infra/intake/import-knowledge-vault.ps1`でcollector・LLM・SSH batchを実行し、Linux側では`knowledge_vault_batch`として観測する。
+
+通常のSlack / Misskey候補化は`docs/spec/ai-candidate-proposal-contract-p0.md`の共通v2を通す。現行oneshot workerはまだLLM呼出を持たないため、Slack / Misskeyの定期本流として有効化しない。定期化前に、Web serverへ依存せず`candidate_proposal.py`とOpenAI互換clientを呼ぶworker adapterへ更新し、action / aspiration、held、冪等性、source単位の失敗分離を回帰する。
 
 Linuxへの初回登録例:
 
@@ -72,7 +74,7 @@ systemd登録後も、まず`systemctl start`でoneshotを1回実行し、Hubの
 
 1. source adapter は source event を cursor または content hash で差分取得する。
 2. 正規化済み event は `source_id + external_id`、または content hash を一意にして冪等に保存する。
-3. candidate 化は event から再実行可能にし、同一 event を重複候補にしない。
+3. candidate 化は共通v2 prompt / validatorを通し、event から再実行可能にして同一 event を重複候補にしない。旧direct importを通常経路へ戻さない。
 4. 入口ごとの失敗は全体同期を止めず、source 単位で記録・再試行する。
 5. 手動取り込みは定期同期と同一 lock / 同一冪等キーを使う。
 

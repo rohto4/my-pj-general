@@ -9,6 +9,7 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number.parseInt(process.env.PORT || "4173", 10);
 const host = process.env.HOST || "127.0.0.1";
 const dbTool = join(root, "db_tool.py");
+const candidateProposalPrompt = readFileSync(join(root, "prompts", "threadline-candidate-proposal-v2.txt"), "utf8");
 const bundledPython = join(process.env.USERPROFILE || "", ".cache", "codex-runtimes", "codex-primary-runtime", "dependencies", "python", "python.exe");
 const python = process.env.PYTHON || (existsSync(bundledPython) ? bundledPython : "python");
 
@@ -227,16 +228,7 @@ function buildChatSystemPrompt(context) {
     "あなたはThreadlineのローカル相談アシスタントです。日本語で、相談相手として具体的かつ簡潔に答えてください。",
     "現在のHub候補とTasks側の情報を参照できます。情報がない場合は推測せず、確認が必要だと伝えてください。",
     "必要なら読み取り専用のget_threadline_context toolを使って、Hub候補またはTasks状況の要約を確認してください。タスク登録やGOはtoolで実行できません。",
-    "タスクらしい依頼を検出した場合は、回答本文で『タスク候補にしますか？』と確認し、確認用の構造化ブロックを末尾に追加してください。",
-    "構造化ブロックは、候補を提案するときだけ次の形式で出してください。候補はまだpendingであり、ユーザーのボタン操作なしに登録やGOをしてはいけません。",
-    "候補の要約は入力にない推測や定型の導入句を入れない。判断に必要な事実・目的・制約だけを日本語1〜2文で書く。",
-    "todoは画面でそのまま実行タイトルとして読める具体的な行動句にする。『〜を確認する』『〜を整理する』だけの曖昧な表現にしない。",
-    "titleはtodoと同じ実行名を優先し、タグを推測で増やさない。不足があればmissingへ明記する。",
-    "THREADLINE_TASK_PROPOSALS",
-    "```json",
-    '[{"title":"短いタイトル","summary":"要約","todo":"実行すること","kind":"todo","schedule":"候補なし","confidence":"medium","missing":[]}]',
-    "```",
-    "END_THREADLINE_TASK_PROPOSALS",
+    "回答本文には候補登録用JSONを含めないでください。候補抽出は回答後に別の共通validatorが、直近のユーザー本文だけを根拠として行います。",
     "現在のThreadline context:",
     JSON.stringify(context, null, 2),
   ].join("\n");
@@ -247,6 +239,107 @@ function messageContent(message) {
     return message.content.map((part) => typeof part === "string" ? part : part?.text || "").join("");
   }
   return String(message?.content || "");
+}
+
+function parseJsonObject(content) {
+  let value = String(content || "").trim();
+  if (value.startsWith("```")) {
+    value = value.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  }
+  return JSON.parse(value);
+}
+
+async function callCandidateProposalLlm(source, sourceRef, sourceBody, allowedTags) {
+  const config = localLlmConfig();
+  if (!config.enabled) throw new Error("候補抽出LLMが無効です");
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: candidateProposalPrompt },
+        {
+          role: "user",
+          content: [
+            `SOURCE_KIND: ${source}`,
+            `SOURCE_REF: ${sourceRef}`,
+            `ALLOWED_TAGS: ${JSON.stringify(allowedTags)}`,
+            "SOURCE_BODY:",
+            String(sourceBody || "").slice(0, 12000),
+          ].join("\n"),
+        },
+      ],
+      temperature: 0,
+      max_tokens: 1800,
+      stream: false,
+      ...(config.provider === "ollama" ? { think: config.think } : {}),
+    }),
+    signal: AbortSignal.timeout(config.timeoutMs),
+  });
+  if (!response.ok) throw new Error("候補抽出LLMに接続できません");
+  const payload = await response.json();
+  const content = messageContent(payload?.choices?.[0]?.message);
+  if (!content) throw new Error("候補抽出LLMからJSONがありません");
+  return parseJsonObject(content);
+}
+
+function acceptedSuggestions(normalized) {
+  return (normalized?.proposals || [])
+    .filter((proposal) => proposal?.validation?.status === "accepted")
+    .map((proposal) => ({
+      title: proposal.title,
+      summary: proposal.summary,
+      todo: proposal.todo,
+      kind: proposal.kind,
+      schedule: proposal.schedule,
+      confidence: proposal.confidence,
+      missing: proposal.missing,
+    }));
+}
+
+async function importExternalSourceWithAi(source, payload) {
+  const config = runDb("candidate-proposal-config");
+  if (!config.sources[source]) throw new Error(`${source} source is disabled`);
+  const rawItems = source === "slack" ? (payload.messages || []) : (payload.notes || []);
+  const items = [];
+  try {
+    for (const item of rawItems) {
+      const sourceBody = String(item.text || item.content || "").trim();
+      if (!sourceBody) continue;
+      const identity = String(item.ts || item.id || item.createdAt || item.time || "unknown");
+      const baseRef = String(item.permalink || item.url || payload.channelUrl || `${source}://intake`);
+      const sourceRef = item.permalink || item.url ? baseRef : `${baseRef.replace(/\/$/, "")}/${encodeURIComponent(identity)}`;
+      const output = await callCandidateProposalLlm(source, sourceRef, sourceBody, config.allowedTags);
+      items.push({
+        sourceRef,
+        sourceBody,
+        occurred: String(item.occurred || item.createdAt || payload.occurred || "").slice(0, 10) || undefined,
+        output,
+      });
+    }
+  } catch {
+    const run = runDb("start-source-sync", { source, cursor_before: payload.cursor });
+    runDb("finish-source-sync", {
+      run_id: run.run_id,
+      state: "failed",
+      scanned: rawItems.length,
+      failed: 1,
+      error: "CandidateProposalProviderError",
+    });
+    throw new Error("候補抽出LLMに接続できません");
+  }
+  return runDb("import-source-proposals", {
+    source,
+    sourceLabel: payload.channelName || payload.sourceLabel || (source === "slack" ? "memo-ideas" : "Misskey"),
+    allowedTags: config.allowedTags,
+    cursor: payload.cursor,
+    cursor_after: payload.cursor_after,
+    items,
+  });
 }
 
 async function callLocalLlm(history, context) {
@@ -622,14 +715,30 @@ async function handleApi(request, response, url) {
         ]);
         const rawAnswer = await callLocalLlm(history.messages, context);
         const parsed = parseChatTaskProposals(rawAnswer);
+        let proposed = [];
+        try {
+          const proposalConfig = runDb("candidate-proposal-config");
+          const sourceRef = `chat://thread/${encodeURIComponent(threadId)}/message/${userMessage.id}`;
+          const output = await callCandidateProposalLlm("chat", sourceRef, content, proposalConfig.allowedTags);
+          const normalized = runDb("normalize-source-proposals", {
+            source: "chat",
+            sourceRef,
+            sourceBody: content,
+            allowedTags: proposalConfig.allowedTags,
+            output,
+          });
+          proposed = acceptedSuggestions(normalized);
+        } catch {
+          proposed = [];
+        }
         const assistantMessage = runDb("chat-save-message", {
           thread_id: threadId,
           role: "assistant",
           content: parsed.content || "回答を生成できませんでした。",
-          metadata: { model: localLlmConfig().model, suggestionCount: parsed.suggestions.length },
+          metadata: { model: localLlmConfig().model, suggestionCount: proposed.length },
         });
-        const suggestions = parsed.suggestions.length
-          ? runDb("chat-create-suggestions", { thread_id: threadId, message_id: assistantMessage.id, suggestions: parsed.suggestions })
+        const suggestions = proposed.length
+          ? runDb("chat-create-suggestions", { thread_id: threadId, message_id: assistantMessage.id, suggestions: proposed })
           : [];
         sendJson(response, 200, { userMessage, assistantMessage, suggestions, context, config: publicLocalLlmConfig() });
       } catch (error) {
@@ -693,7 +802,16 @@ async function handleApi(request, response, url) {
     }
     if (request.method === "POST" && url.pathname === "/api/import/slack") {
       const body = await readBody(request);
-      sendJson(response, 200, runDb("import-slack", JSON.parse(body || "{}")));
+      const payload = JSON.parse(body || "{}");
+      const result = payload.mode === "legacy_direct"
+        ? runDb("import-slack", payload)
+        : await importExternalSourceWithAi("slack", payload);
+      sendJson(response, 200, result);
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/import/misskey") {
+      const body = await readBody(request);
+      sendJson(response, 200, await importExternalSourceWithAi("misskey", JSON.parse(body || "{}")));
       return true;
     }
     const sourceMatch = url.pathname.match(/^\/api\/admin\/sources\/([^/]+)$/);

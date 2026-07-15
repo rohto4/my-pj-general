@@ -569,3 +569,11 @@
 - `47d11c3`を`rohto4/my-pj-general`の`main`へPushし、安全再配信scriptでHub `B72EF8979712D2139D4300799A724AC761DD3EA7DFD216743F1D30F32AECB9C4`、Tasks `C4436371FA151399E359089A2338479F3F0F0A740982EE0D8F6CCBF16B934645`をLinuxへ反映した。Hub/Tasks API 200、SQLite integrity `ok`、新lineage table 5件は0行、既存候補・判断・link・Taskも0件を維持した。local LLMの`unavailable`はHub chatだけの残存ブロッカーで、Vault取込は未実行である。
 - 目標完了監査で、配信済みのHub / Tasksを`imp-tasks`とブロッカー監査が未配信扱いする文書ドリフトを検出した。失敗する静的回帰を先に追加して進行正本を是正し、Hub Node 48件、Hub Python 19件、worker / infra 23件、PowerShell構文、`git diff --check`を再確認した。残件は外部LLM構成、利用者の視覚判断、確認付き実データ操作だけである。
 - P0ブロッカーB01〜B05を`p0-frontend-acceptance-checklist-2026-07-12.html`先頭へ統合し、結果・コメント・B03/B04の関連R/RV/U行を一元管理するよう変更した。B01は完了済み、B02〜B05は未達で開始し、B05には`実取込GO`なしに実行しない本線commandと自動GO禁止を明記した。独立監査の重複表、旧19件の現況表示、報告promptを0件clean baselineへ同期し、Node 49件と`git diff --check`で検証した。in-app browserの`file://`再読込はURL policyで拒否されたため、迂回せず静的DOM/JavaScript回帰を証拠とした。
+
+# 2026-07-15 4入口共通AI候補提案 v2
+
+- `threadline-candidate-proposal-v2`を新しいruntime正本とし、具体的な未完了作業`action(kind=todo)`と、本人の未確定なやりたいこと`aspiration(kind=idea)`を分離した。aspirationの`todo`は原文の希望表現と完全一致させ、架空の実装方法・期限・担当・成果物へ具体化した提案をheldにする。
+- source-neutralな`candidate_proposal.py`へprompt構築と決定的validatorを分離し、Windows Vault batch、Slack payload、Misskey note payload、AI相談の4入口へ適用した。同じ根拠にaction / aspirationが重複した場合はactionを優先する。
+- Slackは`POST /api/import/slack`、Misskeyはsource有効化後の`POST /api/import/misskey`でacceptedだけをpending候補へ写像する。Misskeyの外部取得・認証は未実装、sourceは既定無効である。Slack `legacy_direct`とoneshot workerの旧direct importは回帰互換だけに残し、通常の品質受入には使わない。
+- AI相談は相談回答と候補抽出を別呼出にし、候補抽出へは直近user messageだけを渡す。assistant回答、過去会話、Hub / Tasks contextは候補根拠にしない。候補抽出だけが失敗した場合は相談回答を維持し、候補を合成しない。
+- `gemma4:latest`の合成dry-runはaction 1 / aspiration 1をaccepted、完了checkbox 1件を除外し、held 0 / fallback 0だった。Linux転送、SQLite取込、Slack / Misskey実接続、自動GO、Vikunja登録は行っていない。

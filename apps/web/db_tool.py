@@ -659,6 +659,16 @@ def seed(conn):
             ),
         )
         ensure_setting(conn, "migration.candidate-triage.v2", {"appliedAt": now()})
+    candidate_prompt_v3 = conn.execute("select 1 from settings where key = ?", ("migration.candidate-triage.v3",)).fetchone()
+    if candidate_prompt_v3 is None:
+        conn.execute(
+            "update prompt_templates set body = ? where id = ?",
+            (
+                "knowledge-vault / Slack / Misskey / AI相談の本人本文から、明示actionはTODO、まだ曖昧な『やりたいこと』はaspirationとして原文根拠付きで候補化する。aspirationを架空の具体作業へ変換せず、全件を確認待ちにして自動GOしない。runtime正本はthreadline-candidate-proposal-v2。",
+                "candidate-triage",
+            ),
+        )
+        ensure_setting(conn, "migration.candidate-triage.v3", {"appliedAt": now()})
     marker = conn.execute("select 1 from settings where key = ?", ("migration.remove-initial-candidates.v1",)).fetchone()
     if marker is None:
         conn.execute("delete from decisions where candidate_id in ('AI-001', 'AI-002', 'AI-003', 'AI-004', 'AI-005', 'AI-006')")
@@ -1343,6 +1353,40 @@ def import_slack(conn, payload):
     return import_domain(conn, payload)
 
 
+def candidate_proposal_config(conn):
+    from candidate_proposal import PROMPT_VERSION
+
+    return {
+        "promptVersion": PROMPT_VERSION,
+        "allowedTags": [
+            row["name"]
+            for row in conn.execute("select name from tags where visible = 1 order by name").fetchall()
+        ],
+        "sources": {
+            row["id"]: bool(row["enabled"])
+            for row in conn.execute("select id, enabled from sources order by id").fetchall()
+        },
+    }
+
+
+def normalize_source_proposals(payload):
+    from candidate_proposal import normalize_output
+
+    return normalize_output(
+        payload.get("output") or {},
+        str(payload.get("sourceBody") or ""),
+        allowed_tags=payload.get("allowedTags") or [],
+        source_kind=str(payload.get("source") or ""),
+        source_ref=str(payload.get("sourceRef") or ""),
+    )
+
+
+def import_source_proposals(conn, payload):
+    from source_sync import import_source_proposals as import_domain
+
+    return import_domain(conn, payload)
+
+
 def update_source(conn, source_id, payload):
     enabled = 1 if payload.get("enabled") else 0
     conn.execute("update sources set enabled = ? where id = ?", (enabled, source_id))
@@ -1454,6 +1498,12 @@ def main():
             output = import_vault_batch(conn, payload)
         elif command == "import-slack":
             output = import_slack(conn, payload)
+        elif command == "candidate-proposal-config":
+            output = candidate_proposal_config(conn)
+        elif command == "normalize-source-proposals":
+            output = normalize_source_proposals(payload)
+        elif command == "import-source-proposals":
+            output = import_source_proposals(conn, payload)
         elif command == "update-source":
             output = update_source(conn, payload["id"], payload)
         elif command == "update-prompt-template":
