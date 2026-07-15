@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Run the P1 source sync adapters once and exit.
+"""Run legacy snapshot imports or explicit external-source collection once.
 
-The worker intentionally reuses the Hub's SQLite/domain boundary. It does not
-create Vikunja tasks and it isolates source failures so one broken adapter does
-not hide successful imports from the other source.
+External Slack/Misskey collection is dry-run by default.  ``--commit`` is the
+only switch that can create pending candidates or advance a source cursor.
 """
 
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -16,17 +16,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WEB_ROOT = ROOT / "apps" / "web"
 sys.path.insert(0, str(WEB_ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import db_tool  # noqa: E402
 import source_sync  # noqa: E402
+from http_client import HttpClient  # noqa: E402
+from llm_client import CandidateProposalLlm  # noqa: E402
+from misskey_collector import MisskeyCollector  # noqa: E402
+from proposal_pipeline import ProposalPipeline  # noqa: E402
+from slack_collector import SlackCollector  # noqa: E402
 
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Run pj-general source sync once")
     parser.add_argument("--db", default=os.environ.get("P0_DB_PATH", str(WEB_ROOT / "data" / "p0.sqlite")))
-    parser.add_argument(
-        "--knowledge-vault-root",
-        default=os.environ.get("KNOWLEDGE_VAULT_ROOT", "G:/knowledge-vault"),
-    )
+    parser.add_argument("--sources", default=os.environ.get("SYNC_SOURCES", ""), help="comma-separated: slack,misskey")
+    parser.add_argument("--commit", action="store_true", help="persist candidates and source cursors")
+    # Legacy snapshot-only inputs remain available for regression compatibility.
+    parser.add_argument("--knowledge-vault-root", default=os.environ.get("KNOWLEDGE_VAULT_ROOT", "G:/knowledge-vault"))
     parser.add_argument("--targets", default=os.environ.get("SYNC_TARGETS", ""))
     parser.add_argument("--limit", type=int, default=int(os.environ.get("SYNC_LIMIT", "30")))
     parser.add_argument("--slack-payload", default=os.environ.get("SLACK_PAYLOAD_FILE", ""))
@@ -69,6 +75,15 @@ def open_database(path):
     return connection
 
 
+def open_readonly_database(path):
+    database = Path(path).resolve()
+    if not database.exists():
+        raise RuntimeError("database_unavailable")
+    connection = sqlite3.connect(f"{database.as_uri()}?mode=ro", uri=True)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
 def latest_cursor(connection, source):
     row = connection.execute(
         "select cursor_after from source_sync_runs where source = ? and state in ('succeeded', 'partial') "
@@ -83,9 +98,8 @@ def vault_cursor(root, targets):
     timestamps = []
     for target in targets:
         base = root / target
-        if not base.exists():
-            continue
-        timestamps.extend(path.stat().st_mtime_ns for path in base.rglob("*.md") if path.is_file())
+        if base.exists():
+            timestamps.extend(path.stat().st_mtime_ns for path in base.rglob("*.md") if path.is_file())
     return str(max(timestamps)) if timestamps else None
 
 
@@ -117,77 +131,117 @@ def normalize_result(source, result):
     return normalized
 
 
-def failed_result(connection, source, error, existing_run=None):
-    if existing_run is not None:
-        normalized = normalize_run(source, existing_run)
-        normalized["error"] = existing_run.get("error") or str(error)
-        return normalized
-    run = db_tool.start_source_sync(connection, {"source": source})
+def failed_result(connection, source, cursor_before=None):
+    run = db_tool.start_source_sync(connection, {"source": source, "cursor_before": cursor_before})
     completed = db_tool.finish_source_sync(
         connection,
-        {"run_id": run["run_id"], "state": "failed", "failed": 1, "error": str(error)},
+        {"run_id": run["run_id"], "state": "failed", "failed": 1, "error": "source_error"},
     )
     normalized = normalize_run(source, completed)
-    normalized["error"] = completed.get("error")
+    normalized["error"] = "source_error"
     return normalized
 
 
-def run_count(connection, source):
-    return connection.execute("select count(*) from source_sync_runs where source = ?", (source,)).fetchone()[0]
-
-
-def latest_run(connection, source):
-    row = connection.execute("select * from source_sync_runs where source = ? order by id desc limit 1", (source,)).fetchone()
-    return dict(row) if row else None
-
-
-def run_once(args):
+def legacy_run(connection, args):
     targets = [item.strip() for item in args.targets.split(",") if item.strip()]
     if not targets:
         targets = [item["id"] for item in db_tool.ADMIN_CONTROL_DEFAULTS["scopes"] if item.get("enabled")]
     results = {}
-    connection = open_database(args.db)
     try:
+        payload = {
+            "root": args.knowledge_vault_root,
+            "targets": targets,
+            "limit": args.limit,
+            "cursor": latest_cursor(connection, "knowledge_vault"),
+            "cursor_after": vault_cursor(args.knowledge_vault_root, targets),
+        }
+        results["knowledge_vault"] = normalize_result("knowledge_vault", source_sync.import_knowledge_vault(connection, payload))
+    except Exception:
+        results["knowledge_vault"] = failed_result(connection, "knowledge_vault")
+    if args.slack_payload:
         try:
-            vault_run_count = run_count(connection, "knowledge_vault")
-            vault_payload = {
-                "root": args.knowledge_vault_root,
-                "targets": targets,
-                "limit": args.limit,
-                "cursor": latest_cursor(connection, "knowledge_vault"),
-                "cursor_after": vault_cursor(args.knowledge_vault_root, targets),
-            }
-            results["knowledge_vault"] = normalize_result(
-                "knowledge_vault", source_sync.import_knowledge_vault(connection, vault_payload)
-            )
-        except Exception as error:  # isolate source failure
-            existing_run = latest_run(connection, "knowledge_vault") if run_count(connection, "knowledge_vault") > vault_run_count else None
-            results["knowledge_vault"] = failed_result(connection, "knowledge_vault", error, existing_run)
+            payload = json.loads(Path(args.slack_payload).read_text(encoding="utf-8"))
+            payload["cursor"] = latest_cursor(connection, "slack")
+            payload["cursor_after"] = slack_cursor(payload.get("messages") or [])
+            results["slack"] = normalize_result("slack", source_sync.import_slack(connection, payload))
+        except Exception:
+            results["slack"] = failed_result(connection, "slack")
+    return results
 
-        if args.slack_payload:
-            try:
-                slack_run_count = run_count(connection, "slack")
-                payload = json.loads(Path(args.slack_payload).read_text(encoding="utf-8"))
-                payload["cursor"] = latest_cursor(connection, "slack")
-                payload["cursor_after"] = slack_cursor(payload.get("messages") or [])
-                results["slack"] = normalize_result("slack", source_sync.import_slack(connection, payload))
-            except Exception as error:  # isolate source failure
-                existing_run = latest_run(connection, "slack") if run_count(connection, "slack") > slack_run_count else None
-                results["slack"] = failed_result(connection, "slack", error, existing_run)
 
-        connection.commit()
+def external_collector(source, http):
+    if source == "slack":
+        channel_id = os.environ.get("SLACK_CHANNEL_ID", "")
+        owner_id = os.environ.get("SLACK_OWNER_USER_ID", "")
+        token = os.environ.get("SLACK_BOT_TOKEN", "")
+        if not (channel_id and owner_id and token):
+            raise RuntimeError("slack_config")
+        return SlackCollector(
+            http,
+            channel_id=channel_id,
+            owner_user_id=owner_id,
+            bot_token=token,
+            initial_oldest_ts=os.environ.get("SLACK_INITIAL_OLDEST_TS", ""),
+            api_base_url=os.environ.get("SLACK_API_BASE_URL", "https://slack.com/api"),
+        ), "memo-ideas"
+    if source == "misskey":
+        base_url = os.environ.get("MISSKEY_BASE_URL", "")
+        owner_id = os.environ.get("MISSKEY_OWNER_USER_ID", "")
+        if not (base_url and owner_id):
+            raise RuntimeError("misskey_config")
+        return MisskeyCollector(http, base_url, owner_id, os.environ.get("MISSKEY_ACCESS_TOKEN", "")), "Misskey"
+    raise RuntimeError("unsupported_source")
+
+
+def external_run(connection, args, source):
+    cursor_before = latest_cursor(connection, source)
+    try:
+        timeout_seconds = max(int(os.environ.get("LOCAL_LLM_TIMEOUT_MS", "60000")) / 1000, 5)
+        http = HttpClient(timeout_seconds=timeout_seconds)
+        collector, source_label = external_collector(source, http)
+        collected = collector.collect(cursor_before)
+        pipeline = ProposalPipeline(CandidateProposalLlm(http))
+        result = pipeline.process(connection, source, source_label, collected, cursor_before, commit=args.commit)
+        return {"source": source, **result}
+    except Exception:
+        if args.commit:
+            return failed_result(connection, source, cursor_before)
+        return {
+            "source": source,
+            "state": "failed",
+            "cursorBefore": cursor_before,
+            "cursorAfter": cursor_before,
+            "scanned": 0,
+            "created": 0,
+            "skipped": 0,
+            "failed": 1,
+            "error": "source_error",
+        }
+
+
+def overall_state(results):
+    states = [item["state"] for item in results.values()]
+    if not states or all(state == "succeeded" for state in states):
+        return "succeeded"
+    if all(state == "failed" for state in states):
+        return "failed"
+    return "partial"
+
+
+def run_once(args):
+    selected = [item.strip() for item in args.sources.split(",") if item.strip()]
+    if any(item not in {"slack", "misskey"} for item in selected):
+        raise RuntimeError("unsupported_source")
+    if not args.commit and not selected:
+        return {"state": "succeeded", "mode": "dry-run", "sources": {}}
+    connection = open_database(args.db) if args.commit else open_readonly_database(args.db)
+    try:
+        results = {source: external_run(connection, args, source) for source in selected} if selected else legacy_run(connection, args)
+        if args.commit:
+            connection.commit()
     finally:
         connection.close()
-    states = [item["state"] for item in results.values()]
-    if not states:
-        return {"state": "succeeded", "sources": {}}
-    if all(state == "succeeded" for state in states):
-        state = "succeeded"
-    elif all(state == "failed" for state in states):
-        state = "failed"
-    else:
-        state = "partial"
-    return {"state": state, "sources": results}
+    return {"state": overall_state(results), "mode": "commit" if args.commit else "dry-run", "sources": results}
 
 
 def main(argv=None):
@@ -199,8 +253,8 @@ def main(argv=None):
         output = {"state": "locked", "lockFile": str(Path(args.lock_file))}
         print(json.dumps(output, ensure_ascii=False))
         return 2
-    except Exception as error:
-        output = {"state": "failed", "error": str(error)}
+    except Exception:
+        output = {"state": "failed", "error": "worker_error"}
         print(json.dumps(output, ensure_ascii=False))
         return 1
     print(json.dumps(output, ensure_ascii=False))

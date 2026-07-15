@@ -10,9 +10,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKER = ROOT / "workers" / "sync" / "run.py"
+sys.path.insert(0, str(ROOT / "workers" / "sync"))
+import run as sync_run
 
 
 class SyncWorkerTests(unittest.TestCase):
+    def test_external_sources_are_explicit_and_dry_run_by_default(self):
+        args = sync_run.parse_args(["--sources", "slack,misskey"])
+
+        self.assertEqual(args.sources, "slack,misskey")
+        self.assertFalse(args.commit)
+
     def test_systemd_timer_is_persistent_and_six_hourly(self):
         timer = (ROOT / "infra" / "systemd" / "pj-general-sync.timer").read_text(encoding="utf-8")
         service = (ROOT / "infra" / "systemd" / "pj-general-sync.service").read_text(encoding="utf-8")
@@ -20,6 +28,11 @@ class SyncWorkerTests(unittest.TestCase):
         self.assertIn("Persistent=true", timer)
         self.assertIn("Type=oneshot", service)
         self.assertIn("--lock-file /run/pj-general-sync/sync.lock", service)
+        self.assertIn("--sources slack,misskey", service)
+        self.assertNotIn("--commit", service)
+        env_example = (ROOT / "infra" / "systemd" / "sync.env.example").read_text(encoding="utf-8")
+        self.assertIn("SLACK_BOT_TOKEN=", env_example)
+        self.assertIn("MISSKEY_OWNER_USER_ID=", env_example)
 
     def run_worker(self, database, vault, slack_payload, lock_file):
         result = subprocess.run(
@@ -34,6 +47,7 @@ class SyncWorkerTests(unittest.TestCase):
                 str(slack_payload),
                 "--lock-file",
                 str(lock_file),
+                "--commit",
             ],
             cwd=ROOT,
             capture_output=True,

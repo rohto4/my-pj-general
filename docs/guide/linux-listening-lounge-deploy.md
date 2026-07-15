@@ -205,20 +205,9 @@ cd /home/unibell4/pj-general-deploy/infra/vikunja
 
 ## P1定期sync workerの登録
 
-Hub bundleを反映した後、worker bundleを展開する。workerはHubと同じSQLiteを使うため、先にHub bundleの再buildを完了させる。
+Slack / Misskey workerのsource-only実装とfake回帰は完了しているが、この通常配信手順ではworkerを登録・有効化しない。workerはHubと同じSQLiteを使うため、実運用はユーザーがrepo外の最小権限envを設定し、手動dry-run 1回と明示`--commit` 1回を承認した後に分離して行う。`sync.env.example`は値を入れずに参照する雛形であり、secretをGit・ログ・チャットへ出さない。
 
-```bash
-sudo tar -xzf /tmp/pj-general-p1-sync-working-tree.tgz -C /srv/pj-general
-sudo install -d -m 0750 /etc/pj-general
-sudo install -m 0600 /srv/pj-general/infra/systemd/sync.env.example /etc/pj-general/sync.env
-sudo systemctl daemon-reload
-sudo systemctl enable --now pj-general-sync.timer
-sudo systemctl start pj-general-sync.service
-sudo journalctl -u pj-general-sync.service -n 100 --no-pager
-curl -fsS http://192.168.0.200:4173/api/observability
-```
-
-`/etc/pj-general/sync.env` にSlack payloadの絶対パスを設定しない場合、knowledge-vaultだけを実行する。定期workerの初回実行後、`/api/observability` のsource別runを確認してから常用する。
+timer有効化は、source別runとpending候補の品質を`/api/observability`で受入した後だけにする。具体的な契約と登録順は`docs/arch/linux-periodic-intake-architecture.md`と`docs/ops/p0-operations-runbook-2026-07.md`を正本とする。
 
 Hub復旧後のVikunja状態再照合は、同じbundleのreconcile timerで15分ごとに実行できる。
 

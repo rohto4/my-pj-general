@@ -96,11 +96,13 @@ def import_source_proposals(conn, payload):
         conn.execute("update sources set last_imported_at = ? where id = ?", (db_tool.now(), source))
         sync_run = db_tool.finish_source_sync(conn, {
             "run_id": run["run_id"],
-            "state": "succeeded",
+            "state": payload.get("state") or "succeeded",
             "cursor_after": payload.get("cursor_after"),
-            "scanned": len(items),
+            "scanned": payload.get("scanned", len(items)),
             "created": imported,
-            "skipped": skipped,
+            "skipped": skipped + int(payload.get("collector_skipped") or 0),
+            "failed": int(payload.get("failed") or 0),
+            "error": payload.get("error"),
         })
         return {
             "imported": imported,

@@ -1,5 +1,12 @@
 # 完了記録
 
+## 2026-07-15 Slack / Misskey共通v2定期workerのfake実装完了
+
+- `workers/sync/http_client.py`、`slack_collector.py`、`misskey_collector.py`、`llm_client.py`、`proposal_pipeline.py`を追加し、`run.py --sources slack,misskey`をdry-run既定、`--commit`明示のCLIへ更新した。workerは`candidate_proposal.py`の版管理v2 prompt / 決定的validatorと`source_sync.py`のpending写像だけを再利用し、独自prompt、legacy direct fallback、自動GOを持たない。
+- fake HTTP / fake LLMでSlackの本人root投稿・pagination・429/5xx、Misskeyの`sinceId + untilId`・renote/空note除外・CW正規化、action / aspiration、held、partial時cursor据置、dry-run非書込み、secret/source本文非出力を固定した。Hub既存のcandidate/source sync回帰と合わせて23件が成功した。
+- systemd serviceとenv例は新CLIへ同期したが、実token、実API、Linux実SQLite書込み、Linux配信、systemd登録、timer有効化は行っていない。実運用はユーザー設定後のdry-run 1回、明示commit 1回、候補品質受入、timer有効化の順に分離する。
+- 入口取込のspec・AI契約・ops/deploy手順・カバレッジ・タスク・ユーザー境界・次回焦点を同期した。PJ固有の実装断面であり、knowledge-vaultへの重複記録は不要と判断した。
+
 ## 2026-07-15 共通v2実行位置図・Mermaid再描画・安全再配信委任
 
 - `apps/web/prompts/threadline-candidate-proposal-v2.txt`がWindows Vaultの`candidate_proposal.load_prompt()`と、Hub Node起動時の`server.mjs readFileSync`からLLM system messageへ注入され、決定的validatorを経てpending境界へ至る実行位置図を`ai-candidate-proposal-contract-p0.md`へ追加した。管理画面の説明文はruntime promptではないこと、prompt変更にはHub再起動または安全再配信が必要なことも明記した。

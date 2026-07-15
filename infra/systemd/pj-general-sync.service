@@ -1,5 +1,5 @@
 [Unit]
-Description=pj-general source sync (knowledge-vault and Slack payload)
+Description=pj-general external-source dry-run sync (Slack and Misskey)
 After=network-online.target
 Wants=network-online.target
 
@@ -10,7 +10,7 @@ Group=unibell4
 WorkingDirectory=/srv/pj-general
 EnvironmentFile=-/etc/pj-general/sync.env
 RuntimeDirectory=pj-general-sync
-ExecStart=/usr/bin/python3 /srv/pj-general/workers/sync/run.py --db /home/unibell4/.local/share/pj-general/p0.sqlite --knowledge-vault-root /srv/knowledge-vault --limit 30 --lock-file /run/pj-general-sync/sync.lock
+ExecStart=/usr/bin/python3 /srv/pj-general/workers/sync/run.py --db /home/unibell4/.local/share/pj-general/p0.sqlite --sources slack,misskey --lock-file /run/pj-general-sync/sync.lock
 NoNewPrivileges=true
 PrivateTmp=true
 StandardOutput=journal

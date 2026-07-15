@@ -1,6 +1,6 @@
 # P0 入口別 adapter 仕様
 
-> 状態: Web / Slack payload / Windows knowledge-vault AI batch / AI相談はP0実装済み。Misskeyは正規化済みpayload以降の共通AI候補化だけ実装済みで、外部取得・認証は未実装である。Linuxローカルvault scanとSlack `legacy_direct`は互換経路である。
+> 状態: Web / Slack payload / Windows knowledge-vault AI batch / AI相談はP0実装済み。Slack / MisskeyのLinux定期workerは、共通v2を再利用するsource client・LLM client・pipeline・dry-run既定まで実装し、fake HTTP / fake LLM回帰を完了した。実token、実API、実SQLite書込み、systemd登録・timer有効化は未実施である。Linuxローカルvault scanとSlack `legacy_direct`は互換経路である。
 
 作成日: 2026-07-09
 
@@ -44,8 +44,8 @@ source payload
 | Adapter | P0 薄く実装 1 版 | P0 完了時点の方向 |
 | --- | --- | --- |
 | Web manual | drawer から `/api/candidates` へ登録し、SQLite に保存する | 最初の本線入口として維持する |
-| Slack | connector / 手動 import payload を `/api/import/slack` へ渡し、共通v2で候補判定する。対象は `memo-ideas` チャンネルに限定 | Slack API / event / polling のどれで取るかを後続確定する |
-| Misskey | source有効化後にnote payloadを`/api/import/misskey`へ渡し、共通v2で候補判定する | 外部取得・認証は未実装。P1 PoCでREST差分取得 / Streaming / experimental Webhookを比較する |
+| Slack | connector / 手動 import payload を `/api/import/slack` へ渡し、共通v2で候補判定する。対象は `memo-ideas` チャンネルに限定 | `workers/sync/slack_collector.py`が`conversations.history`を差分取得する固定実装。実tokenと手動dry-runはユーザー確認後 |
+| Misskey | source有効化後にnote payloadを`/api/import/misskey`へ渡し、共通v2で候補判定する | `workers/sync/misskey_collector.py`が`users/notes`を差分取得する固定実装。実接続・実データ投入はP1 PoCの確認後 |
 | knowledge-vault | Windows collectorが`records` / `inbox` / `tasks` / `memory`を読み、ローカルLLM提案または限定fallbackをSSH batchでLinux importerへ渡す | content hash、根拠断片、prompt/model版、検証理由を保存し、acceptedだけを`KVAI-*` pending候補へ写像する |
 
 ## Web manual adapter
@@ -127,7 +127,7 @@ P0は Slack API token、event subscription、全ワークスペース検索をHu
 
 ### 実装済みpayload境界
 
-Misskey sourceは既定で無効である。有効化後の`POST /api/import/misskey`は`notes[]`の`id` / `text` / `url` / `createdAt`を受け、本人のnote本文だけを共通v2へ渡す。acceptedは`MKAI-*`、`source=misskey`、`status=pending`へ写像する。外部Misskeyからnoteを取得する認証・差分cursor・購読処理は実装していない。
+Misskey sourceは既定で無効である。有効化後の`POST /api/import/misskey`は`notes[]`の`id` / `text` / `url` / `createdAt`を受け、本人のnote本文だけを共通v2へ渡す。acceptedは`MKAI-*`、`source=misskey`、`status=pending`へ写像する。定期workerは本人ID、`sinceId + untilId`、renote除外、CW本文を固定実装したが、認証情報設定・実API実行・実データ取込・timer有効化は未実施である。
 
 ## knowledge-vault adapter
 
@@ -196,7 +196,7 @@ PowerShell wrapperはbatchとmanifestだけを専用SSH鍵で転送する。Linu
 | Windows AI batchのprompt・根拠検証・縮退・lineage・冪等性 | `apps/web/test/test_vault_intake.py` | ローカルLLMの正解セット評価後、pending候補の原文忠実度を確認すること |
 | 共通v2のaction / aspiration、非具体化、重複優先 | `apps/web/test/test_candidate_proposal.py` | source別の実データ品質は各connector接続後に確認すること |
 | SSH batchのhash・単独SQLite writer | `infra/intake/test_import_knowledge_vault.py` | dry-run後に専用鍵で1batchを送り、`knowledge_vault_batch` runを確認すること |
-| Slack / Misskeyの共通v2、pending、重複skip・観測 | `apps/web/test/test_source_sync.py`、`apps/web/test/api.test.mjs` | connector payloadを使った件数と、再実行時の`skipped`を確認すること |
+| Slack / Misskeyの共通v2、pending、重複skip・観測 | `apps/web/test/test_source_sync.py`、`apps/web/test/api.test.mjs`、`workers/sync/test_external_intake.py`、`workers/sync/test_run.py` | fake回帰後、ユーザー確認下でdry-run 1回、明示commit 1回、候補品質受入後のtimer有効化を分離すること |
 | 手入力の永続化・失敗時非合成 | `apps/web/test/api.test.mjs` の候補作成/SQLite応答テスト | 実データを変更する入力はユーザー確認後だけに行うこと |
 
 実装を読む必要があるのは、adapterの候補写像・同期run・再実行規則を変更するときだけである。legacy scanは`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`、SQLite境界は`apps/web/db_tool.py`と対応testだけを読む。
