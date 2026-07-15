@@ -96,6 +96,7 @@ G:\devwork\pj-general
 - Hub と Vikunja の恒久テーマは、夜色・藍・銅・ウールグレーを使う `Listening Lounge` とする。
 - Windowsのknowledge-vaultはWindows collectorだけが読み、任意のローカルLLM提案を決定的に検証してSSH batchでLinuxへ渡す。Linux HubだけをSQLite writerとし、検証済み提案もpending候補までで自動GOしない。
 - knowledge-vault / Slack / Misskey / AI相談の候補判定は共通の版管理promptと決定的validatorを使い、具体的な未完了作業`action`と未確定のやりたいこと`aspiration`を分ける。source固有の取得・認証はadapterへ閉じ、AIはaspirationを架空の具体作業へ変換しない。
+- 専用SSH鍵とsudo不要の`redeploy-p0-frontend.ps1`によるsource-only再配信はCodexが直接実行してよい。sudo、secret設定、実データ変更、DB/files/volume操作はこの委任に含めず、ユーザー操作または直前確認へ分離する。
 - Codex 専用運用土台の参照元は `aaif-goose/goose` を第一候補とする。
 - MCP 実装や CLI 操作の参照元は `PrefectHQ/fastmcp` を第一候補とする。
 - MCP 参照サーバの把握には `modelcontextprotocol/servers` を使う。

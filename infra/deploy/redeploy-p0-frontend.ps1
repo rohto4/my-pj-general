@@ -2,7 +2,7 @@
 param(
   [string]$Server = '192.168.0.200',
   [string]$User = 'unibell4',
-  [string]$IdentityFile = (Join-Path $env:USERPROFILE '.ssh\pj-general-ed25519'),
+  [string]$IdentityFile = (Join-Path $env:USERPROFILE '.ssh\codex_pjserver_ed25519'),
   [switch]$DryRun
 )
 

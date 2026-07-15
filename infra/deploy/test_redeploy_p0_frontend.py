@@ -48,7 +48,7 @@ class RedeployP0FrontendTests(unittest.TestCase):
         helper = (ROOT / "redeploy-p0-frontend-remote.sh").read_text(encoding="utf-8")
         start_script = (ROOT / "start-pj-general.sh").read_text(encoding="utf-8")
 
-        self.assertIn("pj-general-ed25519", script)
+        self.assertIn("codex_pjserver_ed25519", script)
         self.assertIn("BatchMode=yes", script)
         self.assertNotIn("sudo ", helper)
         self.assertNotIn("sudo ", start_script)

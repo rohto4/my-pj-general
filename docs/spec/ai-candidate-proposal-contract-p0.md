@@ -6,6 +6,42 @@ knowledge-vault、Slack、Misskey、AI相談で、入口ごとに異なる文章
 
 runtime promptの正本は`apps/web/prompts/threadline-candidate-proposal-v2.txt`、決定的validatorの正本は`apps/web/candidate_proposal.py`である。旧`knowledge-vault-task-proposal-v1.txt`は過去batchの意味を復元する履歴として残し、新規実行には使わない。
 
+## runtimeへの組込み・実行位置
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","textColor":"#26313f","lineColor":"#52606d"},"flowchart":{"htmlLabels":true,"curve":"basis","useMaxWidth":true}}}%%
+flowchart LR
+    P["共通v2 prompt正本<br/>threadline-candidate-proposal-v2.txt"]:::prompt
+    V["Windows Vault<br/>vault_intake.py<br/>build_request"]:::input
+    S["Slack / Misskey<br/>server.mjs<br/>importExternalSourceWithAi"]:::input
+    C["AI相談<br/>server.mjs<br/>POST /api/chat/messages"]:::input
+    R["LLM request<br/>system = 共通v2<br/>user = source fields"]:::api
+    L["ローカルLLM<br/>POST /chat/completions"]:::llm
+    D["決定的validator<br/>candidate_proposal.py<br/>normalize_output"]:::decision
+    O["保存境界<br/>外部source = pending<br/>chat = proposed → 利用者受理 → pending"]:::data
+
+    P -->|"Python: load_prompt()"| V
+    P -->|"Node起動時: readFileSync"| S
+    P -->|"同じNode内のprompt定数"| C
+    V --> R
+    S --> R
+    C --> R
+    R --> L --> D --> O
+
+    classDef input fill:#e3f2fd,stroke:#64a6d9,color:#17324d,stroke-width:1.5px
+    classDef prompt fill:#fff4c2,stroke:#d8b545,color:#3b3100,stroke-width:2px
+    classDef api fill:#e8f5e9,stroke:#73b77a,color:#183d1f,stroke-width:1.5px
+    classDef llm fill:#f3e8ff,stroke:#a986d8,color:#302044,stroke-width:1.5px
+    classDef decision fill:#fff0f0,stroke:#d87878,color:#4a1515,stroke-width:1.5px
+    classDef data fill:#dff3ff,stroke:#5aa4c8,color:#173746,stroke-width:1.5px
+```
+
+- Windows Vault経路は`vault_intake.py`から`candidate_proposal.build_request()`を呼び、その時点で`load_prompt()`がpromptファイルをUTF-8読込する。
+- Slack / Misskey / AI相談経路はHub起動時に`server.mjs`がpromptファイルを`readFileSync`し、`callCandidateProposalLlm()`のsystem messageへ注入する。prompt変更をLinux Hubへ反映するには安全再配信またはHub再起動が必要である。
+- LLMへ渡すuser messageは`SOURCE_KIND`、`SOURCE_REF`、`ALLOWED_TAGS`、`SOURCE_BODY`だけである。相談回答や別source本文を混ぜない。
+- 管理画面の`candidate-triage`本文は利用者向けの短い説明であり、runtime promptではない。
+- 設計済み・未実装のSlack / Misskey定期workerは`candidate_proposal.build_request()`を再利用し、別promptを作らない。
+
 ## 入力契約
 
 | 入力 | 契約 |

@@ -1,5 +1,12 @@
 # 完了記録
 
+## 2026-07-15 共通v2実行位置図・Mermaid再描画・安全再配信委任
+
+- `apps/web/prompts/threadline-candidate-proposal-v2.txt`がWindows Vaultの`candidate_proposal.load_prompt()`と、Hub Node起動時の`server.mjs readFileSync`からLLM system messageへ注入され、決定的validatorを経てpending境界へ至る実行位置図を`ai-candidate-proposal-contract-p0.md`へ追加した。管理画面の説明文はruntime promptではないこと、prompt変更にはHub再起動または安全再配信が必要なことも明記した。
+- Windows Vaultの2本のMermaid sequenceは、閲覧側ダークテーマで白文字と淡色boxが衝突し、下側actorのミラーで縦長になる問題を、明示`base` theme、`box`廃止、`mirrorActors:false`、短いmessageへ修正した。機能責務と禁止境界は維持した。
+- `redeploy-p0-frontend.ps1`の既定鍵を、Linuxへ登録済みの`codex_pjserver_ed25519`へテスト先行で統一した。通常のsource-only、hash照合、sudo不要、DB/files/volume非削除、再インポートなしの再配信とAPI/SQLite読取り検証はCodexが直接実行し、sudo、secret/env、実データ変更はユーザー境界へ残した。
+- 設計書カバレッジ、レビュー結果表、受入チェック、読込ガイド、現行タスク、handoffを同期した。この断面ではLinux再配信、実データ変更、GO、Vikunja task作成、knowledge-vault転記は行っていない。
+
 ## 2026-07-15 AI取込責務図・次セッション実装設計
 
 - `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`の責務表を、Windows収集・共通v2・決定的検証・専用SSH・Linux冪等取込と、利用者確認・GO後Vikunja登録を分けた2本のMermaidシーケンス図へ置換した。禁止境界は図外の短い一覧にも残し、表から情報を落としていない。

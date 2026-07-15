@@ -110,7 +110,7 @@
 実装を読む条件:
 
 - 安全な再配信script自体を変更する。
-- この場合だけ `infra/deploy/redeploy-p0-frontend.ps1`、`infra/deploy/redeploy-p0-frontend-remote.sh`、`infra/deploy/start-pj-general.sh` と対応テストを読む。ユーザー以外がSSH/sudoを実行しない。
+- この場合だけ `infra/deploy/redeploy-p0-frontend.ps1`、`infra/deploy/redeploy-p0-frontend-remote.sh`、`infra/deploy/start-pj-general.sh` と対応テストを読む。Codexは専用鍵によるsudo不要の安全再配信を直接実行できる。sudo、secret設定、実データ変更、DB/files/volume操作はユーザー境界へ戻す。
 
 ## 設計書化
 

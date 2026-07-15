@@ -118,10 +118,10 @@ sha256sum /tmp/pj-general-web-working-tree.tgz /tmp/vikunja-listening-lounge-wor
 Windowsでは専用鍵を作り、公開鍵だけをLinuxの`~/.ssh/authorized_keys`へ追加する。秘密鍵はWindows側から持ち出さず、リポジトリにも置かない。
 
 ```powershell
-ssh-keygen -t ed25519 -a 100 -f "$env:USERPROFILE\.ssh\pj-general-ed25519" -C "pj-general-deploy"
+ssh-keygen -t ed25519 -a 100 -f "$env:USERPROFILE\.ssh\codex_pjserver_ed25519" -C "codex-pjserver"
 Get-Service ssh-agent | Set-Service -StartupType Automatic
 Start-Service ssh-agent
-ssh-add "$env:USERPROFILE\.ssh\pj-general-ed25519"
+ssh-add "$env:USERPROFILE\.ssh\codex_pjserver_ed25519"
 ```
 
 Linuxの既存SSH接続内で、表示した公開鍵の1行だけを登録する。
@@ -135,18 +135,25 @@ chmod 600 ~/.ssh/authorized_keys
 
 鍵のpassphraseは`ssh-add`時にWindowsログインごとに一度だけ入力する。再配信scriptは`BatchMode=yes`で実行するため、鍵またはagent登録がない場合にパスワード入力へフォールバックしない。
 
-P0フロントのHub / Tasks sourceを更新する場合、ユーザーはWindows PowerShellで次の一行だけを実行する。前提準備後は対話パスワード入力を求めない。
+P0フロントのHub / Tasks sourceを更新する場合、CodexがWindowsから次の一行を直接実行する。ユーザーはPowerShellやSSHを開かない。前提準備後は`BatchMode=yes`で実行し、対話パスワード入力を求めない。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File G:\devwork\pj-general\infra\deploy\redeploy-p0-frontend.ps1
 ```
 
 - script自身が実行直前にローカルの現行 `apps/web` と `tmp/vikunja-listening-lounge` からsource-only bundleを再作成し、そのbundleのSHA-256を表示してLinux側でも照合する。古い `tmp/*.tgz` を再利用しないため、資材更新のたびにユーザーがbundleを作り直す必要はない。文書へhashを手入力しない。
-- 既定鍵は`%USERPROFILE%\.ssh\pj-general-ed25519`であり、`-IdentityFile`で明示変更できる。SSH鍵とagentが準備済みなら、SSH・sudoとも対話入力なしで終わる。
+- 既定鍵は、すでにLinuxへ公開鍵登録済みの`%USERPROFILE%\.ssh\codex_pjserver_ed25519`であり、`-IdentityFile`で明示変更できる。秘密鍵は表示・転送・Git保存しない。
 - Hub / Tasks sourceと`start-pj-general.sh`だけを転送・展開し、`--rebuild-vikunja`で一式を再buildする。
 - DB、files、volumeを削除せず、再インポート、env内容表示、secret保存も行わない。
 - `/api/bootstrap`と`/api/v1/info`がともに200でない場合、成功扱いにせず停止する。
 - 事前確認だけなら末尾に`-DryRun`を付ける。
+
+### Codexへ委任する範囲
+
+- Codexは、対象sourceのテスト成功と差分確認後に、`-DryRun`、通常再配信、両API 200とSQLite integrity・件数の読取り確認まで直接実行してよい。
+- この委任は`redeploy-p0-frontend.ps1`が保証するsource-only、hash照合、sudo不要、DB/files/volume非削除、再インポートなしの経路に限定する。
+- sudo、docker groupや`authorized_keys`の変更、secret/env設定、実データ取込、GO、rollbackでデータへ触れる操作は含めない。必要になった時点でユーザーへ戻す。
+- デプロイのためだけにユーザーへPowerShell一行の実行を依頼しない。鍵がagentへ未登録、鍵ファイルがない、BatchModeで接続できない場合は、Codexが原因を切り分けて必要な最小ユーザー操作だけを依頼する。
 
 ## Hubの再ビルドと切替
 

@@ -34,39 +34,30 @@ flowchart LR
 ### Windows収集・AI提案・Linux取込
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","textColor":"#26313f","actorBkg":"#e3f2fd","actorBorder":"#64a6d9","actorTextColor":"#17324d","actorLineColor":"#78909c","signalColor":"#26313f","signalTextColor":"#26313f","labelBoxBkgColor":"#fff0f0","labelBoxBorderColor":"#d87878","labelTextColor":"#4a1515","loopTextColor":"#4a1515","noteBkgColor":"#f5f7fa","noteBorderColor":"#aab4c0","noteTextColor":"#26313f"},"sequence":{"mirrorActors":false,"useMaxWidth":true,"wrap":true}}}%%
 sequenceDiagram
     autonumber
-    box rgb(227, 242, 253) Windows source
-        participant V as knowledge-vault
-    end
-    box rgb(232, 245, 233) Windows intake
-        participant W as Collector / Validator
-        participant L as ローカルLLM
-    end
-    box rgb(255, 232, 214) Linux boundary
-        participant H as Hub Importer / SQLite
-    end
+    participant V as Windows Vault
+    participant W as Collector / Validator
+    participant L as ローカルLLM
+    participant H as Linux Hub Importer
 
-    W->>V: allowlist内MarkdownをUTF-8で差分scan
-    V-->>W: 相対path・許可本文
-    W->>W: 秘密らしい行を伏せ、断片化・content hash
-    W->>L: 共通v2 prompt・許可タグ・source ref
+    W->>V: allowlist内Markdownを差分scan
+    V-->>W: 相対pathと許可本文
+    W->>L: 共通v2 promptと伏せ字済み本文
     alt LLM応答が正常
-        L-->>W: 要約・action / aspiration・完全一致根拠JSON
-        W->>W: schema・引用・enum・完了・重複を決定的検証
-    else 未設定・timeout・不正JSON
-        L--xW: 一般化した失敗
-        W->>W: 明示された未完了actionだけをfallback提案
+        L-->>W: 要約・action / aspiration・根拠JSON
+    else LLM未設定・失敗
+        L--xW: 一般化した失敗種別
+        Note right of W: 明示された未完了actionだけfallback
     end
-    W->>W: batch・manifest・SHA-256を生成
+    Note right of W: schema・引用・完了・重複を決定的検証
     W->>H: 専用SSH鍵でbatchとmanifestだけを転送
-    H->>H: hash・schema・versionを検証
     alt batchが有効
-        H->>H: transactionでlineageを冪等保存
-        H->>H: acceptedだけをpending候補へ写像
-        H-->>W: scanned / accepted / held / skipped
-    else 不一致・未知version
-        H--xW: SQLite無変更でbatchを拒否
+        Note right of H: hash・schema・versionを検証<br/>lineageを冪等保存<br/>acceptedだけpendingへ写像
+        H-->>W: accepted / held / skipped
+    else hash・schema不一致
+        H--xW: SQLite無変更で拒否
     end
 
     Note over W,H: SQLite本体・secret・Vault全文は転送しない
@@ -75,25 +66,20 @@ sequenceDiagram
 ### Hub確認・GO後の実行
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","textColor":"#26313f","actorBkg":"#fff4c2","actorBorder":"#d8b545","actorTextColor":"#3b3100","actorLineColor":"#78909c","signalColor":"#26313f","signalTextColor":"#26313f","labelBoxBkgColor":"#fff0f0","labelBoxBorderColor":"#d87878","labelTextColor":"#4a1515","loopTextColor":"#4a1515","noteBkgColor":"#f5f7fa","noteBorderColor":"#aab4c0","noteTextColor":"#26313f"},"sequence":{"mirrorActors":false,"useMaxWidth":true,"wrap":true}}}%%
 sequenceDiagram
     autonumber
-    box rgb(255, 244, 194) Review
-        actor U as 利用者
-        participant H as Hub確認待ち
-    end
-    box rgb(255, 232, 214) Execution
-        participant T as Vikunja Tasks
-    end
+    actor U as 利用者
+    participant H as Hub確認待ち
+    participant T as Vikunja Tasks
 
     H-->>U: pending候補と原文根拠を表示
     U->>H: 編集 / 不要 / アーカイブ
-    alt 利用者がGO
+    opt 利用者がGO
         U->>H: GOを確定
         H->>T: 実行TODOを一方向登録
         T-->>H: task ID・実行状態
         H-->>U: 登録結果とmirror状態を表示
-    else GOしない
-        H-->>U: Hub内の判断状態だけを保持
     end
 
     Note over H,T: LLM・ImporterはGOもVikunja更新も行わない
