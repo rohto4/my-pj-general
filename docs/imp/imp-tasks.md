@@ -1,5 +1,13 @@
 # 実装待ち
 
+## 2026-07-15 次セッション実装候補: Slack / Misskey共通v2定期worker
+
+- [x] `docs/arch/linux-periodic-intake-architecture.md`へ、source別collector、公式API、本人filter、pagination/cursor、429/5xx、共通v2、partial時cursor据置、secret非出力、dry-run既定、ファイル責務、fake回帰、手動受入順を固定した。方式比較は完了し、次回はこの契約からテスト先行で実装する。
+- [ ] `workers/sync/http_client.py`、`slack_collector.py`、`misskey_collector.py`、`llm_client.py`、`proposal_pipeline.py`をテスト先行で追加し、`run.py`を`--sources` / `--commit`契約へ更新する。
+- [ ] Slack / Misskey fake APIとfake LLMでpagination、本人性、action / aspiration、held、retry、partial、cursor据置、冪等性、secret・本文非出力を回帰する。実サービス、実token、実SQLiteは使わない。
+- [ ] `infra/systemd/sync.env.example`と`pj-general-sync.service`を新CLIへ同期する。ただし`--commit`追加、timer有効化、実データ取込は行わない。
+- [ ] fake回帰とsource-only配信準備後、ユーザーがrepo外へ最小権限tokenと初期cursorを設定する。実行直前に確認を取り、手動dry-run 1回、承認後の手動commit 1回、品質確認後のtimer有効化の順で進める。
+
 ## 2026-07-15 共通AI候補抽出（action / aspiration）
 
 - [x] knowledge-vaultの精度優先promptを、具体的な未完了作業`action`だけでなく、本人が「いつかやりたい・試したい・関心がある」と表明した`aspiration`も原文根拠付きで抽出する版へ更新した。曖昧さを架空の具体作業・期限・担当へ変換しない。

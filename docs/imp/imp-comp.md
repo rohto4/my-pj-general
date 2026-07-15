@@ -1,5 +1,12 @@
 # 完了記録
 
+## 2026-07-15 AI取込責務図・次セッション実装設計
+
+- `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`の責務表を、Windows収集・共通v2・決定的検証・専用SSH・Linux冪等取込と、利用者確認・GO後Vikunja登録を分けた2本のMermaidシーケンス図へ置換した。禁止境界は図外の短い一覧にも残し、表から情報を落としていない。
+- `docs/arch/linux-periodic-intake-architecture.md`へ、未実装だったSlack / Misskey定期workerを実装だけで開始できる粒度まで設計した。source client、LLM、共通pipelineのファイル責務、Slack `conversations.history`、Misskey `users/notes`、本人性、pagination、cursor commit、partial、retry、dry-run既定、secret非出力、fake回帰、実サービス受入順を固定した。
+- P0で実装済みのpayload以降の共通v2と、P1で未実装の外部取得・定期workerを分離した。実装、token発行、実API接続、実SQLite変更、Linux配信、timer有効化はこの断面では行っていない。
+- 状態・次タスク・実行順を`imp-tasks.md`、`next-session-focus.md`、`docs/diary/2026-07-15-external-intake-worker-handoff.md`へ同期した。PJ固有の設計・handoffであり、knowledge-vaultへの重複記録は不要と判断した。
+
 ## 2026-07-14 P0受入チェックの再配信状態同期
 
 - 2026-07-14に実施済みのHub / Tasks再配信と、Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、候補19 / decision 9 / execution link 4の維持を、P0受入HTML・ユーザー手順・実装タスクへ同期した。
