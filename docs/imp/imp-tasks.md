@@ -79,18 +79,18 @@ P1開始のユーザー確認後、次の順で進める。
 5. 実運用データを蓄積してから、Misskey・重複束ね・部分自動確定・CalendarをPoCする。
 6. PostgreSQL・認証・queueは導入ゲートを満たした場合だけ実装へ進める。
 
-## 2026-07-12 Linux配信（進行中）
+## 2026-07-12 Linux配信（配信完了・実機受入中）
 
 - [x] Windows検証済みHub `Listening Lounge` の転送bundleを作成: `tmp/pj-general-web-working-tree.tgz`
 - [x] U03のGO／不要／アーカイブ送信前に、実データ・判断ログ変更を明示して確認する画面ダイアログを実装し、Node 28件回帰で確認した。
 - [x] Vikunja Listening Lounge forkの転送bundleを作成: `tmp/vikunja-listening-lounge-working-tree.tgz`
 - [x] Hub bundle / Vikunja bundleのSHA-256を記録: `docs/guide/linux-listening-lounge-deploy.md`
 - [x] 2026-07-14 配信事前確認: `redeploy-p0-frontend.ps1 -DryRun`で現行source-only bundleを再生成し、Hub `A6B783BA6908DC86EF92FB8B2B606B55EC9F71198AB2338B077AD1DC7CEC8EEA`、Tasks `40817A5361CFEA375F91EA80AF4164F465C932ADF80EEBDDA239305A10EC55C4`を照合した。Hubのtest用`__pycache__`を明示除外して、node_modules / SQLite / 全`__pycache__`、Tasksの`.git` / node_modules / distがbundleにないことを実体確認した。Hub 34件、補助Python 8件、再配信script 4件の回帰は成功。SSH / scp / sudo / Linux実配信はまだ実行していない。
-- [ ] Linux上でHub `pj-general` を再buildし、`/api/health` と本流テーマ表示を確認する
-- [ ] Linux上でVikunja custom imageを別tagでbuildし、stable rollback可能な状態で切り替える
+- [x] Linux上でHub `pj-general` を再buildし、`/api/health`、`/api/bootstrap=200`、SQLite integrity `ok`、本流テーマsourceを確認した。
+- [x] Linux上でVikunja custom imageを別tagでbuildし、`/api/v1/info=200`を確認した。stable `v2.3.0`へimage参照だけを戻せるrollback契約とscript回帰を維持する。
 - [ ] Linux実機でHome / Dashboard / Inbox List / Table / Kanban / Gantt / Task detailとHub導線を受入確認する
 
-Linux側の実行手順は `docs/guide/linux-listening-lounge-deploy.md` を正本とする。現在のCodex環境からは `unibell4@192.168.0.200` のSSH公開鍵認証が通らないため、bundle作成までをこちらで完了し、サーバー側の実行は認証回復後に継続する。
+Linux側の実行手順は `docs/guide/linux-listening-lounge-deploy.md` を正本とする。2026-07-15に専用SSH鍵と安全再配信scriptでHub / Tasksの再build・切替・API確認まで完了した。残るのは利用者による実画面の見た目・操作感受入である。
 
 ## 後続へ維持する項目
 
