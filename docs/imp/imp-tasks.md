@@ -5,6 +5,7 @@
 - [x] knowledge-vaultの精度優先promptを、具体的な未完了作業`action`だけでなく、本人が「いつかやりたい・試したい・関心がある」と表明した`aspiration`も原文根拠付きで抽出する版へ更新した。曖昧さを架空の具体作業・期限・担当へ変換しない。
 - [x] 同じ候補提案promptと決定的validatorをknowledge-vault / Slack / Misskey / AI相談の正規化済み入力へ適用し、source固有collectorと候補判定を分離した。Misskeyはpayload以降だけで既定無効、外部サービスへの実接続・実データ取込・自動GOはこの断面に含めない。
 - [x] `action` / `aspiration`の区別、本人性、根拠引用、重複抑止、source lineage、pending止まりをテスト先行で固定し、設計正本・カバレッジ・完了記録を同期した。`gemma4:latest`の合成dry-runはaction 1 / aspiration 1をaccepted、完了済み項目を除外し、fallback 0だった。
+- [x] `335725c`を`origin/main`へPushし、安全再配信scriptで共通v2をLinux Hubへ反映した。Hub / Tasks API 200、SQLite integrity `ok`、候補・判断・execution link 0件、Misskey既定無効を維持した。Linux Hubのlocal LLM unavailableはB02の既知ブロッカーとして継続する。
 
 ## 2026-07-15 Windows knowledge-vault AI取込パイプライン
 

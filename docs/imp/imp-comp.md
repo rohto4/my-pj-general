@@ -577,3 +577,5 @@
 - Slackは`POST /api/import/slack`、Misskeyはsource有効化後の`POST /api/import/misskey`でacceptedだけをpending候補へ写像する。Misskeyの外部取得・認証は未実装、sourceは既定無効である。Slack `legacy_direct`とoneshot workerの旧direct importは回帰互換だけに残し、通常の品質受入には使わない。
 - AI相談は相談回答と候補抽出を別呼出にし、候補抽出へは直近user messageだけを渡す。assistant回答、過去会話、Hub / Tasks contextは候補根拠にしない。候補抽出だけが失敗した場合は相談回答を維持し、候補を合成しない。
 - `gemma4:latest`の合成dry-runはaction 1 / aspiration 1をaccepted、完了checkbox 1件を除外し、held 0 / fallback 0だった。Linux転送、SQLite取込、Slack / Misskey実接続、自動GO、Vikunja登録は行っていない。
+- Hub Python 27件、Node API / 設計書 / 受入HTML 50件、intake / deploy / worker補助11件の計88件と`git diff --check`が成功した。`335725c`を`rohto4/my-pj-general`の`main`へPushした。
+- 安全再配信scriptでHub bundle `C29F8E51012C6B4AC2034099F5E76B555924F673889FC622004ED295C0FBBB74`、Tasks bundle `91403035BC759845854CFD768903851C275E374FC454CD357630EFAABB5F39E4`をLinuxへ反映した。Hub / Tasks API 200、SQLite integrity `ok`、候補・判断・execution link 0件、管理表示のv2反映、Misskey既定無効を確認した。実取込、自動GO、Vikunja task作成は行っていない。Hub healthの`degraded`は既知のlocal LLM unavailableによる。

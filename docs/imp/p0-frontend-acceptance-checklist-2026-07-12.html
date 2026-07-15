@@ -138,7 +138,7 @@ const defaultState = {
   V01:{result:'done',comment:'E902…544FをLinuxでrebuild済み。Hub healthとVikunja APIは正常で、Chrome 1280px task detailは右操作railが本文下の操作面へ移ることを確認。再インポートなし。'},
   R04:{result:'done',comment:'再配信済み。Hub /api/bootstrap=200、Tasks /api/v1/info=200、実データは候補19 / decision 9 / execution link 4を維持。Kanban guideの実機残存はR05で修正する。'},
   R05:{result:'done',comment:'完了。Linux再配信、Hub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4を維持。Thread Line左レールとKanban guide非表示を実機確認済み。後続の左レール再編は定常R06で再受入する。'},
-  R06:{result:'',comment:'2026-07-14に再配信とAPI確認は完了。Hub左レールとTasks本文テーマを強制再読込後に見て、主要ボタン・link・focus・選択行・左端線・card/task/dashboard rail・カレンダー上端にHub由来のオレンジが残らず、TLマーク右のタイトル面だけが薄青であることを最終判定する。'},
+  R06:{result:'',comment:'2026-07-15に共通AI候補v2を含むHub / Tasksを安全再配信し、API 200、SQLite integrity ok、候補・判断・execution link 0件を確認済み。画面styleは変更していないため、Hub左レールとTasks本文テーマの最終見た目・操作感だけを継続判定する。'},
   R07:{result:'',comment:'2026-07-14に再配信とAPI確認は完了。Tasksを強制再読込し、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを最終判定する。'},
   U01:{result:'failed',comment:'未達。初回遷移直後のHubガントが崩れ、タブ切替で復帰する症状が再発。R04反映後、初回遷移から再現しないことを確認する。'},
   U02:{result:'failed',comment:'未達。sourceは本文抜粋・本文由来要約・既存タグマスタ照合・TODO案優先へ改善済み。既存19件の再インポートはせず、新規AI相談候補を1件だけ作る実機確認は実行前の明示確認待ち。'},
