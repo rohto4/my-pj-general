@@ -44,7 +44,7 @@ sequenceDiagram
 
     W->>V: allowlist内Markdownを差分scan
     V-->>W: 相対pathと許可本文
-    W->>L: 共通v2 promptと伏せ字済み本文
+    W->>L: 共通v3 promptと伏せ字済み本文
     alt LLM応答が正常
         L-->>W: 要約・action / aspiration・根拠JSON
     else LLM未設定・失敗
@@ -106,7 +106,7 @@ sequenceDiagram
 
 - collector / validator / importer: `apps/web/vault_intake.py`
 - 共通候補契約: `docs/spec/ai-candidate-proposal-contract-p0.md`
-- prompt正本: `apps/web/prompts/threadline-candidate-proposal-v2.txt`
+- prompt正本: `apps/web/prompts/threadline-candidate-proposal-v3.txt`
 - 決定的validator: `apps/web/candidate_proposal.py`
 - SQLite: `apps/web/db_tool.py`
 - Windows→Linux運用: `infra/intake/import-knowledge-vault.ps1`、`infra/intake/import-knowledge-vault-remote.sh`

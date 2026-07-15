@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-PROMPT_VERSION = "threadline-candidate-proposal-v2"
+PROMPT_VERSION = "threadline-candidate-proposal-v3"
 ALLOWED_SOURCE_KINDS = {"knowledge_vault", "slack", "misskey", "chat"}
 ALLOWED_CONFIDENCE = {"high", "medium", "low"}
 GENERIC_ACTIONS = {"確認する", "整理する", "対応する", "検討する", "調査する", "修正する"}

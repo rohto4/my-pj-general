@@ -4,18 +4,18 @@
 
 knowledge-vault、Slack、Misskey、AI相談で、入口ごとに異なる文章を同じ品質基準でHub候補へ変換する。source adapterは取得・話者限定・source reference生成を担い、この契約は正規化済み本文から候補を提案・検証する段階だけを担う。
 
-runtime promptの正本は`apps/web/prompts/threadline-candidate-proposal-v2.txt`、決定的validatorの正本は`apps/web/candidate_proposal.py`である。旧`knowledge-vault-task-proposal-v1.txt`は過去batchの意味を復元する履歴として残し、新規実行には使わない。
+runtime promptの正本は`apps/web/prompts/threadline-candidate-proposal-v3.txt`、決定的validatorの正本は`apps/web/candidate_proposal.py`である。v2は過去batchの意味を復元する履歴として残し、新規実行には使わない。
 
 ## runtimeへの組込み・実行位置
 
 ```mermaid
 %%{init: {"theme":"base","themeVariables":{"background":"#ffffff","textColor":"#26313f","lineColor":"#52606d"},"flowchart":{"htmlLabels":true,"curve":"basis","useMaxWidth":true}}}%%
 flowchart LR
-    P["共通v2 prompt正本<br/>threadline-candidate-proposal-v2.txt"]:::prompt
+    P["共通v3 prompt正本<br/>threadline-candidate-proposal-v3.txt"]:::prompt
     V["Windows Vault<br/>vault_intake.py<br/>build_request"]:::input
     S["Slack / Misskey<br/>server.mjs<br/>importExternalSourceWithAi"]:::input
     C["AI相談<br/>server.mjs<br/>POST /api/chat/messages"]:::input
-    R["LLM request<br/>system = 共通v2<br/>user = source fields"]:::api
+    R["LLM request<br/>system = 共通v3<br/>user = source fields"]:::api
     L["ローカルLLM<br/>POST /chat/completions"]:::llm
     D["決定的validator<br/>candidate_proposal.py<br/>normalize_output"]:::decision
     O["保存境界<br/>外部source = pending<br/>chat = proposed → 利用者受理 → pending"]:::data

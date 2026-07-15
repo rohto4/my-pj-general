@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 WEB_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(WEB_ROOT))
@@ -18,7 +19,8 @@ class VaultIntakePromptTests(unittest.TestCase):
     def test_prompt_is_versioned_and_forbids_common_quality_failures(self):
         prompt = vault_intake.load_prompt()
 
-        self.assertEqual(vault_intake.PROMPT_VERSION, "threadline-candidate-proposal-v2")
+        self.assertEqual(vault_intake.PROMPT_VERSION, "threadline-candidate-proposal-v3")
+        self.assertLessEqual(len(prompt), 1800)
         for required in (
             "SOURCE_BODYだけを事実根拠",
             "完了事項を再タスク化",
@@ -37,6 +39,32 @@ class VaultIntakePromptTests(unittest.TestCase):
         self.assertNotIn('action: source.id === "knowledge_vault" ? "importKnowledgeVault"', app)
         self.assertIn("windows_ssh_batch", db)
         self.assertIn("infra/intake/import-knowledge-vault.ps1", db)
+
+    def test_openai_client_reserves_enough_output_tokens_for_complete_candidate_json(self):
+        captured = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return b'{"choices":[{"message":{"content":"{\\\"document_summary\\\":\\\"ok\\\",\\\"candidate_proposals\\\":[]}"}}]}'
+
+        def fake_urlopen(request, timeout):
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            captured["timeout"] = timeout
+            return FakeResponse()
+
+        client = vault_intake.openai_compatible_client("http://llm.test/v1", "fake-model", timeout=42)
+        with patch.object(vault_intake.urllib.request, "urlopen", fake_urlopen):
+            output = client({"system_prompt": "system", "user_prompt": "user"})
+
+        self.assertEqual(captured["payload"]["max_tokens"], 3000)
+        self.assertEqual(captured["timeout"], 42)
+        self.assertEqual(output["document_summary"], "ok")
 
 
 class VaultIntakeCollectionTests(unittest.TestCase):

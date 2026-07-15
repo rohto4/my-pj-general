@@ -13,7 +13,7 @@ P0 は次の実装済み入口を同じ確認待ちキューへ集約する。
 - Slack `memo-ideas` の connector / 手動 payload 取り込み
 - ローカル LLM 相談からの、ユーザー確認付き候補追加
 
-Slack / knowledge-vault / AI相談は共通v2で、具体的な未完了作業`action`と、まだ曖昧なやりたいこと`aspiration`を分ける。Misskeyはpayload以降の同じ候補化だけ先行実装し、実接続はP0に含めない。Google Calendar登録もP0外とする。入口から候補化し、ユーザーが編集・GOし、Vikunjaで実行し、実行状態をHubへ反映できることをP0の一続きの達成条件とする。
+Slack / knowledge-vault / AI相談は共通v3で、具体的な未完了作業`action`と、まだ曖昧なやりたいこと`aspiration`を分ける。Misskeyはpayload以降の同じ候補化だけ先行実装し、実接続はP0に含めない。Google Calendar登録もP0外とする。入口から候補化し、ユーザーが編集・GOし、Vikunjaで実行し、実行状態をHubへ反映できることをP0の一続きの達成条件とする。
 
 ## 全体要約ワークフロー
 
@@ -50,7 +50,7 @@ flowchart LR
 
 ## 固定する境界
 
-- 入口ごとの差は source adapter に閉じ、本人本文を共通v2へ渡してaction / aspiration候補として受ける。
+- 入口ごとの差は source adapter に閉じ、本人本文を共通v3へ渡してaction / aspiration候補として受ける。
 - いきなり実行登録せず、全件を確認待ちにする。
 - AI相談も `提案 + 人の候補追加 + 人の GO` とする。
 - GO 後の実行編集は Vikunja で行う。Hub は候補本文を逆同期しない。

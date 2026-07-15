@@ -46,7 +46,7 @@ LLMにはAPI token、Webhook secret、SQLiteの秘密値を渡さない。外部
 ```text
 ユーザーが相談
   -> ローカルLLMが現在のHub / Tasks概要を参照して回答
-  -> 回答とは別に、直近user messageだけを共通v2 promptへ渡す
+  -> 回答とは別に、直近user messageだけを共通v3 promptへ渡す
   -> action / aspirationを根拠付きでvalidatorが判定
   -> 画面に候補カードを表示
   -> ユーザーが「候補として追加」
@@ -72,7 +72,7 @@ P0の既存方針に合わせ、LLMが直接Vikunja taskを作成したり、ユ
 
 ## 候補の検出
 
-相談回答のsystem promptへ候補JSONを混在させない。回答生成後、`apps/web/prompts/threadline-candidate-proposal-v2.txt`を使う独立したLLM呼出へ、直近のuser messageだけを`SOURCE_BODY`として渡す。Hub / Tasks context、assistant回答、過去会話は相談回答には使えても、候補の根拠には使わない。
+相談回答のsystem promptへ候補JSONを混在させない。回答生成後、`apps/web/prompts/threadline-candidate-proposal-v3.txt`を使う独立したLLM呼出へ、直近のuser messageだけを`SOURCE_BODY`として渡す。Hub / Tasks context、assistant回答、過去会話は相談回答には使えても、候補の根拠には使わない。
 
 共通validatorを通過した`action(kind=todo)`と`aspiration(kind=idea)`だけを候補カードとして表示する。aspirationは「やりたい」という原文を保持し、架空の実装作業へ変換しない。壊れたJSON、根拠不一致、候補抽出だけの失敗はカードを出さず、相談回答本文は表示・保存する。
 

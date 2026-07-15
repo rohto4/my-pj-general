@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>共通候補提案 prompt v2 → v3 比較レビュー</title>
+  <style>
+    body { margin: 0; background: #111827; color: #e5e7eb; font: 16px/1.65 system-ui, sans-serif; }
+    main { max-width: 980px; margin: 36px auto; padding: 0 20px 48px; }
+    h1, h2 { color: #f8fafc; } .lead { color: #cbd5e1; }
+    .ok { color: #86efac; font-weight: 700; } .hold { color: #fcd34d; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 28px; background: #172033; }
+    th, td { border: 1px solid #334155; padding: 10px; text-align: left; vertical-align: top; }
+    th { color: #bfdbfe; background: #1e293b; } code { color: #fde68a; }
+    a { color: #93c5fd; } ul { padding-left: 1.3em; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>共通候補提案 prompt v2 → v3 比較レビュー</h1>
+    <p class="lead">2026-07-16。v3 は入力を短くしても、候補の安全境界と JSON 契約を維持するための版更新です。実データ取込はまだ行っていません。</p>
+
+    <h2>確認用の実体</h2>
+    <ul>
+      <li><a href="../../apps/web/prompts/threadline-candidate-proposal-v2.txt">v2 prompt（旧・2,747文字）</a></li>
+      <li><a href="../../apps/web/prompts/threadline-candidate-proposal-v3.txt">v3 prompt（新・1,647文字）</a></li>
+      <li>削減: 1,100文字（40.0%）。runtime は v3 を参照する。</li>
+    </ul>
+
+    <h2>前後比較</h2>
+    <table>
+      <thead><tr><th>観点</th><th>v2</th><th>v3</th><th>レビュー観点</th></tr></thead>
+      <tbody>
+        <tr><td>役割・禁止境界</td><td>役割と pending 止まりを段落で記載</td><td>冒頭で <code>candidate確定 / GO / Vikunja登録はできない</code> と明記</td><td>自動GOを導入していない</td></tr>
+        <tr><td>根拠範囲</td><td>SOURCE_BODYだけを事実根拠とする</td><td>同じ制約を1文へ圧縮し、4入口と assistant回答不使用を併記</td><td>source固有promptや会話混入を導入していない</td></tr>
+        <tr><td>action / aspiration</td><td>各分類を箇条書きで詳細に説明</td><td>分類・kind・非具体化・完全一致todoを各1行へ集約</td><td>aspirationを具体作業へ捏造しない</td></tr>
+        <tr><td>除外・品質</td><td>除外、期限/担当非補完、missing、タグ、引用などを複数節で説明</td><td>完了除外、固有名詞/path保持、actionだけのmissing、日付、タグ、引用、confidenceを1段落へ集約</td><td>完了再タスク化、タグ創作、根拠外補完を緩めていない</td></tr>
+        <tr><td>JSON例</td><td>読みやすい複数行の例</td><td>同じfield・enumの1行例</td><td>schemaやvalidatorを変更していない</td></tr>
+        <tr><td>出力余裕</td><td>client の <code>max_tokens=1800</code></td><td><code>max_tokens=3000</code>。24可視タグを含む実条件で途中切断を回避</td><td>品質条件ではなく、完全 JSON を最後まで返すためのtransport修正</td></tr>
+      </tbody>
+    </table>
+
+    <h2>検証結果</h2>
+    <ul>
+      <li class="ok">focused 回帰 21件成功: prompt契約、validator、fake HTTP の出力上限、Windows transport。</li>
+      <li class="ok">Ollama <code>gemma4:latest</code>・実Vault 1文書の <code>-RequireLlm -DryRun</code>: accepted 2 / held 0 / fallback 0。</li>
+      <li class="ok">dry-run のため SSH転送、Linux import、SQLite変更、candidate登録、GO、Vikunja登録はすべて 0。</li>
+      <li class="hold">次の実取込は、ここでの差異レビュー後にだけ実行する。</li>
+    </ul>
+  </main>
+</body>
+</html>

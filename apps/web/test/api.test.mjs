@@ -636,7 +636,7 @@ test("ローカルLLM停止中のAI相談は送信前に閉じ、会話を保存
   assert.equal(after.messages.length, 0);
 });
 
-test("SlackとMisskeyは共通v2 promptでactionとaspirationをpending候補へ分ける", async (context) => {
+test("SlackとMisskeyは共通v3 promptでactionとaspirationをpending候補へ分ける", async (context) => {
   const dir = await mkdtemp(join(tmpdir(), "pj-general-source-ai-api-"));
   const appPort = 4193;
   const llmPort = 4292;

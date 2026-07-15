@@ -152,7 +152,7 @@
       </section>
       <section class="work-card evidence">
         <h3>確認済みの根拠</h3>
-        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>共通v2候補提案、Windows Vault batch、Slack / Misskey workerはfake HTTP / fake LLM回帰まで完了</li><li>2026-07-15の安全再配信後、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・Vikunja task 0件を確認</li><li>Ollama停止時のAI相談クローズと保存前503をNode 41件・Python 27件の回帰で確認。実token・実API・実SQLite取込・timer有効化は未実施</li></ul>
+        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>共通v3候補提案、Windows Vault batch、Slack / Misskey workerはfake HTTP / fake LLM回帰まで完了</li><li>2026-07-15の安全再配信後、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・Vikunja task 0件を確認</li><li>Ollama停止時のAI相談クローズと保存前503をNode 41件・Python 27件の回帰で確認。実token・実API・実SQLite取込・timer有効化は未実施</li></ul>
       </section>
       <section class="work-card">
         <h3>次の作業</h3>
@@ -187,7 +187,7 @@
   </section>
 
   <div class="notes">
-    <section><h2>P0の判断</h2><ul><li>契約・データ層、共通v2候補判定、source-only再配信と0件clean baselineは実証済み。</li><li>B02〜B05のユーザー受入が終わるまで、フロント受入・実データ操作・LLM縮退をP0完了扱いにしない。</li></ul></section>
+    <section><h2>P0の判断</h2><ul><li>契約・データ層、共通v3候補判定、source-only再配信と0件clean baselineは実証済み。</li><li>B02〜B05のユーザー受入が終わるまで、フロント受入・実データ操作・LLM縮退をP0完了扱いにしない。</li></ul></section>
     <section><h2>P1の判断</h2><ul><li>P1の実機運用は、P0フロント受入を先に完了してから再開する。</li><li>custom image切替、timer、停止→reconcile、実運用1巡回は後続へ保留。</li></ul></section>
   </div>
   <p class="foot">根拠: <code>docs/imp/p0-completion-audit-2026-07-12.md</code> / <code>docs/imp/p0-frontend-completion-tasks-2026-07-12.md</code> / <a href="p0-frontend-acceptance-checklist-2026-07-12.html">P0受入チェックHTML（B01〜B05の正本）</a> / <code>docs/imp/next-session-focus.md</code> / <code>docs/imp/p1-verification-matrix-2026-07-12.md</code></p>
@@ -197,7 +197,7 @@
   const axes = ['R','I','E','O','F','U','T','D','X','S'];
   const axisNames = {R:'要件',I:'実装',E:'実証',O:'運用',F:'復旧',U:'UI/UX',T:'回帰',D:'文書',X:'連携',S:'安全'};
   const tasks = [
-    {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'共通v2 prompt / validator、Windows Vault batch、Slack / Misskey workerのfake HTTP / fake LLM回帰まで完了。Linuxは0件clean baselineで、実入口の見た目・実token/API・日常運用は未受入'},
+    {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'共通v3 prompt / validator、Windows Vault batch、Slack / Misskey workerのfake HTTP / fake LLM回帰まで完了。Linuxは0件clean baselineで、実入口の見た目・実token/API・日常運用は未受入'},
     {phase:'P0', name:'確認待ち・編集・判断ログ', scores:[5,5,3,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Linuxは候補・判断・execution link 0件のclean baseline。B04/U03の確認付き実データ操作で、HTTP応答・操作ID付き判断ログ・SQLite decisionsを同一IDで実機受入する'},
     {phase:'P0', name:'GO → Vikunja task → 状態mirror', scores:[5,5,3,3,4,3,5,5,4,4], pending:['E','O','U','X','S'], status:'契約と過去実機は確認済みだが、現行clean baselineでは未再実証。B04/U03後に最新画面の状態mirror・Tasks導線を再受入する'},
     {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,2,5,5,3,4], pending:['E','O','U','X','S'], status:'停止時クローズと保存前503を回帰済み。Windows Ollamaは利用者依頼で停止中で、B02の縮退受入判断と、再開を許可した場合だけU02の新規候補1件の品質受入が残る'},

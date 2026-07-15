@@ -1,5 +1,11 @@
 # 完了記録
 
+## 2026-07-16 共通候補提案 prompt v3 圧縮と完全JSON回帰
+
+- `threadline-candidate-proposal-v3`をruntime正本にし、2,747文字のv2を1,647文字へ圧縮した。SOURCE_BODY限定、action / aspiration、完全一致引用、完了除外、固有名詞/path保持、許可タグ、pending止まり、自動GO禁止は維持した。
+- `vault_intake.py`のOpenAI互換clientは`max_tokens=3000`を使い、24件の可視タグを含む実条件で途中終了しない完全JSONを返す。fake HTTPを含むfocused回帰21件が成功した。
+- `gemma4:latest`で実Vault 1文書の`-RequireLlm -DryRun`を行い、accepted 2 / held 0 / fallback 0だった。SSH転送、Linux SQLite、candidate、GO、Vikunja登録は行っていない。実取込は利用者のv2→v3比較レビュー後に、別の実データ操作として扱う。
+
 ## 2026-07-15 ローカルLLM停止時のAI相談クローズ
 
 - Windowsの常駐`ollama.exe`を停止し、待受port 11434が残っていないことを確認した。CodexのNode processは停止していない。

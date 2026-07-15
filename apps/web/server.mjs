@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL(".", import.meta.url));
 const port = Number.parseInt(process.env.PORT || "4173", 10);
 const host = process.env.HOST || "127.0.0.1";
 const dbTool = join(root, "db_tool.py");
-const candidateProposalPrompt = readFileSync(join(root, "prompts", "threadline-candidate-proposal-v2.txt"), "utf8");
+const candidateProposalPrompt = readFileSync(join(root, "prompts", "threadline-candidate-proposal-v3.txt"), "utf8");
 const bundledPython = join(process.env.USERPROFILE || "", ".cache", "codex-runtimes", "codex-primary-runtime", "dependencies", "python", "python.exe");
 const python = process.env.PYTHON || (existsSync(bundledPython) ? bundledPython : "python");
 

@@ -178,7 +178,7 @@ def openai_compatible_client(base_url, model, timeout=60, api_key=""):
                 {"role": "user", "content": request["user_prompt"]},
             ],
             "temperature": 0,
-            "max_tokens": 1800,
+            "max_tokens": 3000,
             "stream": False,
         }
         http_request = urllib.request.Request(

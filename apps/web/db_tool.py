@@ -664,7 +664,7 @@ def seed(conn):
         conn.execute(
             "update prompt_templates set body = ? where id = ?",
             (
-                "knowledge-vault / Slack / Misskey / AI相談の本人本文から、明示actionはTODO、まだ曖昧な『やりたいこと』はaspirationとして原文根拠付きで候補化する。aspirationを架空の具体作業へ変換せず、全件を確認待ちにして自動GOしない。runtime正本はthreadline-candidate-proposal-v2。",
+                "knowledge-vault / Slack / Misskey / AI相談の本人本文から、明示actionはTODO、まだ曖昧な『やりたいこと』はaspirationとして原文根拠付きで候補化する。aspirationを架空の具体作業へ変換せず、全件を確認待ちにして自動GOしない。runtime正本はthreadline-candidate-proposal-v3。",
                 "candidate-triage",
             ),
         )

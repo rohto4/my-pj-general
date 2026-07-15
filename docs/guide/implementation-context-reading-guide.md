@@ -80,7 +80,7 @@
 実装を読む条件:
 
 - candidateへの写像、source run、操作ID、provider HTTP status、tool scopeのいずれかが正本にない。
-- 共通AI判定は`apps/web/candidate_proposal.py`と`apps/web/prompts/threadline-candidate-proposal-v2.txt`、legacy scanとSlack/Misskey写像は`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`と`infra/intake/*`、SQLite/HTTPは`apps/web/db_tool.py` / `apps/web/server.mjs`を読む。定期workerは上記archで指定した`workers/sync`の対象ファイルだけをテスト先行で追加する。testは`test_candidate_proposal.py` / `test_source_sync.py` / `test_vault_intake.py` / `api.test.mjs`とworker新規testの対象だけを読む。
+- 共通AI判定は`apps/web/candidate_proposal.py`と`apps/web/prompts/threadline-candidate-proposal-v3.txt`、legacy scanとSlack/Misskey写像は`apps/web/source_sync.py`、Windows batchは`apps/web/vault_intake.py`と`infra/intake/*`、SQLite/HTTPは`apps/web/db_tool.py` / `apps/web/server.mjs`を読む。定期workerは上記archで指定した`workers/sync`の対象ファイルだけをテスト先行で追加する。testは`test_candidate_proposal.py` / `test_source_sync.py` / `test_vault_intake.py` / `api.test.mjs`とworker新規testの対象だけを読む。
 
 ## P1開始設計
 

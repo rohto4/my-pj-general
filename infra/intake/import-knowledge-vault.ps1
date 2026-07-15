@@ -8,6 +8,8 @@ param(
   [string]$LlmModel = 'local-unverified',
   [string]$AllowedTags = '',
   [int]$Limit = 30,
+  [ValidateRange(1, 600)]
+  [int]$LlmTimeout = 60,
   [switch]$NoLlm,
   [switch]$RequireLlm,
   [switch]$DryRun
@@ -29,10 +31,10 @@ function Require-File([string]$Path) {
 }
 
 function Resolve-Python {
-  $command = Get-Command python -ErrorAction SilentlyContinue
-  if ($command) { return $command.Source }
   $bundled = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
   if (Test-Path -LiteralPath $bundled -PathType Leaf) { return $bundled }
+  $command = Get-Command python.exe -CommandType Application -ErrorAction SilentlyContinue
+  if ($command -and (Test-Path -LiteralPath $command.Source -PathType Leaf)) { return $command.Source }
   throw 'Python runtime was not found'
 }
 
@@ -51,7 +53,7 @@ if (-not $AllowedTags) {
 $collectArgs = @(
   $collector, 'collect-vault-batch', '--root', $VaultRoot,
   '--output', $batch, '--manifest', $manifest, '--limit', [string]$Limit,
-  '--llm-model', $LlmModel
+  '--llm-model', $LlmModel, '--llm-timeout', [string]$LlmTimeout
 )
 if ($AllowedTags) { $collectArgs += @('--allowed-tags', $AllowedTags) }
 if ($NoLlm) {

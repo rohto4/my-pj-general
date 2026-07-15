@@ -10,10 +10,11 @@ import candidate_proposal
 
 
 class CandidateProposalPromptTests(unittest.TestCase):
-    def test_v2_prompt_is_source_neutral_and_extracts_action_and_aspiration(self):
+    def test_v3_prompt_is_compact_source_neutral_and_extracts_action_and_aspiration(self):
         prompt = candidate_proposal.load_prompt()
 
-        self.assertEqual(candidate_proposal.PROMPT_VERSION, "threadline-candidate-proposal-v2")
+        self.assertEqual(candidate_proposal.PROMPT_VERSION, "threadline-candidate-proposal-v3")
+        self.assertLessEqual(len(prompt), 1800)
         for required in (
             "SOURCE_KIND",
             "knowledge_vault",
@@ -24,6 +25,7 @@ class CandidateProposalPromptTests(unittest.TestCase):
             '"proposal_type": "aspiration"',
             "なんとなくやりたい",
             "具体的な作業へ捏造",
+            "aspirationは[]",
             "evidence_quotes",
             "pending",
         ):

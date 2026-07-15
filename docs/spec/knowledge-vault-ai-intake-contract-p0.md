@@ -25,7 +25,7 @@ Windows上のknowledge-vaultを文書単位で収集し、任意のローカルL
 
 ## prompt・出力契約
 
-runtime promptは`apps/web/prompts/threadline-candidate-proposal-v2.txt`を実行正本とし、`prompt_version=threadline-candidate-proposal-v2`をbatchとAI runへ保存する。旧`knowledge-vault-task-proposal-v1.txt`は過去実行の意味を復元する履歴として残す。
+runtime promptは`apps/web/prompts/threadline-candidate-proposal-v3.txt`を実行正本とし、`prompt_version=threadline-candidate-proposal-v3`をbatchとAI runへ保存する。v2と旧`knowledge-vault-task-proposal-v1.txt`は過去実行の意味を復元する履歴として残す。Ollama互換endpointでは完全な候補JSONを途中で切らないため、clientの出力上限を3,000 tokenにする。
 
 出力はJSON objectだけとし、文書全体の`document_summary`と`candidate_proposals`を返す。各提案は`proposal_type=action|aspiration`を持ち、actionは`kind=todo`、aspirationは`kind=idea`へ写像する。各提案は次を満たす。
 

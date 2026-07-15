@@ -1,5 +1,12 @@
 # 実装待ち
 
+## 2026-07-16 共通候補提案 prompt v3 圧縮・Ollama出力完結性
+
+- [x] v2の2,747文字をv3の1,647文字へ圧縮しつつ、4入口共通、SOURCE_BODY限定、action / aspiration、完全一致引用、完了除外、pending止まり、自動GO禁止を維持した。
+- [x] fake HTTPを含むfocused回帰21件と、`gemma4:latest`の実Vault 1文書`-RequireLlm -DryRun`（accepted 2 / held 0 / fallback 0）を完了した。SSH転送、Linux SQLite、candidate、GO、Vikunja登録は行っていない。
+- [x] Ollama互換clientの出力上限を3,000 tokenへ上げ、可視タグ24件を含むJSONが途中終了しないことを固定した。
+- [ ] 利用者が`prompt-v2-v3-comparison-2026-07-16.html`でv2→v3差異をレビューする。B05実取込はレビュー後、実データ変更として直前確認を得てから1 batchだけ実行する。
+
 ## 2026-07-15 AI相談の停止時クローズ
 
 - [x] Windows Ollamaを停止し、AI相談がprovider unavailable時に入力・送信・サイド窓口を閉じ、会話を保存せず再起動案内だけを表示するようテスト先行で修正した。
@@ -97,7 +104,7 @@ P1開始のユーザー確認後、次の順で進める。
 1. 常設運用・観測・backup / restoreを整える。
 2. Vikunja Listening Lounge forkを別tagで配信し、stable rollbackを検証する。
 3. knowledge-vaultから定期入口workerを切り出す。
-4. Slack / Misskeyの定期workerを共通v2 prompt / validatorへ載せる。現行`workers/sync --slack-payload`のlegacy direct importは通常運用へ使わない。
+4. Slack / Misskeyの定期workerを共通v3 prompt / validatorへ載せる。現行`workers/sync --slack-payload`のlegacy direct importは通常運用へ使わない。
 5. 実運用データを蓄積してから、Misskey外部取得・重複束ね・部分自動確定・CalendarをPoCする。
 6. PostgreSQL・認証・queueは導入ゲートを満たした場合だけ実装へ進める。
 

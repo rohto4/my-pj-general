@@ -6,6 +6,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class KnowledgeVaultTransportTests(unittest.TestCase):
+    def test_windows_transport_uses_a_real_python_executable_not_the_store_alias(self):
+        script = (ROOT / "infra" / "intake" / "import-knowledge-vault.ps1").read_text(encoding="utf-8")
+
+        self.assertIn("Get-Command python.exe -CommandType Application", script)
+        self.assertLess(script.index("$bundled ="), script.index("Get-Command python.exe -CommandType Application"))
+        self.assertNotIn("Get-Command python -ErrorAction", script)
+
+    def test_windows_transport_allows_a_bounded_llm_timeout_override(self):
+        script = (ROOT / "infra" / "intake" / "import-knowledge-vault.ps1").read_text(encoding="utf-8")
+
+        self.assertIn("[int]$LlmTimeout = 60", script)
+        self.assertIn("'--llm-timeout', [string]$LlmTimeout", script)
+
     def test_windows_transport_uses_dedicated_key_hash_and_batch_mode(self):
         script = (ROOT / "infra" / "intake" / "import-knowledge-vault.ps1").read_text(encoding="utf-8")
         self.assertIn("IdentitiesOnly=yes", script)
