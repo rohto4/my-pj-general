@@ -21,6 +21,7 @@
 
 P0のバックエンド・連携契約は完了しているが、Hub / Vikunjaの画面操作、無効ボタン、読み取り専用責務、最新データ構造のフロント反映が未受入である。次の目標は `docs/imp/next-goal-p0-frontend-completion-2026-07-12.md`、詳細タスクは `docs/imp/p0-frontend-completion-tasks-2026-07-12.md` を正本とする。
 
+- [x] `p0-blocker-audit-2026-07-15.md`のB01〜B05を、`p0-frontend-acceptance-checklist-2026-07-12.html`先頭の実行順チェックへ統合した。独立監査には重複表を残さず、HTMLで結果・コメント・関連R/RV/U行を一元管理する。
 - [x] 全button / link / formの静的監査とAPI対応表を作成する（`p0-frontend-operation-audit-2026-07-12.md`）
 - [x] Hub / Tasksの編集責務、mirror状態、未接続・接続失敗の次操作をHub UIに反映する
 - [ ] Hub候補の保存・保存してGO・GO・不要・アーカイブを、現行プロセスの実画面で受入する

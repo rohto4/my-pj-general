@@ -17,15 +17,15 @@ P0のコード上の未実装と最新版配信は、今回のWindows knowledge-
 | Windows local LLM | `gemma4:latest`利用可能 | `/api/tags`と合成Markdown collector実行 |
 | Vault AI batch | Linux配信・schema反映済み、実Vault dry-run完了 | 新table 5件は0行。3文書、3 accepted、2 held、1文書fallback。実候補変更なし |
 
-## ブロッカー表
+## P0受入チェックへの統合
 
-| ID | 項目 | 種別 | 現在地 | 次操作 |
-| --- | --- | --- | --- | --- |
-| B01 | 最新Hub sourceのLinux反映 | 完了 | Hub/Tasks再配信、Hub/Tasks API 200、SQLite integrity `ok`、新table 5件、既存データ0件を確認 | 追加操作なし |
-| B02 | Hub対話チャットのLLM到達性 | 外部状態・構成判断 | Linuxからconfigured providerへ到達不可。Windows localhostのLLMは利用可能 | Windows LLMを認証・firewall付きLAN endpointにするか、Linux側runtimeを置くかを別途決める。P0の他機能は止めない |
-| B03 | R05/R06/R07、RV01〜RV05、U05 | ユーザー視覚判断 | source/fork回帰と直近配信は完了、最終見た目・操作感は未承認 | 受入HTMLで実画面判定する |
-| B04 | U03 GO / 編集 / 不要 / アーカイブ | ユーザー確認付き実データ操作 | DBは空。実装とoperation ID回帰は完了 | 実行前確認後、同一operation IDをHTTP・画面・SQLiteで照合する |
-| B05 | Vault AI batch初回実取込 | ユーザー確認付き実データ操作 | dry-runのみ。Linux DBと候補は未変更 | 確認を得て1batch取込し、pending候補品質をレビューする。GOはしない |
+B01〜B05の実行順、現在結果、コメント、詳細受入行への導線は、[上から実行するP0受入チェック](p0-frontend-acceptance-checklist-2026-07-12.html)を正本とする。この監査には表を重複保持せず、ブロッカーの分類根拠と完了証拠だけを残す。
+
+- B01は完了済みとして先頭に表示する。
+- B02はLLM到達性回復または縮退受入のユーザー判断を記録する。
+- B03はR06/R07、RV01〜RV05、U05の全承認後に閉じる。
+- B04はU03の確認付き実データ操作と同一operation ID照合後に閉じる。
+- B05は`実取込GO`後の初回Vault AI batch品質確認で閉じ、自動GOは行わない。
 
 ## 非ブロッカーとして完了したもの
 
@@ -43,7 +43,7 @@ P0のコード上の未実装と最新版配信は、今回のWindows knowledge-
 | --- | --- | --- |
 | Windows VaultからLinux SQLiteまでの経路設計 | `docs/arch/windows-vault-ai-intake-architecture-2026-07.md`、`docs/spec/knowledge-vault-ai-intake-contract-p0.md`、`docs/data/knowledge-vault-ai-intake-data-design-2026-07.md`、`docs/ops/knowledge-vault-ai-intake-runbook-2026-07.md` | Windows reader / Linux単独writer / pending止まりの境界を静的回帰で確認 |
 | 精度優先の要約・タスク提案prompt | `apps/web/prompts/knowledge-vault-task-proposal-v1.txt`、`apps/web/vault_intake.py` | 完全一致引用、完了除外、タグ・日付・曖昧title、秘密らしい行、LLM失敗縮退を自動回帰。実Vault dry-runは3 accepted / 2 held |
-| 小規模なら実装まで | Windows collector、OpenAI互換LLM client、validator、SSH batch、Linux importer、SQLite lineage 5table | Hub Node 48件、Hub Python 19件、worker / infra 23件が成功。Linux Hub / Tasks API 200、SQLite integrity `ok` |
+| 小規模なら実装まで | Windows collector、OpenAI互換LLM client、validator、SSH batch、Linux importer、SQLite lineage 5table | Hub Node 49件、Hub Python 19件、worker / infra 23件が成功。Linux Hub / Tasks API 200、SQLite integrity `ok` |
 | その他P0のブロッカー検出と非ブロック実装 | この監査、`docs/imp/imp-tasks.md`、P0完成度表 | B01とコード上の未実装は完了。B02〜B05は外部構成判断、視覚承認、確認付き実データ操作へ限定 |
 
 ## P0完了条件
