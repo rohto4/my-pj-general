@@ -612,3 +612,10 @@
 - 転記先: `G:\knowledge-vault\knowledge\dev\self-built-intake-and-layered-pm-oss-selection.md`
 - 日時: 2026-07-15 13:33:11 +09:00
 - 対象: Windows読込からLinux候補取込までのsecret・absolute root・hidden reasoning遮断、accepted-onlyのlineage付き冪等化、proposal validatorとheld/fallback境界、および4入口共通のaction / aspiration分離・根拠汚染防止・候補抽出失敗時の合成禁止。PJ固有のhash・接続状態・実取込は対象外。
+
+# 2026-07-15 P0受入星取表の現状再同期
+
+- `p0-p1-completion-assessment-2026-07-12.html`を、2026-07-15のLinux clean baseline（候補・判断・execution link・Vikunja task 0件、SQLite integrity `ok`、Hub / Tasks API 200）とB01〜B05の受入順へ同期した。旧19 / 9 / 4件の現況表示は残していない。
+- B01だけを完了として維持し、B02はWindows Ollama停止中の縮退判断、B03はR06/R07・RV01〜RV05・U05の見た目承認、B04はU03の確認付き実データ操作、B05はOllama再開と`実取込GO`後のVault AI batch品質受入として分離した。P0未受入を星の満点根拠へ使わない。
+- 実データ変更、Ollama再起動、外部API、Linux再配信、timer有効化は実行していない。PJ固有の進捗同期だけのためknowledge-vaultへの追記は不要と判断した。
+- Hub Node 41件、Hub Python 27件、`git diff --check`を実行して確認した。

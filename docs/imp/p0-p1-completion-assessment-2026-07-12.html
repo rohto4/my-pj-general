@@ -133,31 +133,31 @@
 
   <section class="summary" aria-label="概要">
     <div class="card p0"><small>P0 契約・データ</small><strong id="p0-average">0.0 / 5</strong><span>契約・データは実証済み、フロント受入は別評価</span></div>
-    <div class="card p0-ui"><small>P0 フロント受入</small><strong id="p0-ui-average">0.0 / 5</strong><span>定常R06/R07の実機確認、RV01〜RV05完成度レビュー、U03実データ判断、U05最終受入が残る</span></div>
+    <div class="card p0-ui"><small>P0 フロント受入</small><strong id="p0-ui-average">0.0 / 5</strong><span>B02の縮退判断、B03の画面受入、B04/B05の確認付き実データ受入が残る</span></div>
     <div class="card p1"><small>P1 平均</small><strong id="p1-average">0.0 / 5</strong><span>フロント受入後に再開</span></div>
-    <div class="card next"><small>次の目標</small><strong>P0フロント受入: 実画面・実Vikunja・画面幅別証跡</strong><span>Hub操作・guide/empty/action・最新データ・3幅受入</span></div>
+    <div class="card next"><small>次の目標</small><strong>P0受入: B02〜B05を順に閉じる</strong><span>画面承認、確認付き判断操作、Vault AI batch品質確認</span></div>
   </section>
 
   <section class="current-work" id="scorecard-current-work" aria-labelledby="current-work-title">
     <div class="current-work-head">
       <div><div class="eyebrow">LIVE WORK CONTEXT</div><h2 id="current-work-title">現在の作業</h2></div>
-      <p>更新: 2026-07-14 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
+      <p>更新: 2026-07-15 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
     </div>
     <div class="work-grid">
       <section class="work-card">
         <h3>着手中</h3>
-        <p><strong>Thread Line Workspace要件の固定とP0フロント受入</strong></p>
-        <p>R01・R02・R03・R04・R05・V01・U04・U06は配信・API・実データ保持の断面まで完了。R06/R07は、HubまたはTasksの配信資材を更新した回に必ず先頭で実施する定常ゲートとした。2026-07-14の現行bundle再配信、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、候補19 / decision 9 / execution link 4、Hub/Tasks/管理画面のbrowser error 0を確認済みである。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編し、AI相談と非活性の詳細管理を下部操作へ分離した。Tasks本文の青・淡青統一、TLマーク右だけのタイトル面、`マスタ管理`統合とHub左レールは、最終の実画面受入待ちである。U02は新規AI相談候補1件の品質確認、U03は判断ログを操作IDで照合する実データ受入、RV01〜RV05/U05は画面完成度・幅別の受入が残る。実装の都度広範囲を読み直さないための設計書化カバレッジ、役割別読込境界、3つのPJ skillは正本化・検証済みである。</p>
-        <span class="work-state">黄: R05、R06/R07、RV01〜RV05、U02/U03、U05の最終実画面受入。実データ操作は確認待ち</span>
+        <p><strong>B01完了後のP0最終受入</strong></p>
+        <p>2026-07-15の安全再配信後、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、SQLite integrity <code>ok</code>を確認した。Linuxは候補・判断・execution link・Vikunja taskが0件のclean baselineであり、新しいVault AI lineage table 5件も0行である。R01〜R05・V01・U04・U06の配信／回帰断面は完了し、R06/R07は配信資材を更新した回に先頭で再実施する定常ゲートとして維持する。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編済みで、AI相談と非活性の詳細管理は下部操作へ分離した。WindowsのOllamaは利用者依頼により停止中であり、AI相談は停止時に入力・送信・サイド窓口を閉じ、保存前に503で拒否する。この縮退実装はB02の受入判断を完了にしない。</p>
+        <span class="work-state">黄: B02（LLM縮退判断）、B03（R06/R07・RV01〜RV05・U05の見た目承認）、B04/U03、B05（実取込GO）の順に受入</span>
       </section>
       <section class="work-card evidence">
         <h3>確認済みの根拠</h3>
-        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>Hub Node 34件、補助Python 8件、再配信script Python 4件、dry-run成功</li><li>2026-07-14再配信後のHub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4、browser error 0を確認</li><li>Kanban guideの表示名依存をviewKind判定へ修正し、Hub/Tasks左レールの現行断面を配信済み</li></ul>
+        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>共通v2候補提案、Windows Vault batch、Slack / Misskey workerはfake HTTP / fake LLM回帰まで完了</li><li>2026-07-15の安全再配信後、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・Vikunja task 0件を確認</li><li>Ollama停止時のAI相談クローズと保存前503をNode 41件・Python 27件の回帰で確認。実token・実API・実SQLite取込・timer有効化は未実施</li></ul>
       </section>
       <section class="work-card">
         <h3>次の作業</h3>
-        <ul><li>定常R06/R07: 強制再読込後のHub左レール、Tasks本文テーマ、`マスタ管理`を実機受入する。現行bundleは配信済みのため再配信操作は不要</li><li>R05: Hub/Tasksを強制再読込し、Thread Line左レールとKanban guide非表示を受入</li><li>RV01〜RV05: 1438x715同一条件の証跡と、実装結果を上から再受入</li><li>U02: 新規AI相談候補を1件だけ作り、要約・タグ・TODO案の品質を確認する（実行前確認）</li><li>U03: HubのGO・不要・アーカイブを、実データ変更前の確認と操作ID照合付きで受入</li><li>U05: 保存済み9画面JPEGを開き、幅別の見た目・操作感を最終判定</li></ul>
-        <span class="work-state">R06/R07は定常ゲートとして先頭固定 / RV01〜RV04は指摘反映後の再受入</span>
+        <ul><li>B02: HubチャットをP0必須として回復するか、degraded縮退受入とするかを判断する。Ollamaは明示依頼なしに再起動しない</li><li>B03: R06/R07、RV01〜RV05、U05を上から確認し、Hub左レール、Tasks本文テーマ、`マスタ管理`、幅別の見た目・操作感を承認する。現行bundleは配信済みのため再配信操作は不要</li><li>B04/U03: 実データ変更の直前確認後だけ、GO・編集・不要・アーカイブを操作IDで照合する</li><li>B05: 実取込GOとOllama再開を確認後だけ、Vault AI batchを1回pending候補まで取り込み、action / aspiration・根拠・path・自動GO 0件を確認する</li></ul>
+        <span class="work-state">P0の次操作はB02。B03/B04/B05は独立したユーザー受入であり、同一commitや自動実行へ混ぜない</span>
       </section>
     </div>
   </section>
@@ -187,28 +187,28 @@
   </section>
 
   <div class="notes">
-    <section><h2>P0の判断</h2><ul><li>契約・データ層は完了。Linux実DBの再起動・backup/restore・Hub→Vikunja連携を確認済み。</li><li>フロント受入、無効操作、編集責務の説明は追加P0として埋める。</li></ul></section>
+    <section><h2>P0の判断</h2><ul><li>契約・データ層、共通v2候補判定、source-only再配信と0件clean baselineは実証済み。</li><li>B02〜B05のユーザー受入が終わるまで、フロント受入・実データ操作・LLM縮退をP0完了扱いにしない。</li></ul></section>
     <section><h2>P1の判断</h2><ul><li>P1の実機運用は、P0フロント受入を先に完了してから再開する。</li><li>custom image切替、timer、停止→reconcile、実運用1巡回は後続へ保留。</li></ul></section>
   </div>
-  <p class="foot">根拠: <code>docs/imp/p0-completion-audit-2026-07-12.md</code> / <code>docs/imp/p0-frontend-completion-tasks-2026-07-12.md</code> / <a href="p0-frontend-acceptance-checklist-2026-07-12.html">P0受入チェックHTML</a> / <code>docs/imp/p1-verification-matrix-2026-07-12.md</code></p>
+  <p class="foot">根拠: <code>docs/imp/p0-completion-audit-2026-07-12.md</code> / <code>docs/imp/p0-frontend-completion-tasks-2026-07-12.md</code> / <a href="p0-frontend-acceptance-checklist-2026-07-12.html">P0受入チェックHTML（B01〜B05の正本）</a> / <code>docs/imp/next-session-focus.md</code> / <code>docs/imp/p1-verification-matrix-2026-07-12.md</code></p>
 </main>
 
 <script>
   const axes = ['R','I','E','O','F','U','T','D','X','S'];
   const axisNames = {R:'要件',I:'実装',E:'実証',O:'運用',F:'復旧',U:'UI/UX',T:'回帰',D:'文書',X:'連携',S:'安全'};
   const tasks = [
-    {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'契約・SQLite回帰は完了。実入口の見た目・日常運用・安全な実機受入はP0追加で継続'},
-    {phase:'P0', name:'確認待ち・編集・判断ログ', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'U03の最新bundle実データ照合が未完了。HTTP応答・操作ID付き判断ログ・SQLite decisionsを同一IDで実機受入'},
-    {phase:'P0', name:'GO → Vikunja task → 状態mirror', scores:[5,5,4,3,4,3,5,5,4,4], pending:['E','O','U','X','S'], status:'契約と過去実機は確認済み。R04後に最新画面で状態mirrorと導線を再受入'},
-    {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,3,5,5,3,4], pending:['E','O','U','X','S'], status:'pending境界と要約/タグ/TODO案のsource改善は完了。U02の新規AI相談候補1件による実画面品質受入が未完了'},
-    {phase:'P0追加', name:'Windows Vault AI要約・提案batch', scores:[5,5,5,5,4,4,5,5,4,4], pending:['O','U','X'], status:'設計・collector・版管理prompt・validator・SSH hash・Linux lineage/importer・回帰・Linux再配信と空schema確認まで完了。gemma4合成入力と実Vault最新3文書dry-run成功。実batch取込とpending候補品質のユーザー受入だけを残す'},
-    {phase:'P0', name:'Listening Lounge Hub UI', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Hub source・回帰・2026-07-14再配信後の読取り確認は完了。R05/R06とU05の最終実機受入を残す'},
-    {phase:'P0', name:'P0受入・運用文書', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'HTML星取表・受入チェック・runbookと再配信証跡は整備済み。最終の利用者実機受入が残る'},
+    {phase:'P0', name:'入口取込（Web / knowledge-vault / Slack）', scores:[5,5,5,3,4,3,5,5,3,4], pending:['O','U','X','S'], status:'共通v2 prompt / validator、Windows Vault batch、Slack / Misskey workerのfake HTTP / fake LLM回帰まで完了。Linuxは0件clean baselineで、実入口の見た目・実token/API・日常運用は未受入'},
+    {phase:'P0', name:'確認待ち・編集・判断ログ', scores:[5,5,3,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Linuxは候補・判断・execution link 0件のclean baseline。B04/U03の確認付き実データ操作で、HTTP応答・操作ID付き判断ログ・SQLite decisionsを同一IDで実機受入する'},
+    {phase:'P0', name:'GO → Vikunja task → 状態mirror', scores:[5,5,3,3,4,3,5,5,4,4], pending:['E','O','U','X','S'], status:'契約と過去実機は確認済みだが、現行clean baselineでは未再実証。B04/U03後に最新画面の状態mirror・Tasks導線を再受入する'},
+    {phase:'P0', name:'AI相談・pending候補化', scores:[5,5,3,2,3,2,5,5,3,4], pending:['E','O','U','X','S'], status:'停止時クローズと保存前503を回帰済み。Windows Ollamaは利用者依頼で停止中で、B02の縮退受入判断と、再開を許可した場合だけU02の新規候補1件の品質受入が残る'},
+    {phase:'P0追加', name:'Windows Vault AI要約・提案batch', scores:[5,5,5,4,4,3,5,5,4,4], pending:['O','U','X'], status:'設計・collector・版管理prompt・validator・SSH hash・Linux lineage/importer・回帰・Linux再配信と空schema確認まで完了。gemma4合成入力と実Vault最新3文書dry-run成功。Ollama再開と実取込GOを確認後、実batch取込とpending候補品質を受入する'},
+    {phase:'P0', name:'Listening Lounge Hub UI', scores:[5,5,3,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'Hub source・回帰・2026-07-15の安全再配信後のAPI/SQLite読取り確認は完了。B03のR06/R07とU05で最終実機受入を残す'},
+    {phase:'P0', name:'P0受入・運用文書', scores:[5,5,4,3,4,3,5,5,3,4], pending:['E','O','U','X','S'], status:'HTML星取表・B01〜B05受入チェック・runbookと再配信証跡は同期済み。B02〜B05の利用者受入が完了するまでP0完了とはしない'},
     {phase:'P0追加', name:'Hub dashboard button / link操作監査', scores:[4,4,4,3,3,3,5,4,3,3], pending:['O','U','X'], status:'初回ガントのsource修正と回帰は完了。Tasks導線と読み取り専用責務は確認済みで、最終の利用者実機受入を残す'},
     {phase:'P0追加', name:'Hub管理画面の状態ラベル・操作列・2列配置', scores:[5,5,5,4,3,5,5,5,2,3], pending:['O','F','X','S'], status:'R03: Linux再build・`/api/bootstrap` 200・Chrome実画面・4K縦3分割相当の横崩れなしを確認'},
-    {phase:'P0追加', name:'Thread Line Hub / Tasks共通識別・左レール', scores:[5,5,4,3,3,2,5,5,3,3], pending:['E','O','F','U','X','S'], status:'R05/R06/R07の現行bundleは2026-07-14に再配信済みで、Hub/Tasks API 200と実データ保持、左レール・`マスタ管理`の読取り確認まで完了。強制再読込後の最終見た目・操作感受入を待つ。原寸PNGは配信しない'},
-    {phase:'P0追加', name:'Hub候補・判断フローの実画面受入', scores:[4,5,3,2,2,2,5,4,3,3], pending:['E','O','F','U','X'], status:'U02/U03未達。AI要約・タグ生成のsource改善は完了し、新規候補1件の品質確認と、GO・編集・不要・アーカイブの操作ID付き実データ照合を残す'},
-    {phase:'P0追加', name:'Hub ↔ Vikunja UI責務・データ反映', scores:[4,4,4,2,2,3,4,4,2,3], pending:['O','F','U','X'], status:'Hub/Tasksの編集責務とstate mirror、初回ガントのsource修正・回帰は確認済み。Vikunja全画面と幅別の最終受入が残る'},
+    {phase:'P0追加', name:'Thread Line Hub / Tasks共通識別・左レール', scores:[5,5,3,3,3,2,5,5,3,3], pending:['E','O','F','U','X','S'], status:'R05/R06/R07の現行bundleは2026-07-15に安全再配信済みで、Hub/Tasks API 200と0件clean baselineを確認。B03でHub左レール、Tasks本文テーマ、`マスタ管理`の最終見た目・操作感受入を待つ。原寸PNGは配信しない'},
+    {phase:'P0追加', name:'Hub候補・判断フローの実画面受入', scores:[4,5,3,2,2,2,5,4,3,3], pending:['E','O','F','U','X'], status:'B04/U03未達。AI要約・タグ生成のsource改善と停止時クローズは完了し、Ollama再開を許可した場合だけ新規候補1件の品質確認、確認後にGO・編集・不要・アーカイブの操作ID付き実データ照合を行う'},
+    {phase:'P0追加', name:'Hub ↔ Vikunja UI責務・データ反映', scores:[4,4,3,2,2,3,4,4,2,3], pending:['E','O','F','U','X'], status:'Hub/Tasksの編集責務とstate mirror、初回ガントのsource修正・回帰は確認済み。現行clean baselineでのB04/U03と、Vikunja全画面・幅別の最終受入が残る'},
     {phase:'P1', name:'複数Hub Project ↔ Vikunja Project連携基盤', scores:[4,1,0,1,1,1,1,4,1,2], pending:['R','I','E','O','F','U','T','D','X','S'], status:'P1開始候補（旧P0追加）。個人PJ既定表示、個別PJの冪等作成・候補所属・GO先解決を設計済み。所有者・初期Project・既存候補移行方針はユーザー確認待ち'},
     {phase:'P0追加', name:'Hub準拠Vikunjaテーマの再配信', scores:[4,5,3,3,3,3,5,4,2,3], pending:['U','D'], status:'E902…544FをLinuxでrebuild済み。Chrome 1280px task detailの本文下操作面を確認。残る画面別UX/JPEGは別行で受入'},
     {phase:'P0追加', name:'Vikunja主要画面の編集・次操作', scores:[5,5,3,2,2,3,5,5,2,3], pending:['E','O','F','U','X'], status:'U04は完了。RV01〜RV04のsource実装とfork回帰は完了し、現行Linux配信後に1438x715/4K縦3分割相当でDashboard/Gantt/Kanban/task detailを再受入する'},
@@ -284,7 +284,7 @@
     updateAverage('p1-average', 'P1');
   }
   document.getElementById('reset').addEventListener('click', () => { overrides = {}; try { localStorage.removeItem(key); } catch (_) {} render(); detail.textContent = '初期評価へ戻しました。'; });
-  document.getElementById('export').addEventListener('click', () => { const blob = new Blob([JSON.stringify({date:'2026-07-12', tasks, overrides}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pj-general-p0-p1-scorecard.json'; a.click(); URL.revokeObjectURL(url); });
+  document.getElementById('export').addEventListener('click', () => { const blob = new Blob([JSON.stringify({date:'2026-07-15', tasks, overrides}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pj-general-p0-p1-scorecard.json'; a.click(); URL.revokeObjectURL(url); });
   render();
 </script>
 </body>
