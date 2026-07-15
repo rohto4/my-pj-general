@@ -7,7 +7,8 @@
 - [x] 精度優先のknowledge-vault要約・タスク提案promptを版管理し、根拠外補完、曖昧な翻訳、架空の期限/担当、重複、完了事項の再タスク化を回帰testで拒否した。
 - [x] テスト先行でWindows collector/batch生成とLinux importerを実装し、LLM停止時は明示actionだけへ安全に縮退した。SQLiteファイル自体は転送・共有しない。
 - [x] P0完成度表と現行タスクを再監査し、ユーザー目視・実データ操作・Linux外部状態だけをblockerとして分離した。実機`gemma4:latest`の合成入力と実Vault最新3文書dry-runまで完了した。
-- [ ] 最新Hub sourceをLinuxへ再配信した後、実Vault batchをSQLiteへ取り込みpending候補を作る。実データ変更のため実行前にユーザー確認を得る。
+- [x] 最新Hub sourceをLinuxへ安全再配信し、新lineage table 5件、SQLite integrity、既存0件データ、Hub/Tasks APIを確認した。
+- [ ] 実Vault batchをSQLiteへ取り込みpending候補を作る。実データ変更のため実行前にユーザー確認を得る。
 
 ## 2026-07-15 knowledge-vault候補・Tasks洗い替え
 
