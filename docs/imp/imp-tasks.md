@@ -1,5 +1,12 @@
 # 実装待ち
 
+## 2026-07-17 現行資材の Linux source-only 再配信と次の検討準備
+
+- [x] `d1eaaed` のHub / Tasks資材を安全再配信した。Hub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、Hub SQLite integrity `ok`を確認し、候補・判断・execution link・取込系テーブルは0件のclean baselineを維持した。
+- [x] 再配信はsource bundleのhash照合、Linux rebuild、API読取り確認だけで完了した。実Vault取込、GO/不要/アーカイブ、Slack / Misskey実API、Linux SQLite書込み、systemd登録・timer有効化は実行していない。
+- [ ] P0受入はB02（local LLMの縮退判断）からB03、B04/U03、B05の順に利用者受入を進める。B05はv2→v3比較レビュー後、実データ変更として改めて直前確認を得る。
+- [ ] 次の実装検討は、P0受入を閉じるか、Slack / Misskey workerを実tokenなしのfake回帰再確認から有効化準備へ進めるかを選ぶ。後者は`docs/arch/linux-periodic-intake-architecture.md`の固定実装設計を正本とし、方式比較へ戻らない。
+
 ## 2026-07-16 共通候補提案 prompt v3 圧縮・Ollama出力完結性
 
 - [x] v2の2,747文字をv3の1,647文字へ圧縮しつつ、4入口共通、SOURCE_BODY限定、action / aspiration、完全一致引用、完了除外、pending止まり、自動GO禁止を維持した。

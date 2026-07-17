@@ -141,18 +141,18 @@
   <section class="current-work" id="scorecard-current-work" aria-labelledby="current-work-title">
     <div class="current-work-head">
       <div><div class="eyebrow">LIVE WORK CONTEXT</div><h2 id="current-work-title">現在の作業</h2></div>
-      <p>更新: 2026-07-15 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
+      <p>更新: 2026-07-17 / P0本体も未受入のUI/UX・連携・安全を満点にしない</p>
     </div>
     <div class="work-grid">
       <section class="work-card">
         <h3>着手中</h3>
         <p><strong>B01完了後のP0最終受入</strong></p>
-        <p>2026-07-15の安全再配信後、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、SQLite integrity <code>ok</code>を確認した。Linuxは候補・判断・execution link・Vikunja taskが0件のclean baselineであり、新しいVault AI lineage table 5件も0行である。R01〜R05・V01・U04・U06の配信／回帰断面は完了し、R06/R07は配信資材を更新した回に先頭で再実施する定常ゲートとして維持する。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編済みで、AI相談と非活性の詳細管理は下部操作へ分離した。WindowsのOllamaは利用者依頼により停止中であり、AI相談は停止時に入力・送信・サイド窓口を閉じ、保存前に503で拒否する。この縮退実装はB02の受入判断を完了にしない。</p>
+        <p>2026-07-17の安全再配信後、Hub <code>/api/bootstrap=200</code>、Tasks <code>/api/v1/info=200</code>、SQLite integrity <code>ok</code>を確認した。Linuxは候補・判断・execution link・取込系テーブルが0件のclean baselineである。R01〜R05・V01・U04・U06の配信／回帰断面は完了し、R06/R07は配信資材を更新した回に先頭で再実施する定常ゲートとして維持する。Hub左レールはダッシュボード／簡易日程／タスクキュー／ワークビュー／簡易管理へ再編済みで、AI相談と非活性の詳細管理は下部操作へ分離した。WindowsのOllamaは利用者依頼により停止中であり、AI相談は停止時に入力・送信・サイド窓口を閉じ、保存前に503で拒否する。この縮退実装はB02の受入判断を完了にしない。</p>
         <span class="work-state">黄: B02（LLM縮退判断）、B03（R06/R07・RV01〜RV05・U05の見た目承認）、B04/U03、B05（実取込GO）の順に受入</span>
       </section>
       <section class="work-card evidence">
         <h3>確認済みの根拠</h3>
-        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>共通v3候補提案、Windows Vault batch、Slack / Misskey workerはfake HTTP / fake LLM回帰まで完了</li><li>2026-07-15の安全再配信後、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・Vikunja task 0件を確認</li><li>Ollama停止時のAI相談クローズと保存前503をNode 41件・Python 27件の回帰で確認。実token・実API・実SQLite取込・timer有効化は未実施</li></ul>
+        <ul><li>全button / link / formの静的監査とAPI対応表</li><li>Hub / Tasks編集責務と状態mirror表示</li><li>共通v3候補提案、Windows Vault batch、Slack / Misskey workerはfake HTTP / fake LLM回帰まで完了</li><li>2026-07-17の安全再配信後、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・取込系テーブル0件を確認</li><li>Ollama停止時のAI相談クローズと保存前503をNode 41件・Python 27件の回帰で確認。実token・実API・実SQLite取込・timer有効化は未実施</li></ul>
       </section>
       <section class="work-card">
         <h3>次の作業</h3>
@@ -284,7 +284,7 @@
     updateAverage('p1-average', 'P1');
   }
   document.getElementById('reset').addEventListener('click', () => { overrides = {}; try { localStorage.removeItem(key); } catch (_) {} render(); detail.textContent = '初期評価へ戻しました。'; });
-  document.getElementById('export').addEventListener('click', () => { const blob = new Blob([JSON.stringify({date:'2026-07-15', tasks, overrides}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pj-general-p0-p1-scorecard.json'; a.click(); URL.revokeObjectURL(url); });
+  document.getElementById('export').addEventListener('click', () => { const blob = new Blob([JSON.stringify({date:'2026-07-17', tasks, overrides}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'pj-general-p0-p1-scorecard.json'; a.click(); URL.revokeObjectURL(url); });
   render();
 </script>
 </body>

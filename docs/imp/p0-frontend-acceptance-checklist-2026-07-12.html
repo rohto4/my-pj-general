@@ -120,7 +120,7 @@ const tasks = [
   {id:'U06', level:'review', label:'エラー・empty・再試行の受入', kind:'ブラウザ / 操作感', steps:['HubのTasks概要で「更新」を押し、正常取得後も表示とリンクが壊れないことを確認する。','Vikunjaの0件表示・filter 0件表示で、固定sampleではなく次の操作が出ることを確認する。','Hubの未接続/接続失敗文言は、再現できない場合は実装済みの説明文が読めることだけ確認し、無理にサービスを停止しない。'], note:'本番相当のコンテナを意図的に停止しない。再現不能なら「正常系のみ確認」とコメントする。'}
 ];
 const defaultState = {
-  B01:{result:'done',comment:'2026-07-15にHub / Tasksを再配信し、API 200、SQLite integrity ok、新lineage table 5件、候補・判断・execution link・Vikunja task 0件を確認済み。'},
+  B01:{result:'done',comment:'2026-07-17に現行Hub / Tasks資材をsource-only再配信し、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link・取込系テーブル0件を確認済み。'},
   B02:{result:'failed',comment:'未達。Linux Hubチャットのlocal LLMはunavailable。P0必須として到達性を回復するか、degradedの縮退受入とするかユーザー判断が必要。'},
   B03:{result:'failed',comment:'未達。R06/R07、RV01〜RV05、U05の最終見た目・操作感を実画面で承認した後に完了する。'},
   B04:{result:'failed',comment:'未達。U03の確認付き実データ操作を行い、HTTP・bootstrap.log・decisions.noteを同一operation IDで照合する。'},
@@ -138,8 +138,8 @@ const defaultState = {
   V01:{result:'done',comment:'E902…544FをLinuxでrebuild済み。Hub healthとVikunja APIは正常で、Chrome 1280px task detailは右操作railが本文下の操作面へ移ることを確認。再インポートなし。'},
   R04:{result:'done',comment:'再配信済み。Hub /api/bootstrap=200、Tasks /api/v1/info=200、実データは候補19 / decision 9 / execution link 4を維持。Kanban guideの実機残存はR05で修正する。'},
   R05:{result:'done',comment:'完了。Linux再配信、Hub /api/bootstrap=200、Tasks /api/v1/info=200、候補19 / decision 9 / execution link 4を維持。Thread Line左レールとKanban guide非表示を実機確認済み。後続の左レール再編は定常R06で再受入する。'},
-  R06:{result:'',comment:'2026-07-15に共通AI候補v2を含むHub / Tasksを安全再配信し、API 200、SQLite integrity ok、候補・判断・execution link 0件を確認済み。画面styleは変更していないため、Hub左レールとTasks本文テーマの最終見た目・操作感だけを継続判定する。'},
-  R07:{result:'',comment:'2026-07-14に再配信とAPI確認は完了。Tasksを強制再読込し、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを最終判定する。'},
+  R06:{result:'',comment:'2026-07-17に共通AI候補v3を含むHub / Tasksを安全再配信し、Hub /api/bootstrap=200、Tasks /api/v1/info=200、SQLite integrity ok、候補・判断・execution link 0件を確認済み。Hub左レールとTasks本文テーマの最終見た目・操作感だけを継続判定する。'},
+  R07:{result:'',comment:'2026-07-17に再配信とAPI確認は完了。Tasksを強制再読込し、左レールの単一「マスタ管理」入口、プロジェクト・ラベル・チームの3セクション、各追加と既存編集導線、4K縦3分割相当の横崩れなしを最終判定する。'},
   U01:{result:'failed',comment:'未達。初回遷移直後のHubガントが崩れ、タブ切替で復帰する症状が再発。R04反映後、初回遷移から再現しないことを確認する。'},
   U02:{result:'failed',comment:'未達。sourceは本文抜粋・本文由来要約・既存タグマスタ照合・TODO案優先へ改善済み。既存19件の再インポートはせず、新規AI相談候補を1件だけ作る実機確認は実行前の明示確認待ち。'},
   U03:{result:'failed',comment:'未達。GO / 編集 / 不要 / アーカイブの判断ログが表示されない、または順序不正。現行コードは各操作で操作IDを付けてdecisionsへ記録し、画面通知にHTTP状態と操作IDを出す。最新Hub bundle反映後にHTTP表示・bootstrap.log・DB decisions.noteを同一操作IDで照合する。実データ操作は実行前確認が必要。'},

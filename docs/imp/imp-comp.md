@@ -1,5 +1,12 @@
 # 完了記録
 
+## 2026-07-17 現行Hub / Tasks資材のLinux再配信と状態整理
+
+- `d1eaaed`を含む現行working treeを、`infra/deploy/redeploy-p0-frontend.ps1`でsource-only再配信した。Hub bundle SHA-256は`CB0580D49C147C15B32C6787930CD081AA065F3B1CF5664BD16941F805FECAC7`、Tasks bundle SHA-256は`5C45FB572BC23C1AE765DF9A362A11C499D4BEF47B2F390AA76225E01CE11ABA`である。
+- Linux側のHub `/api/bootstrap=200`、Tasks `/api/v1/info=200`、Hub SQLite integrity `ok`を確認した。Hubの候補・判断・execution link・取込系テーブルは0件で、source-only手順は実Vault取込、GO/不要/アーカイブ、Slack / Misskey実API、Linux SQLite書込み、systemd登録・timer有効化を行っていない。
+- P0受入のB02、B03、B04/U03、B05は未完了のまま受入表・ユーザー手順へ同期した。Linux local LLMは`unavailable`で、Windows Ollamaも通常停止方針を維持する。状態の正本は`current-state-and-next-discussion-2026-07-17.md`、復元用handoffは`docs/diary/2026-07-17-current-state-and-linux-redeploy-handoff.md`とした。
+- 横断知識は、v3 promptの圧縮と出力上限の検証パターンだけをPJ内候補台帳へ`candidate`として記録した。今回のLinux再配信そのものはPJ固有の進捗であり、knowledge-vaultへ直接転記していない。
+
 ## 2026-07-16 共通候補提案 prompt v3 圧縮と完全JSON回帰
 
 - `threadline-candidate-proposal-v3`をruntime正本にし、2,747文字のv2を1,647文字へ圧縮した。SOURCE_BODY限定、action / aspiration、完全一致引用、完了除外、固有名詞/path保持、許可タグ、pending止まり、自動GO禁止は維持した。
