@@ -1,5 +1,11 @@
 # 完了記録
 
+## 2026-07-17 P0 / P0追加 / P1の能力マトリクス
+
+- P0/P1星取表の下へ、各フェーズが受入まで完了した場合にできることを示す○×能力マトリクスを追加した。P0からP0追加、P1へ進むごとにWindows Vault AI batch、画面受入、定期worker、複数Project、観測・復旧が増える構造を可視化した。
+- P1後も、認証・PostgreSQL切替・Calendar/SaaS双方向同期・自動GO・商用マルチテナントは×として残した。これは現時点の進捗を完了扱いにするものではなく、星取表とB01〜B05受入表が進捗の正本である。
+- Node回帰に能力マトリクスの見出し、段階的に増える対象、P1でも残る安全境界を固定した。PJ固有の説明表示であり、knowledge-vaultへの転記は不要と判断した。
+
 ## 2026-07-17 現行Hub / Tasks資材のLinux再配信と状態整理
 
 - `d1eaaed`を含む現行working treeを、`infra/deploy/redeploy-p0-frontend.ps1`でsource-only再配信した。Hub bundle SHA-256は`CB0580D49C147C15B32C6787930CD081AA065F3B1CF5664BD16941F805FECAC7`、Tasks bundle SHA-256は`5C45FB572BC23C1AE765DF9A362A11C499D4BEF47B2F390AA76225E01CE11ABA`である。

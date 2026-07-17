@@ -106,6 +106,19 @@
     .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
     .notes section { border-left: 3px solid var(--copper); background: var(--panel); padding: 14px 16px; }
     .notes ul { margin: 8px 0 0 18px; padding: 0; color: var(--muted); }
+    .capability-matrix { border: 1px solid var(--line); background: rgba(21,30,43,.94); margin-top: 16px; }
+    .capability-head { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .capability-head p { margin-bottom: 0; font-size: 13px; }
+    .capability-table { min-width: 980px; table-layout: fixed; }
+    .capability-table th:first-child { width: 33%; text-align: left; }
+    .capability-table th:nth-child(2), .capability-table th:nth-child(3), .capability-table th:nth-child(4) { width: 11%; }
+    .capability-table th:last-child { width: 34%; text-align: left; }
+    .capability-table td { color: var(--muted); font-size: 13px; }
+    .capability-table td:first-child { color: var(--ink); font-weight: 700; }
+    .capability-table td:nth-child(2), .capability-table td:nth-child(3), .capability-table td:nth-child(4) { text-align: center; font-size: 18px; font-weight: 800; }
+    .capability-table .yes { color: var(--good); }
+    .capability-table .no { color: #e49a9a; }
+    .capability-note { margin: 0; padding: 10px 16px 14px; color: #8491a5; font-size: 12px; }
     code { color: #c4d4ff; }
     .foot { color: #8491a5; font-size: 12px; margin-top: 20px; }
     @media (max-width: 760px) {
@@ -184,6 +197,37 @@
       </table>
     </div>
     <div class="detail" id="detail" aria-live="polite">星を選ぶと、タスク・評価軸・現在値がここに表示されます。</div>
+  </section>
+
+  <section class="capability-matrix" aria-labelledby="capability-matrix-title">
+    <div class="capability-head">
+      <div class="eyebrow">PHASE CAPABILITY MAP</div>
+      <h2 id="capability-matrix-title">段階別にできること／まだできないこと</h2>
+      <p>各列は、そのフェーズの対象が実装・受入まで完了した場合の到達範囲です。これは現在の進捗表示ではなく、P0からP1へ何が増え、P1後も何を約束しないかを示します。</p>
+    </div>
+    <div class="scroll">
+      <table class="capability-table">
+        <thead><tr><th scope="col">利用者・運用者ができること</th><th scope="col">P0完了</th><th scope="col">P0追加完了</th><th scope="col">P1完了<br>（現行採用範囲）</th><th scope="col">P1後も×として残す範囲・前提</th></tr></thead>
+        <tbody>
+          <tr><td>一人のHubで、入力・候補・判断・実行状況を横断して確認する</td><td class="yes">○</td><td class="yes">○</td><td class="yes">○</td><td>組織横断の権限管理や複数テナント運用は含めない。</td></tr>
+          <tr><td>候補を編集し、確認付きでGO／不要／アーカイブし、判断ログを追う</td><td class="yes">○</td><td class="yes">○</td><td class="yes">○</td><td>AIやworkerが利用者確認なしに判断を確定することはない。</td></tr>
+          <tr><td>HubからVikunja taskを作成し、外部task状態をmirror表示する</td><td class="yes">○</td><td class="yes">○</td><td class="yes">○</td><td>任意の第三者タスクサービスや全社workflowへの一般化は含めない。</td></tr>
+          <tr><td>利用可能なlocal LLMへ相談し、本人本文からpending候補を提案する</td><td class="yes">○</td><td class="yes">○</td><td class="yes">○</td><td>provider停止中は入力を閉じる。常駐LLMや回答品質の保証は含めない。</td></tr>
+          <tr><td>Windows knowledge-vaultをAI batchで読み、根拠付きpending候補を作る</td><td class="no">×</td><td class="yes">○</td><td class="yes">○</td><td>実取込は毎回確認付き。Vault全文検索基盤や自動確定は含めない。</td></tr>
+          <tr><td>Hub／Tasksを主要画面・主要幅で一貫した見た目と導線で使う</td><td class="no">×</td><td class="yes">○</td><td class="yes">○</td><td>全端末・全解像度・アクセシビリティ監査の完全保証は別途扱う。</td></tr>
+          <tr><td>Slack／Misskeyの本人投稿を定期取得し、dry-runからpending候補へ取り込む</td><td class="no">×</td><td class="no">×</td><td class="yes">○</td><td>token設定、実API受入、候補品質、timer有効化は段階的に確認する。</td></tr>
+          <tr><td>複数Hub ProjectとVikunja Projectの所属・GO先を冪等に連携する</td><td class="no">×</td><td class="no">×</td><td class="yes">○</td><td>組織階層、委任権限、既存大規模データ移行は含めない。</td></tr>
+          <tr><td>health、観測、backup／restore、reconcileを定常運用の入口として使う</td><td class="no">×</td><td class="no">×</td><td class="yes">○</td><td>24時間SLO、外部監視基盤、障害当番の常設運用は別フェーズ。</td></tr>
+          <tr><td>Vikunja forkを安定配信し、rollbackを含む運用手順で戻す</td><td class="no">×</td><td class="no">×</td><td class="yes">○</td><td>全ブラウザ・全バージョンの互換保証や複数環境CIは含めない。</td></tr>
+          <tr><td>複数利用者の認証、ロール、権限分離を本番運用する</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td>PostgreSQL移行と認証の開始ゲートを通過した後の後続テーマ。</td></tr>
+          <tr><td>PostgreSQLを正本にした高可用な共有データ基盤へ移行する</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td>現行P1はmigration dry-runと開始条件までで、切替は約束しない。</td></tr>
+          <tr><td>Calendar、メール、任意SaaSを双方向同期して予定やtaskを統合する</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td>候補・設計・PoCの対象であり、現行の採用範囲には入れない。</td></tr>
+          <tr><td>AIが候補を自動GOし、実データを一括変更する</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td>安全境界として意図的に未対応。利用者確認と操作IDを必須にする。</td></tr>
+          <tr><td>ネイティブmobile app、公開SaaS、複数テナントの商用提供を行う</td><td class="no">×</td><td class="no">×</td><td class="no">×</td><td>現行PJのスコープ外。必要になった時点で別の要件・運用設計から開始する。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="capability-note">○は「当該フェーズの受入まで終わったときに利用できる」、×は「その段階ではまだ約束しない」を表す。現在の未受入項目は上の星取表とB01〜B05受入表を正本とする。</p>
   </section>
 
   <div class="notes">
